@@ -249,7 +249,6 @@ public sealed partial class MainWindow : Window
         var pathGeo = new PathGeometry();
         pathGeo.Figures.Add(figure);
         NotchBackground.Data = pathGeo;
-        NotchBorderStroke.Data = pathGeo;
 
         UpdateWindowRegion((int)width, (int)height, earRadius, bottomRadius);
     }

@@ -20,14 +20,10 @@
             <!-- Fondo negro absoluto con silueta exacta del Notch de Mac (con orejas cóncavas y esquinas redondeadas) -->
             <Path x:Name="NotchBackground"
                   Fill="#FF000000"
-                  HorizontalAlignment="Left"
-                  VerticalAlignment="Top"/>
-            <Path x:Name="NotchBorderStroke"
                   Stroke="#1FFFFFFF"
                   StrokeThickness="1"
                   HorizontalAlignment="Left"
-                  VerticalAlignment="Top"
-                  IsHitTestVisible="False"/>
+                  VerticalAlignment="Top"/>
 
             <!-- Contenido compacto con estilo exacto de Mac -->
             <Grid x:Name="CompactContent" Margin="18,0,18,0" Height="36">
