@@ -1,12 +1,15 @@
 using AlexIsland.App.Native;
-using Microsoft.UI;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Graphics;
+using Windows.Media.Control;
 using WinRT.Interop;
+using System.Globalization;
 
 namespace AlexIsland.App;
 
@@ -14,18 +17,23 @@ public sealed partial class MainWindow : Window
 {
     private const int NotchWidth = 160;
     private const int NotchHeight = 38;
-    private const int HoverWidth = 420;
-    private const int HoverHeight = 82;
-    private const int PinnedWidth = 520;
-    private const int PinnedHeight = 176;
+    private const int ExpandedWidth = 920;
+    private const int ExpandedHeight = 350;
+    private const double EarRadius = 10;
 
     private readonly AppWindow _appWindow;
     private readonly nint _hwnd;
+    private readonly DispatcherQueueTimer _collapseTimer;
+    private readonly DispatcherQueueTimer _clockTimer;
+    private readonly DispatcherQueueTimer _timelineTimer;
+
+    private GlobalSystemMediaTransportControlsSessionManager? _mediaManager;
+    private GlobalSystemMediaTransportControlsSession? _mediaSession;
     private bool _isPointerInside;
     private bool _isPinned;
     private bool _isExpanded;
+    private bool _isDisposed;
     private Storyboard? _activeAnimation;
-    private readonly DispatcherQueueTimer _collapseTimer;
 
     public MainWindow()
     {
@@ -35,50 +43,60 @@ public sealed partial class MainWindow : Window
         var windowId = Win32Interop.GetWindowIdFromWindow(_hwnd);
         _appWindow = AppWindow.GetFromWindowId(windowId);
 
-        ConfigureTitleBar();
+        _appWindow.TitleBar.ExtendsContentIntoTitleBar = true;
         Activated += MainWindow_Activated;
+        Closed += MainWindow_Closed;
 
         _collapseTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
-        _collapseTimer.Interval = TimeSpan.FromMilliseconds(220);
+        _collapseTimer.Interval = TimeSpan.FromMilliseconds(300);
         _collapseTimer.IsRepeating = false;
         _collapseTimer.Tick += CollapseTimer_Tick;
 
+        _clockTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
+        _clockTimer.Interval = TimeSpan.FromSeconds(1);
+        _clockTimer.IsRepeating = true;
+        _clockTimer.Tick += (_, _) => UpdateClock();
+
+        _timelineTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
+        _timelineTimer.Interval = TimeSpan.FromSeconds(1);
+        _timelineTimer.IsRepeating = true;
+        _timelineTimer.Tick += (_, _) => UpdateTimeline();
+
+        UpdateClock();
+        UpdateNotchGeometry(NotchWidth, NotchHeight);
         ApplyIslandState();
+        _ = InitializeMediaAsync();
     }
 
     private void MainWindow_Activated(object sender, WindowActivatedEventArgs args)
     {
-        // Mantiene la isla por encima de ventanas normales sin robar el foco.
         NativeMethods.ConfigureIslandWindow(_hwnd);
     }
 
-    private void ConfigureTitleBar()
+    private void MainWindow_Closed(object sender, WindowEventArgs args)
     {
-        _appWindow.TitleBar.ExtendsContentIntoTitleBar = true;
+        _isDisposed = true;
+        _collapseTimer.Stop();
+        _clockTimer.Stop();
+        _timelineTimer.Stop();
+        if (_mediaManager is not null)
+        {
+            _mediaManager.CurrentSessionChanged -= MediaManager_CurrentSessionChanged;
+        }
+        DetachMediaSession();
     }
 
-    private void IslandSurface_PointerEntered(object sender, PointerRoutedEventArgs e)
+    private void IslandContainer_PointerEntered(object sender, PointerRoutedEventArgs e)
     {
         _collapseTimer.Stop();
-        if (_isPointerInside)
-        {
-            return;
-        }
-
+        if (_isPointerInside) return;
         _isPointerInside = true;
         ApplyIslandState();
     }
 
-    private void IslandSurface_PointerExited(object sender, PointerRoutedEventArgs e)
+    private void IslandContainer_PointerExited(object sender, PointerRoutedEventArgs e)
     {
-        if (_isPinned)
-        {
-            return;
-        }
-
-        // El cambio de tamaño puede generar un PointerExited transitorio.
-        // Esperamos brevemente para permitir que el puntero vuelva a entrar
-        // en la ventana redimensionada antes de contraer la isla.
+        if (_isPinned) return;
         _isPointerInside = false;
         _collapseTimer.Stop();
         _collapseTimer.Start();
@@ -87,21 +105,13 @@ public sealed partial class MainWindow : Window
     private void CollapseTimer_Tick(DispatcherQueueTimer sender, object args)
     {
         _collapseTimer.Stop();
-        if (_isPinned)
-        {
-            return;
-        }
+        if (_isPinned) return;
 
-        // Consultar la posición real evita contraer por un PointerExited
-        // transitorio provocado por el redimensionamiento de la ventana.
         _isPointerInside = NativeMethods.IsCursorWithinWindow(_hwnd);
-        if (!_isPointerInside)
-        {
-            ApplyIslandState();
-        }
+        if (!_isPointerInside) ApplyIslandState();
     }
 
-    private void IslandSurface_Tapped(object sender, TappedRoutedEventArgs e)
+    private void IslandContainer_Tapped(object sender, TappedRoutedEventArgs e)
     {
         _collapseTimer.Stop();
         _isPinned = !_isPinned;
@@ -113,60 +123,112 @@ public sealed partial class MainWindow : Window
         var wasExpanded = _isExpanded;
         _isExpanded = _isPinned || _isPointerInside;
 
-        NotchContent.Visibility = _isExpanded ? Visibility.Collapsed : Visibility.Visible;
+        CompactContent.Visibility = _isExpanded ? Visibility.Collapsed : Visibility.Visible;
         ExpandedContent.Visibility = _isExpanded ? Visibility.Visible : Visibility.Collapsed;
-        ExpandedPanel.Visibility = _isPinned ? Visibility.Visible : Visibility.Collapsed;
 
-        if (_isPinned)
+        var width = _isExpanded ? ExpandedWidth : NotchWidth;
+        var height = _isExpanded ? ExpandedHeight : NotchHeight;
+        IslandContainer.Width = width;
+        IslandContainer.Height = height;
+        UpdateNotchGeometry(width, height);
+        ResizeIsland(width, height);
+        PositionAtTopCenter();
+
+        if (_isExpanded)
         {
-            StatusText.Text = "Panel fijado · Windows 11";
-            IslandSurface.CornerRadius = new Microsoft.UI.Xaml.CornerRadius(0, 0, 28, 28);
-            IslandSurface.Padding = new Thickness(0);
-            ResizeIsland(PinnedWidth, PinnedHeight);
-        }
-        else if (_isPointerInside)
-        {
-            StatusText.Text = "Núcleo iniciado · Windows 11";
-            IslandSurface.CornerRadius = new Microsoft.UI.Xaml.CornerRadius(0, 0, 26, 26);
-            IslandSurface.Padding = new Thickness(0);
-            ResizeIsland(HoverWidth, HoverHeight);
+            _clockTimer.Start();
+            _timelineTimer.Start();
+            UpdateClock();
+            UpdateTimeline();
         }
         else
         {
-            StatusText.Text = "Núcleo iniciado · Windows 11";
-            IslandSurface.CornerRadius = new Microsoft.UI.Xaml.CornerRadius(0, 0, 18, 18);
-            IslandSurface.Padding = new Thickness(0);
-            ResizeIsland(NotchWidth, NotchHeight);
+            _clockTimer.Stop();
+            _timelineTimer.Stop();
         }
 
-        PositionAtTopCenter();
+        if (wasExpanded != _isExpanded) AnimateIsland(_isExpanded);
+    }
 
-        if (wasExpanded != _isExpanded)
+    private void UpdateNotchGeometry(double width, double height)
+    {
+        if (width <= 0 || height <= 0) return;
+
+        var bottomRadius = _isExpanded ? 24.0 : 14.0;
+        var figure = new PathFigure
         {
-            AnimateIsland(_isExpanded);
-        }
+            StartPoint = new Windows.Foundation.Point(0, 0),
+            IsClosed = true,
+            IsFilled = true
+        };
+
+        // Oreja cóncava superior izquierda: la silueta cae desde el borde
+        // superior hasta el lateral, imitando la unión de una muesca física.
+        figure.Segments.Add(new ArcSegment
+        {
+            Point = new Windows.Foundation.Point(EarRadius, EarRadius),
+            Size = new Windows.Foundation.Size(EarRadius, EarRadius),
+            SweepDirection = SweepDirection.Clockwise,
+            IsLargeArc = false
+        });
+        figure.Segments.Add(new LineSegment
+        {
+            Point = new Windows.Foundation.Point(EarRadius, height - bottomRadius)
+        });
+        figure.Segments.Add(new ArcSegment
+        {
+            Point = new Windows.Foundation.Point(EarRadius + bottomRadius, height),
+            Size = new Windows.Foundation.Size(bottomRadius, bottomRadius),
+            SweepDirection = SweepDirection.Counterclockwise,
+            IsLargeArc = false
+        });
+        figure.Segments.Add(new LineSegment
+        {
+            Point = new Windows.Foundation.Point(width - EarRadius - bottomRadius, height)
+        });
+        figure.Segments.Add(new ArcSegment
+        {
+            Point = new Windows.Foundation.Point(width - EarRadius, height - bottomRadius),
+            Size = new Windows.Foundation.Size(bottomRadius, bottomRadius),
+            SweepDirection = SweepDirection.Counterclockwise,
+            IsLargeArc = false
+        });
+        figure.Segments.Add(new LineSegment
+        {
+            Point = new Windows.Foundation.Point(width - EarRadius, EarRadius)
+        });
+        figure.Segments.Add(new ArcSegment
+        {
+            Point = new Windows.Foundation.Point(width, 0),
+            Size = new Windows.Foundation.Size(EarRadius, EarRadius),
+            SweepDirection = SweepDirection.Clockwise,
+            IsLargeArc = false
+        });
+
+        var geometry = new PathGeometry();
+        geometry.Figures.Add(figure);
+        NotchBackground.Data = geometry;
+        NotchBorderStroke.Data = geometry;
     }
 
     private void AnimateIsland(bool expanding)
     {
         _activeAnimation?.Stop();
-
         var storyboard = new Storyboard();
         var scaleX = new DoubleAnimation
         {
-            From = expanding ? 0.90 : 1.0,
-            To = expanding ? 1.0 : 0.90,
-            Duration = TimeSpan.FromMilliseconds(220),
+            From = expanding ? 0.96 : 1.0,
+            To = expanding ? 1.0 : 0.96,
+            Duration = TimeSpan.FromMilliseconds(260),
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
         };
         var scaleY = new DoubleAnimation
         {
-            From = expanding ? 0.86 : 1.0,
-            To = expanding ? 1.0 : 0.86,
-            Duration = TimeSpan.FromMilliseconds(220),
+            From = expanding ? 0.94 : 1.0,
+            To = expanding ? 1.0 : 0.94,
+            Duration = TimeSpan.FromMilliseconds(260),
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
         };
-
         Storyboard.SetTarget(scaleX, IslandScale);
         Storyboard.SetTargetProperty(scaleX, "ScaleX");
         Storyboard.SetTarget(scaleY, IslandScale);
@@ -186,20 +248,202 @@ public sealed partial class MainWindow : Window
 
     private void PositionAtTopCenter()
     {
-        var displayArea = DisplayArea.GetFromWindowId(_appWindow.Id, DisplayAreaFallback.Primary);
-        if (displayArea is null)
+        var display = DisplayArea.GetFromWindowId(_appWindow.Id, DisplayAreaFallback.Primary);
+        if (display is null) return;
+        var bounds = display.OuterBounds;
+        var x = bounds.X + ((bounds.Width - (int)IslandContainer.Width) / 2);
+        _appWindow.Move(new PointInt32(x, bounds.Y));
+    }
+
+    private async Task InitializeMediaAsync()
+    {
+        try
         {
+            _mediaManager = await GlobalSystemMediaTransportControlsSessionManager.RequestAsync();
+            _mediaManager.CurrentSessionChanged += MediaManager_CurrentSessionChanged;
+            await AttachCurrentSessionAsync();
+        }
+        catch
+        {
+            SetNoMediaSession();
+        }
+    }
+
+    private async void MediaManager_CurrentSessionChanged(
+        GlobalSystemMediaTransportControlsSessionManager sender,
+        CurrentSessionChangedEventArgs args)
+    {
+        if (_isDisposed) return;
+        await DispatcherQueue.EnqueueAsync(async () => await AttachCurrentSessionAsync());
+    }
+
+    private async Task AttachCurrentSessionAsync()
+    {
+        if (_isDisposed || _mediaManager is null) return;
+        var next = _mediaManager.GetCurrentSession();
+        if (!ReferenceEquals(next, _mediaSession))
+        {
+            DetachMediaSession();
+            _mediaSession = next;
+            if (_mediaSession is not null)
+            {
+                _mediaSession.MediaPropertiesChanged += MediaSession_MediaPropertiesChanged;
+                _mediaSession.PlaybackInfoChanged += MediaSession_PlaybackInfoChanged;
+                _mediaSession.TimelinePropertiesChanged += MediaSession_TimelinePropertiesChanged;
+            }
+        }
+        await RefreshMediaAsync();
+    }
+
+    private void DetachMediaSession()
+    {
+        if (_mediaSession is null) return;
+        _mediaSession.MediaPropertiesChanged -= MediaSession_MediaPropertiesChanged;
+        _mediaSession.PlaybackInfoChanged -= MediaSession_PlaybackInfoChanged;
+        _mediaSession.TimelinePropertiesChanged -= MediaSession_TimelinePropertiesChanged;
+        _mediaSession = null;
+    }
+
+    private void MediaSession_MediaPropertiesChanged(
+        GlobalSystemMediaTransportControlsSession sender,
+        MediaPropertiesChangedEventArgs args)
+    {
+        if (!_isDisposed)
+            _ = DispatcherQueue.EnqueueAsync(async () => await RefreshMediaAsync());
+    }
+
+    private void MediaSession_PlaybackInfoChanged(
+        GlobalSystemMediaTransportControlsSession sender,
+        PlaybackInfoChangedEventArgs args)
+    {
+        if (!_isDisposed)
+            _ = DispatcherQueue.TryEnqueue(UpdatePlaybackState);
+    }
+
+    private void MediaSession_TimelinePropertiesChanged(
+        GlobalSystemMediaTransportControlsSession sender,
+        TimelinePropertiesChangedEventArgs args)
+    {
+        if (!_isDisposed)
+            _ = DispatcherQueue.TryEnqueue(UpdateTimeline);
+    }
+
+    private async Task RefreshMediaAsync()
+    {
+        if (_mediaSession is null)
+        {
+            SetNoMediaSession();
             return;
         }
 
-        // Usar los límites físicos del monitor, no WorkArea: el notch debe
-        // quedar pegado al borde superior de la pantalla incluso si la barra
-        // de tareas está configurada arriba.
-        var bounds = displayArea.OuterBounds;
-        var width = _isPinned ? PinnedWidth : _isPointerInside ? HoverWidth : NotchWidth;
-        var x = bounds.X + ((bounds.Width - width) / 2);
-        var y = bounds.Y;
+        try
+        {
+            var properties = await _mediaSession.TryGetMediaPropertiesAsync();
+            TrackTitle.Text = string.IsNullOrWhiteSpace(properties.Title)
+                ? "Reproducción multimedia"
+                : properties.Title;
+            TrackArtist.Text = string.IsNullOrWhiteSpace(properties.Artist)
+                ? _mediaSession.SourceAppUserModelId
+                : properties.Artist;
+            PlaybackSource.Text = _mediaSession.SourceAppUserModelId;
+            AlbumPlaceholder.Visibility = Visibility.Visible;
+            AlbumArt.Source = null;
 
-        _appWindow.Move(new PointInt32(x, y));
+            if (properties.Thumbnail is not null)
+            {
+                using var stream = await properties.Thumbnail.OpenReadAsync();
+                if (stream.Size > 0)
+                {
+                    var bitmap = new BitmapImage();
+                    await bitmap.SetSourceAsync(stream);
+                    AlbumArt.Source = bitmap;
+                    AlbumPlaceholder.Visibility = Visibility.Collapsed;
+                }
+            }
+
+            UpdatePlaybackState();
+            UpdateTimeline();
+        }
+        catch
+        {
+            SetNoMediaSession();
+        }
+    }
+
+    private void SetNoMediaSession()
+    {
+        TrackTitle.Text = "No hay reproducción activa";
+        TrackArtist.Text = "Inicia música en Spotify o en tu navegador";
+        PlaybackSource.Text = "Windows Media Session";
+        AlbumArt.Source = null;
+        AlbumPlaceholder.Visibility = Visibility.Visible;
+        PlayPauseButton.Content = "\uE768";
+        ElapsedText.Text = "00:00";
+        RemainingText.Text = "--:--";
+        ProgressFill.Width = 0;
+    }
+
+    private void UpdatePlaybackState()
+    {
+        if (_mediaSession is null) return;
+        var playback = _mediaSession.GetPlaybackInfo();
+        var playing = playback.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing;
+        PlayPauseButton.Content = playing ? "\uE769" : "\uE768";
+    }
+
+    private void UpdateTimeline()
+    {
+        if (_mediaSession is null) return;
+        try
+        {
+            var timeline = _mediaSession.GetTimelineProperties();
+            var position = timeline.Position;
+            var duration = timeline.EndTime - timeline.StartTime;
+            if (duration <= TimeSpan.Zero) duration = timeline.EndTime;
+            ElapsedText.Text = FormatTime(position);
+            var remaining = duration - position;
+            RemainingText.Text = remaining > TimeSpan.Zero ? "-" + FormatTime(remaining) : "00:00";
+            var ratio = duration.TotalSeconds > 0
+                ? Math.Clamp(position.TotalSeconds / duration.TotalSeconds, 0, 1)
+                : 0;
+            var availableWidth = Math.Max(0, 920 - 68 - 100);
+            ProgressFill.Width = availableWidth * ratio;
+        }
+        catch { }
+    }
+
+    private static string FormatTime(TimeSpan value)
+    {
+        return value.TotalHours >= 1
+            ? value.ToString(@"h\:mm\:ss")
+            : value.ToString(@"mm\:ss");
+    }
+
+    private void UpdateClock()
+    {
+        var now = DateTime.Now;
+        var culture = CultureInfo.GetCultureInfo("es-CL");
+        var stamp = now.ToString("ddd d MMM yyyy  HH:mm", culture);
+        HeaderClock.Text = stamp;
+        CompactClock.Text = now.ToString("HH:mm");
+    }
+
+    private async void PreviousButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_mediaSession is not null)
+            await _mediaSession.TrySkipPreviousAsync();
+    }
+
+    private async void PlayPauseButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_mediaSession is not null)
+            await _mediaSession.TryTogglePlayPauseAsync();
+        UpdatePlaybackState();
+    }
+
+    private async void NextButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_mediaSession is not null)
+            await _mediaSession.TrySkipNextAsync();
     }
 }
