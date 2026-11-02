@@ -186,6 +186,52 @@ public sealed partial class MainWindow : Window
         _appWindow.Resize(new SizeInt32(width, height));
     }
 
+    private void ApplyBottomRoundedClip(int width, int height, double radius)
+    {
+        // Recorta la superficie a una silueta con borde superior recto
+        // y esquinas inferiores redondeadas.
+        var figure = new PathFigure
+        {
+            StartPoint = new Windows.Foundation.Point(0, 0),
+            IsClosed = true
+        };
+
+        figure.Segments.Add(new LineSegment
+        {
+            Point = new Windows.Foundation.Point(width, 0)
+        });
+        figure.Segments.Add(new LineSegment
+        {
+            Point = new Windows.Foundation.Point(width, height - radius)
+        });
+        figure.Segments.Add(new ArcSegment
+        {
+            Point = new Windows.Foundation.Point(width - radius, height),
+            Size = new Windows.Foundation.Size(radius, radius),
+            SweepDirection = SweepDirection.Clockwise,
+            IsLargeArc = false
+        });
+        figure.Segments.Add(new LineSegment
+        {
+            Point = new Windows.Foundation.Point(radius, height)
+        });
+        figure.Segments.Add(new ArcSegment
+        {
+            Point = new Windows.Foundation.Point(0, height - radius),
+            Size = new Windows.Foundation.Size(radius, radius),
+            SweepDirection = SweepDirection.Clockwise,
+            IsLargeArc = false
+        });
+        figure.Segments.Add(new LineSegment
+        {
+            Point = new Windows.Foundation.Point(0, 0)
+        });
+
+        var geometry = new PathGeometry();
+        geometry.Figures.Add(figure);
+        IslandSurface.Clip = geometry;
+    }
+
     private void PositionAtTopCenter()
     {
         var displayArea = DisplayArea.GetFromWindowId(_appWindow.Id, DisplayAreaFallback.Primary);
