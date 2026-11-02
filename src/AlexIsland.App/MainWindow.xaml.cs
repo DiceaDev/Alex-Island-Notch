@@ -129,6 +129,7 @@ public sealed partial class MainWindow : Window
 
         CompactContent.Visibility = _isExpanded ? Visibility.Collapsed : Visibility.Visible;
         ExpandedContent.Visibility = _isExpanded ? Visibility.Visible : Visibility.Collapsed;
+        ExpandedContent.Opacity = _isExpanded ? 1 : 0;
 
         var width = _isExpanded ? ExpandedWidth : NotchWidth;
         var height = _isExpanded ? ExpandedHeight : NotchHeight;
@@ -158,61 +159,14 @@ public sealed partial class MainWindow : Window
     {
         if (width <= 0 || height <= 0) return;
 
-        var bottomRadius = _isExpanded ? 24.0 : 14.0;
-        var figure = new PathFigure
-        {
-            StartPoint = new Windows.Foundation.Point(0, 0),
-            IsClosed = true,
-            IsFilled = true
-        };
+        // Se utiliza Border/CornerRadius en lugar de PathGeometry para evitar
+        // errores de interoperabilidad de geometrías en WinUI al iniciar.
+        var topRadius = Math.Min(14.0, height / 2.0);
+        var bottomRadius = Math.Min(_isExpanded ? 24.0 : 14.0, height / 2.0);
+        var corners = new CornerRadius(topRadius, topRadius, bottomRadius, bottomRadius);
 
-        // Oreja cóncava superior izquierda: la silueta cae desde el borde
-        // superior hasta el lateral, imitando la unión de una muesca física.
-        figure.Segments.Add(new ArcSegment
-        {
-            Point = new Windows.Foundation.Point(EarRadius, EarRadius),
-            Size = new Windows.Foundation.Size(EarRadius, EarRadius),
-            SweepDirection = SweepDirection.Clockwise,
-            IsLargeArc = false
-        });
-        figure.Segments.Add(new LineSegment
-        {
-            Point = new Windows.Foundation.Point(EarRadius, height - bottomRadius)
-        });
-        figure.Segments.Add(new ArcSegment
-        {
-            Point = new Windows.Foundation.Point(EarRadius + bottomRadius, height),
-            Size = new Windows.Foundation.Size(bottomRadius, bottomRadius),
-            SweepDirection = SweepDirection.Counterclockwise,
-            IsLargeArc = false
-        });
-        figure.Segments.Add(new LineSegment
-        {
-            Point = new Windows.Foundation.Point(width - EarRadius - bottomRadius, height)
-        });
-        figure.Segments.Add(new ArcSegment
-        {
-            Point = new Windows.Foundation.Point(width - EarRadius, height - bottomRadius),
-            Size = new Windows.Foundation.Size(bottomRadius, bottomRadius),
-            SweepDirection = SweepDirection.Counterclockwise,
-            IsLargeArc = false
-        });
-        figure.Segments.Add(new LineSegment
-        {
-            Point = new Windows.Foundation.Point(width - EarRadius, EarRadius)
-        });
-        figure.Segments.Add(new ArcSegment
-        {
-            Point = new Windows.Foundation.Point(width, 0),
-            Size = new Windows.Foundation.Size(EarRadius, EarRadius),
-            SweepDirection = SweepDirection.Clockwise,
-            IsLargeArc = false
-        });
-
-        var geometry = new PathGeometry();
-        geometry.Figures.Add(figure);
-        NotchBackground.Data = geometry;
-        NotchBorderStroke.Data = geometry;
+        NotchBackground.CornerRadius = corners;
+        NotchBorderStroke.CornerRadius = corners;
     }
 
     private void AnimateIsland(bool expanding)
