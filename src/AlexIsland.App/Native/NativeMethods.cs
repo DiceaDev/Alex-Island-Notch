@@ -21,7 +21,7 @@ internal static class NativeMethods
     private const uint SwpShowWindow = 0x0040;
 
     private const int DwmwaWindowCornerPreference = 33;
-    private const int DwmwcpRound = 2;
+    private const int DwmwcpDoNotRound = 1;
 
     private static readonly nint HwndTopmost = new(-1);
 
@@ -87,7 +87,7 @@ internal static class NativeMethods
         _ = SetWindowLongPtr(hwnd, GwlExStyle, new nint(extendedStyle));
 
         // Delegar el suavizado de las esquinas al compositor DWM de Windows 11.
-        var cornerPreference = DwmwcpRound;
+        var cornerPreference = DwmwcpDoNotRound;
         _ = DwmSetWindowAttribute(
             hwnd,
             DwmwaWindowCornerPreference,
