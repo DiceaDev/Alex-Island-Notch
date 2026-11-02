@@ -79,6 +79,7 @@ public sealed partial class MainWindow : Window
         // El cambio de tamaño puede generar un PointerExited transitorio.
         // Esperamos brevemente para permitir que el puntero vuelva a entrar
         // en la ventana redimensionada antes de contraer la isla.
+        _isPointerInside = false;
         _collapseTimer.Stop();
         _collapseTimer.Start();
     }
