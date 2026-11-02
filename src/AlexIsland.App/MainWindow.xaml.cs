@@ -3,6 +3,7 @@ using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media.Animation;
 using Windows.Graphics;
 using WinRT.Interop;
 
@@ -22,6 +23,7 @@ public sealed partial class MainWindow : Window
     private bool _isPointerInside;
     private bool _isPinned;
     private bool _isExpanded;
+    private Storyboard? _activeAnimation;
 
     public MainWindow()
     {
@@ -68,6 +70,7 @@ public sealed partial class MainWindow : Window
 
     private void ApplyIslandState()
     {
+        var wasExpanded = _isExpanded;
         _isExpanded = _isPinned || _isPointerInside;
 
         NotchContent.Visibility = _isExpanded ? Visibility.Collapsed : Visibility.Visible;
@@ -97,6 +100,41 @@ public sealed partial class MainWindow : Window
         }
 
         PositionAtTopCenter();
+
+        if (wasExpanded != _isExpanded)
+        {
+            AnimateIsland(_isExpanded);
+        }
+    }
+
+    private void AnimateIsland(bool expanding)
+    {
+        _activeAnimation?.Stop();
+
+        var storyboard = new Storyboard();
+        var scaleX = new DoubleAnimation
+        {
+            From = expanding ? 0.90 : 1.0,
+            To = expanding ? 1.0 : 0.90,
+            Duration = TimeSpan.FromMilliseconds(220),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        var scaleY = new DoubleAnimation
+        {
+            From = expanding ? 0.86 : 1.0,
+            To = expanding ? 1.0 : 0.86,
+            Duration = TimeSpan.FromMilliseconds(220),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+
+        Storyboard.SetTarget(scaleX, IslandScale);
+        Storyboard.SetTargetProperty(scaleX, "ScaleX");
+        Storyboard.SetTarget(scaleY, IslandScale);
+        Storyboard.SetTargetProperty(scaleY, "ScaleY");
+        storyboard.Children.Add(scaleX);
+        storyboard.Children.Add(scaleY);
+        _activeAnimation = storyboard;
+        storyboard.Begin();
     }
 
     private void ResizeIsland(int width, int height)
