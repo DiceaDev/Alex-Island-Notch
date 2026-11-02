@@ -19,6 +19,6 @@ Global
   {C7A40F2D-9A91-4F37-9B6A-8D41E6A2F320}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
   {C7A40F2D-9A91-4F37-9B6A-8D41E6A2F320}.Debug|Any CPU.Build.0 = Debug|Any CPU
   {C7A40F2D-9A91-4F37-9B6A-8D41E6A2F320}.Release|Any CPU.ActiveCfg = Release|Any CPU
-  {C7A40F2D-9A91-4F37-9B6A-8D41E6A2F320}.Release|Any CPU.Build.0 = Debug|Any CPU
+  {C7A40F2D-9A91-4F37-9B6A-8D41E6A2F320}.Release|Any CPU.Build.0 = Release|Any CPU
  EndGlobalSection
 EndGlobal
