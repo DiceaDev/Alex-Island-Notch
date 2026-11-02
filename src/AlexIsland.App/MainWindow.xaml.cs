@@ -10,13 +10,17 @@ namespace AlexIsland.App;
 
 public sealed partial class MainWindow : Window
 {
-    private const int CompactWidth = 420;
-    private const int CompactHeight = 82;
-    private const int ExpandedWidth = 520;
-    private const int ExpandedHeight = 176;
+    private const int NotchWidth = 160;
+    private const int NotchHeight = 38;
+    private const int HoverWidth = 420;
+    private const int HoverHeight = 82;
+    private const int PinnedWidth = 520;
+    private const int PinnedHeight = 176;
 
     private readonly AppWindow _appWindow;
     private readonly nint _hwnd;
+    private bool _isPointerInside;
+    private bool _isPinned;
     private bool _isExpanded;
 
     public MainWindow()
@@ -30,34 +34,67 @@ public sealed partial class MainWindow : Window
         ConfigureTitleBar();
         Activated += MainWindow_Activated;
 
-        ResizeIsland(CompactWidth, CompactHeight);
-        PositionAtTopCenter();
+        ApplyIslandState();
     }
 
     private void MainWindow_Activated(object sender, WindowActivatedEventArgs args)
     {
-        // Reaplica TopMost después de que WinUI activa la ventana.
-        // SWP_NOACTIVATE evita quitar el foco a la aplicación que está usando la persona.
+        // Mantiene la isla por encima de ventanas normales sin robar el foco.
         NativeMethods.ConfigureIslandWindow(_hwnd);
     }
 
     private void ConfigureTitleBar()
     {
-        var titleBar = _appWindow.TitleBar;
-        titleBar.ExtendsContentIntoTitleBar = true;
+        _appWindow.TitleBar.ExtendsContentIntoTitleBar = true;
+    }
+
+    private void IslandSurface_PointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        _isPointerInside = true;
+        ApplyIslandState();
+    }
+
+    private void IslandSurface_PointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        _isPointerInside = false;
+        ApplyIslandState();
     }
 
     private void IslandSurface_Tapped(object sender, TappedRoutedEventArgs e)
     {
-        _isExpanded = !_isExpanded;
-        ExpandedPanel.Visibility = _isExpanded ? Visibility.Visible : Visibility.Collapsed;
-        StatusText.Text = _isExpanded
-            ? "Panel expandido · Windows 11"
-            : "Núcleo iniciado · Windows 11";
+        _isPinned = !_isPinned;
+        ApplyIslandState();
+    }
 
-        ResizeIsland(
-            _isExpanded ? ExpandedWidth : CompactWidth,
-            _isExpanded ? ExpandedHeight : CompactHeight);
+    private void ApplyIslandState()
+    {
+        _isExpanded = _isPinned || _isPointerInside;
+
+        NotchContent.Visibility = _isExpanded ? Visibility.Collapsed : Visibility.Visible;
+        ExpandedContent.Visibility = _isExpanded ? Visibility.Visible : Visibility.Collapsed;
+        ExpandedPanel.Visibility = _isPinned ? Visibility.Visible : Visibility.Collapsed;
+
+        if (_isPinned)
+        {
+            StatusText.Text = "Panel fijado · Windows 11";
+            IslandSurface.CornerRadius = new Microsoft.UI.Xaml.CornerRadius(0, 0, 28, 28);
+            IslandSurface.Padding = new Thickness(0);
+            ResizeIsland(PinnedWidth, PinnedHeight);
+        }
+        else if (_isPointerInside)
+        {
+            StatusText.Text = "Núcleo iniciado · Windows 11";
+            IslandSurface.CornerRadius = new Microsoft.UI.Xaml.CornerRadius(0, 0, 26, 26);
+            IslandSurface.Padding = new Thickness(0);
+            ResizeIsland(HoverWidth, HoverHeight);
+        }
+        else
+        {
+            StatusText.Text = "Núcleo iniciado · Windows 11";
+            IslandSurface.CornerRadius = new Microsoft.UI.Xaml.CornerRadius(0, 0, 19, 19);
+            IslandSurface.Padding = new Thickness(0);
+            ResizeIsland(NotchWidth, NotchHeight);
+        }
 
         PositionAtTopCenter();
     }
@@ -76,9 +113,9 @@ public sealed partial class MainWindow : Window
         }
 
         var workArea = displayArea.WorkArea;
-        var width = _isExpanded ? ExpandedWidth : CompactWidth;
+        var width = _isPinned ? PinnedWidth : _isPointerInside ? HoverWidth : NotchWidth;
         var x = workArea.X + ((workArea.Width - width) / 2);
-        var y = workArea.Y + 8;
+        var y = workArea.Y;
 
         _appWindow.Move(new PointInt32(x, y));
     }
