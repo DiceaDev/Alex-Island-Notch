@@ -271,7 +271,7 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private async void MediaManager_CurrentSessionChanged(
+    private void MediaManager_CurrentSessionChanged(
         GlobalSystemMediaTransportControlsSessionManager sender,
         CurrentSessionChangedEventArgs args)
     {
