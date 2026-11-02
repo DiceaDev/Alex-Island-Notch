@@ -139,6 +139,8 @@ public sealed partial class MainWindow : Window
 
     private void ResizeIsland(int width, int height)
     {
+        IslandScale.CenterX = width / 2.0;
+        IslandScale.CenterY = height / 2.0;
         _appWindow.Resize(new SizeInt32(width, height));
     }
 
