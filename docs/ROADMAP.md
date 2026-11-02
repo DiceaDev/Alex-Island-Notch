@@ -18,7 +18,7 @@
 - [x] Expandir la isla al pasar el cursor y permitir fijar el panel con clic
 - [x] Incorporar animación de escala y transición al expandir/contraer
 - [x] Evitar parpadeo del hover mediante cierre diferido y validación de posición real del cursor
-- [x] Aplicar recorte nativo de ventana con esquinas redondeadas en los tres estados
+- [ ] Validar esquinas suavizadas con DWM y radios XAML en los tres estados
 - [ ] Incorporar gestión de múltiples monitores y cambios de DPI
 - [ ] Incorporar tamaño, posición y apariencia configurables
 
