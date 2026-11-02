@@ -12,5 +12,8 @@
     <AssemblyName>AlexIsland</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
-  <ItemGroup><PackageReference Include="Microsoft.WindowsAppSDK" /></ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AlexIsland.Core\AlexIsland.Core.csproj" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
+  </ItemGroup>
 </Project>
