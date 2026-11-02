@@ -12,7 +12,7 @@
               VerticalAlignment="Top"
               PointerEntered="IslandContainer_PointerEntered"
               PointerExited="IslandContainer_PointerExited"
-              Tapped="IslandContainer_Tapped">
+              Tapped="IslandContainer_Tapped">\n            <Grid.RenderTransform>\n                <ScaleTransform x:Name="IslandScale" ScaleX="1" ScaleY="1"/>\n            </Grid.RenderTransform>
 
             <Path x:Name="NotchBackground" Fill="#F207090C" Stretch="Fill"/>
             <Path x:Name="NotchBorderStroke" Stroke="#20FFFFFF" StrokeThickness="1" Stretch="Fill" IsHitTestVisible="False"/>
@@ -98,7 +98,7 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <Grid Grid.Row="0" ColumnSpacing="10">
+                    <Grid x:Name="ProgressTrack" Grid.Row="0" ColumnSpacing="10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
