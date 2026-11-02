@@ -25,6 +25,30 @@ internal static class NativeMethods
 
     private static readonly nint HwndTopmost = new(-1);
 
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativePoint
+    {
+        public int X;
+        public int Y;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativeRect
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetCursorPos(out NativePoint point);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetWindowRect(nint hwnd, out NativeRect rect);
+
     [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW", SetLastError = true)]
     private static extern nint GetWindowLongPtr(nint hWnd, int nIndex);
 
@@ -39,6 +63,17 @@ internal static class NativeMethods
     [DllImport("dwmapi.dll")]
     private static extern int DwmSetWindowAttribute(
         nint hwnd, int attribute, ref int value, int valueSize);
+
+    internal static bool IsCursorWithinWindow(nint hwnd)
+    {
+        if (!GetCursorPos(out var cursor) || !GetWindowRect(hwnd, out var rect))
+        {
+            return false;
+        }
+
+        return cursor.X >= rect.Left && cursor.X < rect.Right
+            && cursor.Y >= rect.Top && cursor.Y < rect.Bottom;
+    }
 
     internal static void ConfigureIslandWindow(nint hwnd)
     {
