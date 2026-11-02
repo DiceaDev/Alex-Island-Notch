@@ -14,7 +14,8 @@
 - [x] Centrar la isla en la parte superior de la pantalla principal
 - [x] Mantener la ventana siempre visible y fuera de la barra de tareas
 - [x] Eliminar el marco y la barra de título tradicionales
-- [x] Implementar estados compacto y expandido mediante interacción
+- [x] Implementar modo notch compacto integrado al borde superior
+- [x] Expandir la isla al pasar el cursor y permitir fijar el panel con clic
 - [ ] Incorporar transiciones animadas
 - [ ] Incorporar gestión de múltiples monitores y cambios de DPI
 - [ ] Incorporar tamaño, posición y apariencia configurables
