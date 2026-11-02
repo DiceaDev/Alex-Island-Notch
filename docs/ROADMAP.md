@@ -1,28 +1,30 @@
-# Roadmap
+# Hoja de ruta
 
-## Phase 1 — Core architecture
-- [x] Establish WinUI 3 / .NET 10 project baseline
-- [x] Set process execution level to asInvoker
-- [x] Add core module lifecycle contract
-- [x] Add per-user settings persistence
-- [ ] Add dependency injection and module host
-- [ ] Add structured logging and crash handling
-- [ ] Add unit-test project and CI build
+## Fase 1 — Arquitectura base
+- [x] Establecer la base del proyecto WinUI 3 / .NET 10
+- [x] Configurar el nivel de ejecución `asInvoker`
+- [x] Incorporar el contrato del ciclo de vida de módulos
+- [x] Persistir la configuración por usuario
+- [ ] Incorporar inyección de dependencias y host de módulos
+- [ ] Incorporar registro estructurado y gestión de fallos
+- [ ] Agregar proyecto de pruebas unitarias y compilación CI
 
-## Phase 2 — Dynamic Island UI
-- [x] Create initial floating island window
-- [x] Center island at the top of the primary display
-- [x] Keep window topmost and out of the taskbar
-- [ ] Add compact/expanded state machine and transitions
-- [ ] Add multi-monitor and DPI-change handling
-- [ ] Add settings-driven size, position and appearance
+## Fase 2 — Interfaz Dynamic Island
+- [x] Crear la ventana flotante inicial
+- [x] Centrar la isla en la parte superior de la pantalla principal
+- [x] Mantener la ventana siempre visible y fuera de la barra de tareas
+- [x] Eliminar el marco y la barra de título tradicionales
+- [x] Implementar estados compacto y expandido mediante interacción
+- [ ] Incorporar transiciones animadas
+- [ ] Incorporar gestión de múltiples monitores y cambios de DPI
+- [ ] Incorporar tamaño, posición y apariencia configurables
 
-## Phase 3 — Windows integration
-- [ ] Media session service using GSMTC
-- [ ] Audio endpoint service using Windows Core Audio
-- [ ] Windows notification integration
-- [ ] Battery, network and basic system state
-- [ ] Event subscription cleanup and reconnection handling
+## Fase 3 — Integración con Windows
+- [ ] Servicio de sesiones multimedia mediante GSMTC
+- [ ] Servicio de volumen mediante Windows Core Audio
+- [ ] Integración con notificaciones de Windows
+- [ ] Batería, red y estado básico del sistema
+- [ ] Limpieza de suscripciones a eventos y recuperación de conexiones
 
-## Release gates
-A phase is complete only when it builds in Debug and Release, has relevant automated tests, runs without elevation on a standard account, and documents known limitations.
+## Criterios de liberación
+Una fase se considera terminada cuando compila en Debug y Release, dispone de pruebas automatizadas relevantes, funciona sin elevación en una cuenta estándar y documenta sus limitaciones conocidas.
