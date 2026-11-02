@@ -274,7 +274,7 @@ public sealed partial class MainWindow : Window
         CurrentSessionChangedEventArgs args)
     {
         if (_isDisposed) return;
-        await DispatcherQueue.EnqueueAsync(async () => await AttachCurrentSessionAsync());
+        DispatcherQueue.TryEnqueue(() => _ = AttachCurrentSessionAsync());
     }
 
     private async Task AttachCurrentSessionAsync()
@@ -309,7 +309,7 @@ public sealed partial class MainWindow : Window
         MediaPropertiesChangedEventArgs args)
     {
         if (!_isDisposed)
-            _ = DispatcherQueue.EnqueueAsync(async () => await RefreshMediaAsync());
+            DispatcherQueue.TryEnqueue(() => _ = RefreshMediaAsync());
     }
 
     private void MediaSession_PlaybackInfoChanged(
