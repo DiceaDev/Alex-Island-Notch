@@ -1,5 +1,6 @@
 using AlexIsland.App.Native;
 using Microsoft.UI;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
@@ -24,6 +25,7 @@ public sealed partial class MainWindow : Window
     private bool _isPinned;
     private bool _isExpanded;
     private Storyboard? _activeAnimation;
+    private readonly DispatcherQueueTimer _collapseTimer;
 
     public MainWindow()
     {
@@ -35,6 +37,11 @@ public sealed partial class MainWindow : Window
 
         ConfigureTitleBar();
         Activated += MainWindow_Activated;
+
+        _collapseTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
+        _collapseTimer.Interval = TimeSpan.FromMilliseconds(220);
+        _collapseTimer.IsRepeating = false;
+        _collapseTimer.Tick += CollapseTimer_Tick;
 
         ApplyIslandState();
     }
@@ -52,18 +59,42 @@ public sealed partial class MainWindow : Window
 
     private void IslandSurface_PointerEntered(object sender, PointerRoutedEventArgs e)
     {
+        _collapseTimer.Stop();
+        if (_isPointerInside)
+        {
+            return;
+        }
+
         _isPointerInside = true;
         ApplyIslandState();
     }
 
     private void IslandSurface_PointerExited(object sender, PointerRoutedEventArgs e)
     {
-        _isPointerInside = false;
-        ApplyIslandState();
+        if (_isPinned)
+        {
+            return;
+        }
+
+        // El cambio de tamaño puede generar un PointerExited transitorio.
+        // Esperamos brevemente para permitir que el puntero vuelva a entrar
+        // en la ventana redimensionada antes de contraer la isla.
+        _collapseTimer.Stop();
+        _collapseTimer.Start();
+    }
+
+    private void CollapseTimer_Tick(DispatcherQueueTimer sender, object args)
+    {
+        _collapseTimer.Stop();
+        if (!_isPointerInside && !_isPinned)
+        {
+            ApplyIslandState();
+        }
     }
 
     private void IslandSurface_Tapped(object sender, TappedRoutedEventArgs e)
     {
+        _collapseTimer.Stop();
         _isPinned = !_isPinned;
         ApplyIslandState();
     }
