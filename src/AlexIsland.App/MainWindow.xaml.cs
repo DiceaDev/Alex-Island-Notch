@@ -27,10 +27,17 @@ public sealed partial class MainWindow : Window
         _appWindow = AppWindow.GetFromWindowId(windowId);
 
         ConfigureTitleBar();
-        NativeMethods.ConfigureIslandWindow(_hwnd);
+        Activated += MainWindow_Activated;
 
         ResizeIsland(CompactWidth, CompactHeight);
         PositionAtTopCenter();
+    }
+
+    private void MainWindow_Activated(object sender, WindowActivatedEventArgs args)
+    {
+        // Reaplica TopMost después de que WinUI activa la ventana.
+        // SWP_NOACTIVATE evita quitar el foco a la aplicación que está usando la persona.
+        NativeMethods.ConfigureIslandWindow(_hwnd);
     }
 
     private void ConfigureTitleBar()
