@@ -12,7 +12,6 @@
             BorderThickness="1"
             CornerRadius="0,0,19,19"
             IsTapEnabled="True"
-            IsPointerOver="False"
             PointerEntered="IslandSurface_PointerEntered"
             PointerExited="IslandSurface_PointerExited"
             Tapped="IslandSurface_Tapped"
@@ -36,7 +35,7 @@
                         Margin="0,7,0,0" />
                 </Grid>
 
-                <Grid x:Name="ExpandedContent" Visibility="Collapsed" Padding="22,14" RowSpacing="12">
+                <Border x:Name="ExpandedContent" Visibility="Collapsed" Padding="22,14"><Grid RowSpacing="12">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
@@ -105,7 +104,7 @@
                             FontSize="10"
                             Foreground="#FF65D6AD" />
                     </StackPanel>
-                </Grid>
+                </Grid></Border>
             </Grid>
         </Border>
     </Grid>
