@@ -1,0 +1,15 @@
+bin/
+obj/
+.vs/
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+*.user
+*.suo
+.idea/
+.vscode/
+.env
+.env.*
+secrets.json
+*.local.json
