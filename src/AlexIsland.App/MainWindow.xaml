@@ -6,8 +6,8 @@
 
     <Grid Background="Transparent">
         <Grid x:Name="IslandContainer"
-              Width="160"
-              Height="38"
+              Width="196"
+              Height="36"
               HorizontalAlignment="Center"
               VerticalAlignment="Top"
               PointerEntered="IslandContainer_PointerEntered"
@@ -17,33 +17,43 @@
                 <ScaleTransform x:Name="IslandScale" ScaleX="1" ScaleY="1"/>
             </Grid.RenderTransform>
 
-            <Border x:Name="NotchBackground" Background="#F207090C" CornerRadius="14,14,14,14"/>
-            <Border x:Name="NotchBorderStroke" BorderBrush="#20FFFFFF" BorderThickness="1" CornerRadius="14,14,14,14" IsHitTestVisible="False"/>
+            <!-- Fondo negro absoluto con silueta exacta del Notch de Mac (con orejas cóncavas y esquinas redondeadas) -->
+            <Path x:Name="NotchBackground"
+                  Fill="#FF000000"
+                  HorizontalAlignment="Left"
+                  VerticalAlignment="Top"/>
+            <Path x:Name="NotchBorderStroke"
+                  Stroke="#1FFFFFFF"
+                  StrokeThickness="1"
+                  HorizontalAlignment="Left"
+                  VerticalAlignment="Top"
+                  IsHitTestVisible="False"/>
 
-            <Grid x:Name="CompactContent" Margin="14,0" Height="38">
+            <!-- Contenido compacto con estilo exacto de Mac -->
+            <Grid x:Name="CompactContent" Margin="18,0,18,0" Height="36">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <Ellipse Width="9" Height="9" Fill="#00E676" VerticalAlignment="Center"/>
+                <Ellipse x:Name="StatusDot" Width="7" Height="7" Fill="#FF00E676" VerticalAlignment="Center" Margin="2,0,0,0"/>
                 <TextBlock x:Name="CompactClock"
                            Grid.Column="1"
-                           Text="Alex Island"
-                           Foreground="White"
+                           Text="17:43"
+                           Foreground="#FFF5F5F7"
                            FontSize="12"
                            FontWeight="SemiBold"
                            HorizontalAlignment="Center"
                            VerticalAlignment="Center"/>
-                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
-                    <Border Width="2" Height="5" Background="White" CornerRadius="1"/>
-                    <Border Width="2" Height="9" Background="White" CornerRadius="1"/>
-                    <Border Width="2" Height="13" Background="White" CornerRadius="1"/>
-                    <Border Width="2" Height="7" Background="White" CornerRadius="1"/>
+                <StackPanel x:Name="WaveformPanel" Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center" Margin="0,0,2,0">
+                    <Border x:Name="WaveBar1" Width="2" Height="5" Background="#FF00E676" CornerRadius="1"/>
+                    <Border x:Name="WaveBar2" Width="2" Height="11" Background="#FF00E676" CornerRadius="1"/>
+                    <Border x:Name="WaveBar3" Width="2" Height="14" Background="#FF00E676" CornerRadius="1"/>
+                    <Border x:Name="WaveBar4" Width="2" Height="7" Background="#FF00E676" CornerRadius="1"/>
                 </StackPanel>
             </Grid>
 
-            <Grid x:Name="ExpandedContent" Visibility="Collapsed" Opacity="0" Margin="34,18,34,16">
+            <Grid x:Name="ExpandedContent" Visibility="Collapsed" Opacity="0" Margin="34,16,34,16">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>

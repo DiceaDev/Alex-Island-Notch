@@ -34,7 +34,7 @@ internal static class NativeMethods
     private static readonly nint HwndTopmost = new(-1);
 
     [StructLayout(LayoutKind.Sequential)]
-    private struct NativePoint
+    internal struct NativePoint
     {
         public int X;
         public int Y;
@@ -71,6 +71,30 @@ internal static class NativeMethods
     [DllImport("dwmapi.dll")]
     private static extern int DwmSetWindowAttribute(
         nint hwnd, int attribute, ref int value, int valueSize);
+
+    [DllImport("gdi32.dll", SetLastError = true)]
+    private static extern nint CreatePolygonRgn(NativePoint[] lppt, int cPoints, int fnPolyFillMode);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetWindowRgn(nint hWnd, nint hRgn, [MarshalAs(UnmanagedType.Bool)] bool bRedraw);
+
+    [DllImport("gdi32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool DeleteObject(nint hObject);
+
+    internal static void SetWindowPolygonRegion(nint hwnd, NativePoint[] points)
+    {
+        if (hwnd == 0 || points == null || points.Length < 3) return;
+        var rgn = CreatePolygonRgn(points, points.Length, 2); // 2 = WINDING
+        if (rgn != 0)
+        {
+            if (!SetWindowRgn(hwnd, rgn, true))
+            {
+                DeleteObject(rgn);
+            }
+        }
+    }
 
     internal static bool IsCursorWithinWindow(nint hwnd)
     {
