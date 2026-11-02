@@ -4,7 +4,6 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using Windows.Graphics;
 using WinRT.Interop;
@@ -182,54 +181,7 @@ public sealed partial class MainWindow : Window
     {
         IslandScale.CenterX = width / 2.0;
         IslandScale.CenterY = height / 2.0;
-        ApplyBottomRoundedClip(width, height, Math.Min(28, height / 2.0));
         _appWindow.Resize(new SizeInt32(width, height));
-    }
-
-    private void ApplyBottomRoundedClip(int width, int height, double radius)
-    {
-        // Recorta la superficie a una silueta con borde superior recto
-        // y esquinas inferiores redondeadas.
-        var figure = new PathFigure
-        {
-            StartPoint = new Windows.Foundation.Point(0, 0),
-            IsClosed = true
-        };
-
-        figure.Segments.Add(new LineSegment
-        {
-            Point = new Windows.Foundation.Point(width, 0)
-        });
-        figure.Segments.Add(new LineSegment
-        {
-            Point = new Windows.Foundation.Point(width, height - radius)
-        });
-        figure.Segments.Add(new ArcSegment
-        {
-            Point = new Windows.Foundation.Point(width - radius, height),
-            Size = new Windows.Foundation.Size(radius, radius),
-            SweepDirection = SweepDirection.Clockwise,
-            IsLargeArc = false
-        });
-        figure.Segments.Add(new LineSegment
-        {
-            Point = new Windows.Foundation.Point(radius, height)
-        });
-        figure.Segments.Add(new ArcSegment
-        {
-            Point = new Windows.Foundation.Point(0, height - radius),
-            Size = new Windows.Foundation.Size(radius, radius),
-            SweepDirection = SweepDirection.Clockwise,
-            IsLargeArc = false
-        });
-        figure.Segments.Add(new LineSegment
-        {
-            Point = new Windows.Foundation.Point(0, 0)
-        });
-
-        var geometry = new PathGeometry();
-        geometry.Figures.Add(figure);
-        IslandSurface.Clip = geometry;
     }
 
     private void PositionAtTopCenter()
