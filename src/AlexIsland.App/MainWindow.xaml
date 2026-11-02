@@ -5,31 +5,18 @@
     Title="Alex Island">
 
     <Grid Background="Transparent">
-        <Button
-            x:Name="IslandButton"
-            Background="Transparent"
-            BorderBrush="Transparent"
-            BorderThickness="0"
-            PointerOverBackground="Transparent"
-            PointerOverBorderBrush="Transparent"
-            PressedBackground="Transparent"
-            PressedBorderBrush="Transparent"
-            Padding="0"
-            IsTabStop="False"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            Click="IslandButton_Click"
+        <Border
+            x:Name="IslandSurface"
+            Padding="22,14"
+            Background="#FF111318"
+            BorderBrush="#FF292D35"
+            BorderThickness="1"
+            CornerRadius="28"
+            IsTapEnabled="True"
+            Tapped="IslandSurface_Tapped"
             AutomationProperties.Name="Expandir o contraer Alex Island">
 
-            <Border
-                x:Name="IslandSurface"
-                Padding="22,14"
-                Background="#FF111318"
-                BorderBrush="#FF292D35"
-                BorderThickness="1"
-                CornerRadius="28">
-
-                <Grid RowSpacing="12">
+            <Grid RowSpacing="12">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
@@ -98,8 +85,7 @@
                             FontSize="10"
                             Foreground="#FF65D6AD" />
                     </StackPanel>
-                </Grid>
-            </Border>
-        </Button>
+            </Grid>
+        </Border>
     </Grid>
 </Window>
