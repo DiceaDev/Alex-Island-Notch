@@ -17,6 +17,7 @@
 - [x] Implementar modo notch compacto integrado al borde superior
 - [x] Expandir la isla al pasar el cursor y permitir fijar el panel con clic
 - [x] Incorporar animación de escala y transición al expandir/contraer
+- [x] Evitar parpadeo del hover mediante cierre diferido y cancelación al reingresar
 - [ ] Incorporar gestión de múltiples monitores y cambios de DPI
 - [ ] Incorporar tamaño, posición y apariencia configurables
 
