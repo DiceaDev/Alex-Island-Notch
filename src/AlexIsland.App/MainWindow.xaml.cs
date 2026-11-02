@@ -1,5 +1,4 @@
 using AlexIsland.App.Native;
-using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Windows.Graphics;
@@ -37,16 +36,6 @@ public sealed partial class MainWindow : Window
     {
         var titleBar = _appWindow.TitleBar;
         titleBar.ExtendsContentIntoTitleBar = true;
-        titleBar.PreferredHeightOption = AppWindowTitleBarHeightOption.Collapsed;
-        titleBar.ButtonForegroundColor = Colors.Transparent;
-        titleBar.ButtonBackgroundColor = Colors.Transparent;
-        titleBar.ButtonHoverForegroundColor = Colors.Transparent;
-        titleBar.ButtonHoverBackgroundColor = Colors.Transparent;
-        titleBar.ButtonPressedForegroundColor = Colors.Transparent;
-        titleBar.ButtonPressedBackgroundColor = Colors.Transparent;
-        titleBar.ButtonInactiveForegroundColor = Colors.Transparent;
-        titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
-        titleBar.SetPreferredVisibility(AppWindowTitleBarVisibility.Collapsed);
     }
 
     private void IslandButton_Click(object sender, RoutedEventArgs e)
