@@ -16,6 +16,9 @@
             PointerExited="IslandSurface_PointerExited"
             Tapped="IslandSurface_Tapped"
             AutomationProperties.Name="Alex Island">
+            <Border.RenderTransform>
+                <ScaleTransform x:Name="IslandScale" ScaleX="1" ScaleY="1" />
+            </Border.RenderTransform>
 
             <Grid>
                 <Grid x:Name="NotchContent" Visibility="Visible">
