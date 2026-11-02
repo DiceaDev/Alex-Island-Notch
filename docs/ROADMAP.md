@@ -18,7 +18,9 @@
 - [x] Expandir la isla al pasar el cursor y permitir fijar el panel con clic
 - [x] Incorporar animación de escala y transición al expandir/contraer
 - [x] Evitar parpadeo del hover mediante cierre diferido y validación de posición real del cursor
-- [ ] Validar integración al borde físico superior, sin marco DWM y con esquinas inferiores XAML
+- [x] Eliminar bordes nativos WS_BORDER/WS_DLGFRAME y bordes extendidos WS_EX_WINDOWEDGE/CLIENTEDGE
+- [x] Desactivar el contorno DWM para que las esquinas visibles dependan de XAML
+- [ ] Validar visualmente en Windows 11 la integración al borde físico superior y el suavizado de las esquinas inferiores
 - [ ] Incorporar gestión de múltiples monitores y cambios de DPI
 - [ ] Incorporar tamaño, posición y apariencia configurables
 
