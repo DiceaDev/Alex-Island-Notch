@@ -20,12 +20,13 @@
 - [x] Evitar parpadeo del hover mediante cierre diferido y validación de posición real del cursor
 - [x] Eliminar bordes nativos WS_BORDER/WS_DLGFRAME y bordes extendidos WS_EX_WINDOWEDGE/CLIENTEDGE
 - [x] Desactivar el contorno DWM para que las esquinas visibles dependan de XAML
-- [ ] Validar visualmente en Windows 11 la integración al borde físico superior y el suavizado de las esquinas inferiores
+- [ ] Validar visualmente en Windows 11 la integración al borde físico superior, la transparencia exterior y el suavizado de las esquinas
 - [ ] Incorporar gestión de múltiples monitores y cambios de DPI
 - [ ] Incorporar tamaño, posición y apariencia configurables
 
 ## Fase 3 — Integración con Windows
-- [ ] Servicio de sesiones multimedia mediante GSMTC
+- [x] Conectar sesión multimedia activa mediante GSMTC y leer metadatos, portada y línea de tiempo
+- [x] Implementar controles de anterior, reproducir/pausar y siguiente
 - [ ] Servicio de volumen mediante Windows Core Audio
 - [ ] Integración con notificaciones de Windows
 - [ ] Batería, red y estado básico del sistema
