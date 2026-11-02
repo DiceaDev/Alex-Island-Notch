@@ -7,7 +7,7 @@
     <Grid Background="Transparent">
         <Border
             x:Name="IslandSurface"
-            Background="#FF050608"
+            Background="#FF000000"
             BorderBrush="Transparent"
             BorderThickness="0"
             CornerRadius="0,0,18,18"
