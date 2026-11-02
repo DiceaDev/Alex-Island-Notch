@@ -72,7 +72,7 @@
                     </Grid.ColumnDefinitions>
 
                     <Border Width="78" Height="78" CornerRadius="8" Background="#FF24252B"
-                            VerticalAlignment="Top" Clip="True">
+                            VerticalAlignment="Top">
                         <Grid>
                             <Image x:Name="AlbumArt" Stretch="UniformToFill"/>
                             <FontIcon x:Name="AlbumPlaceholder" Glyph="&#xE768;" FontSize="28"
@@ -122,7 +122,7 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <Button Content="&#xE892;" FontFamily="Segoe MDL2 Assets"
-                                Style="{StaticResource DefaultButtonStyle}" Click="PreviousButton_Click"
+                                Click="PreviousButton_Click"
                                 Background="Transparent" Foreground="White" FontSize="18"
                                 HorizontalAlignment="Center"/>
                         <Button x:Name="PlayPauseButton" Grid.Column="1" Content="&#xE768;"
