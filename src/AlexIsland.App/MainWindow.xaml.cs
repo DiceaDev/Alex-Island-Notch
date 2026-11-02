@@ -122,21 +122,21 @@ public sealed partial class MainWindow : Window
             StatusText.Text = "Panel fijado · Windows 11";
             IslandSurface.CornerRadius = new Microsoft.UI.Xaml.CornerRadius(28);
             IslandSurface.Padding = new Thickness(0);
-            ResizeIsland(PinnedWidth, PinnedHeight, 28);
+            ResizeIsland(PinnedWidth, PinnedHeight);
         }
         else if (_isPointerInside)
         {
             StatusText.Text = "Núcleo iniciado · Windows 11";
             IslandSurface.CornerRadius = new Microsoft.UI.Xaml.CornerRadius(26);
             IslandSurface.Padding = new Thickness(0);
-            ResizeIsland(HoverWidth, HoverHeight, 26);
+            ResizeIsland(HoverWidth, HoverHeight);
         }
         else
         {
             StatusText.Text = "Núcleo iniciado · Windows 11";
             IslandSurface.CornerRadius = new Microsoft.UI.Xaml.CornerRadius(18);
             IslandSurface.Padding = new Thickness(0);
-            ResizeIsland(NotchWidth, NotchHeight, 18);
+            ResizeIsland(NotchWidth, NotchHeight);
         }
 
         PositionAtTopCenter();
@@ -177,12 +177,11 @@ public sealed partial class MainWindow : Window
         storyboard.Begin();
     }
 
-    private void ResizeIsland(int width, int height, int cornerRadius)
+    private void ResizeIsland(int width, int height)
     {
         IslandScale.CenterX = width / 2.0;
         IslandScale.CenterY = height / 2.0;
         _appWindow.Resize(new SizeInt32(width, height));
-        NativeMethods.SetRoundedWindowRegion(_hwnd, width, height, cornerRadius);
     }
 
     private void PositionAtTopCenter()
