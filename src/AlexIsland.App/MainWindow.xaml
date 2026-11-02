@@ -17,8 +17,8 @@
                 <ScaleTransform x:Name="IslandScale" ScaleX="1" ScaleY="1"/>
             </Grid.RenderTransform>
 
-            <Path x:Name="NotchBackground" Fill="#F207090C" Stretch="Fill"/>
-            <Path x:Name="NotchBorderStroke" Stroke="#20FFFFFF" StrokeThickness="1" Stretch="Fill" IsHitTestVisible="False"/>
+            <Border x:Name="NotchBackground" Background="#F207090C" CornerRadius="14,14,14,14"/>
+            <Border x:Name="NotchBorderStroke" BorderBrush="#20FFFFFF" BorderThickness="1" CornerRadius="14,14,14,14" IsHitTestVisible="False"/>
 
             <Grid x:Name="CompactContent" Margin="14,0" Height="38">
                 <Grid.ColumnDefinitions>
