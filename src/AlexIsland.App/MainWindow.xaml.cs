@@ -4,6 +4,7 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using Windows.Graphics;
 using WinRT.Interop;
@@ -181,6 +182,7 @@ public sealed partial class MainWindow : Window
     {
         IslandScale.CenterX = width / 2.0;
         IslandScale.CenterY = height / 2.0;
+        ApplyBottomRoundedClip(width, height, Math.Min(28, height / 2.0));
         _appWindow.Resize(new SizeInt32(width, height));
     }
 
