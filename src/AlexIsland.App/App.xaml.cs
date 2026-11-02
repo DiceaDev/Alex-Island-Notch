@@ -34,8 +34,10 @@ public partial class App : Application
         catch (Exception ex)
         {
             WriteLog("ERROR durante el arranque:", ex);
+            var detail = $"{ex.Message}\n\nEn:\n{ex.StackTrace}";
+            if (detail.Length > 800) detail = detail[..800] + "...";
             MessageBoxW(0,
-                $"Alex Island no pudo iniciarse.\n\n{ex.Message}\n\nRegistro: {LogPath}",
+                $"Alex Island no pudo iniciarse.\n\n{detail}\n\nRegistro: {LogPath}",
                 "Error al iniciar Alex Island", 0x10);
         }
     }

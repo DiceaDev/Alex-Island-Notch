@@ -44,7 +44,17 @@ public sealed partial class MainWindow : Window
         var windowId = Win32Interop.GetWindowIdFromWindow(_hwnd);
         _appWindow = AppWindow.GetFromWindowId(windowId);
 
-        _appWindow.TitleBar.ExtendsContentIntoTitleBar = true;
+        try
+        {
+            if (AppWindowTitleBar.IsCustomizationSupported())
+            {
+                _appWindow.TitleBar.ExtendsContentIntoTitleBar = true;
+            }
+        }
+        catch
+        {
+        }
+
         Activated += MainWindow_Activated;
         Closed += MainWindow_Closed;
 
@@ -71,7 +81,13 @@ public sealed partial class MainWindow : Window
 
     private void MainWindow_Activated(object sender, WindowActivatedEventArgs args)
     {
-        NativeMethods.ConfigureIslandWindow(_hwnd);
+        try
+        {
+            NativeMethods.ConfigureIslandWindow(_hwnd);
+        }
+        catch
+        {
+        }
     }
 
     private void MainWindow_Closed(object sender, WindowEventArgs args)
@@ -150,8 +166,8 @@ public sealed partial class MainWindow : Window
         {
             _clockTimer.Stop();
             _timelineTimer.Stop();
-        }
 
+        }
         if (wasExpanded != _isExpanded) AnimateIsland(_isExpanded);
     }
 
@@ -199,18 +215,42 @@ public sealed partial class MainWindow : Window
 
     private void ResizeIsland(int width, int height)
     {
-        IslandScale.CenterX = width / 2.0;
-        IslandScale.CenterY = height / 2.0;
-        _appWindow.Resize(new SizeInt32(width, height));
+        try
+        {
+            IslandScale.CenterX = width / 2.0;
+            IslandScale.CenterY = height / 2.0;
+            _appWindow.Resize(new SizeInt32(width, height));
+        }
+        catch
+        {
+        }
     }
 
     private void PositionAtTopCenter()
     {
-        var display = DisplayArea.GetFromWindowId(_appWindow.Id, DisplayAreaFallback.Primary);
-        if (display is null) return;
-        var bounds = display.OuterBounds;
-        var x = bounds.X + ((bounds.Width - (int)IslandContainer.Width) / 2);
-        _appWindow.Move(new PointInt32(x, bounds.Y));
+        try
+        {
+            DisplayArea? display = null;
+            try
+            {
+                display = DisplayArea.GetFromWindowId(_appWindow.Id, DisplayAreaFallback.Primary);
+            }
+            catch
+            {
+                // Fallback si la ventana aún no está mapeada al subsistema de visualización
+            }
+
+            display ??= DisplayArea.Primary;
+            if (display is null) return;
+
+            var bounds = display.OuterBounds;
+            var width = (int)IslandContainer.Width;
+            var x = bounds.X + ((bounds.Width - width) / 2);
+            _appWindow.Move(new PointInt32(x, bounds.Y));
+        }
+        catch
+        {
+        }
     }
 
     private async Task InitializeMediaAsync()
