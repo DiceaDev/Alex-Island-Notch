@@ -6,13 +6,19 @@ internal static class NativeMethods
 {
     private const int GwlStyle = -16;
     private const int GwlExStyle = -20;
+
     private const long WsCaption = 0x00C00000L;
     private const long WsThickFrame = 0x00040000L;
     private const long WsSysMenu = 0x00080000L;
     private const long WsMinimizeBox = 0x00020000L;
     private const long WsMaximizeBox = 0x00010000L;
+    private const long WsBorder = 0x00800000L;
+    private const long WsDlgFrame = 0x00400000L;
     private const long WsPopup = unchecked((long)0x80000000);
+
     private const long WsExToolWindow = 0x00000080L;
+    private const long WsExWindowEdge = 0x00000100L;
+    private const long WsExClientEdge = 0x00000200L;
 
     private const uint SwpNoActivate = 0x0010;
     private const uint SwpNoMove = 0x0002;
@@ -21,7 +27,9 @@ internal static class NativeMethods
     private const uint SwpShowWindow = 0x0040;
 
     private const int DwmwaWindowCornerPreference = 33;
+    private const int DwmwaBorderColor = 34;
     private const int DwmwcpDoNotRound = 1;
+    private const int DwmColorNone = unchecked((int)0xFFFFFFFE);
 
     private static readonly nint HwndTopmost = new(-1);
 
@@ -77,22 +85,29 @@ internal static class NativeMethods
 
     internal static void ConfigureIslandWindow(nint hwnd)
     {
+        // El HWND debe ser una superficie popup sin decoración. Si quedan
+        // WS_BORDER/WS_EX_WINDOWEDGE, Windows dibuja un contorno rectangular
+        // que rompe la ilusión de un notch integrado en el borde del monitor.
         var style = GetWindowLongPtr(hwnd, GwlStyle).ToInt64();
-        style &= ~(WsCaption | WsThickFrame | WsSysMenu | WsMinimizeBox | WsMaximizeBox);
+        style &= ~(WsCaption | WsThickFrame | WsSysMenu | WsMinimizeBox
+            | WsMaximizeBox | WsBorder | WsDlgFrame);
         style |= WsPopup;
         _ = SetWindowLongPtr(hwnd, GwlStyle, new nint(style));
 
         var extendedStyle = GetWindowLongPtr(hwnd, GwlExStyle).ToInt64();
+        extendedStyle &= ~(WsExWindowEdge | WsExClientEdge);
         extendedStyle |= WsExToolWindow;
         _ = SetWindowLongPtr(hwnd, GwlExStyle, new nint(extendedStyle));
 
-        // Delegar el suavizado de las esquinas al compositor DWM de Windows 11.
+        // El contorno DWM se desactiva explícitamente. Las esquinas visibles
+        // pertenecen al Border XAML, que puede suavizarlas sin recortar el HWND.
         var cornerPreference = DwmwcpDoNotRound;
         _ = DwmSetWindowAttribute(
-            hwnd,
-            DwmwaWindowCornerPreference,
-            ref cornerPreference,
-            sizeof(int));
+            hwnd, DwmwaWindowCornerPreference, ref cornerPreference, sizeof(int));
+
+        var borderColor = DwmColorNone;
+        _ = DwmSetWindowAttribute(
+            hwnd, DwmwaBorderColor, ref borderColor, sizeof(int));
 
         _ = SetWindowPos(
             hwnd,
