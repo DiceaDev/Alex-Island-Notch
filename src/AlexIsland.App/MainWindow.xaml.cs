@@ -113,10 +113,11 @@ public sealed partial class MainWindow : Window
 
     private void IslandContainer_Tapped(object sender, TappedRoutedEventArgs e)
     {
-        // Los controles multimedia no deben alternar el estado fijado.
-        if (_isExpanded) return;
+        // Los botones multimedia conservan su acción; tocar el fondo fija o libera.
+        if (e.OriginalSource is Microsoft.UI.Xaml.Controls.Button) return;
         _collapseTimer.Stop();
         _isPinned = !_isPinned;
+        if (!_isPinned) _isPointerInside = NativeMethods.IsCursorWithinWindow(_hwnd);
         ApplyIslandState();
     }
 
