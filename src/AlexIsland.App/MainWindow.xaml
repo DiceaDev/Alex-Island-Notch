@@ -8,9 +8,9 @@
         <Border
             x:Name="IslandSurface"
             Background="#FF050608"
-            BorderBrush="#FF202329"
-            BorderThickness="1"
-            CornerRadius="0,0,19,19"
+            BorderBrush="Transparent"
+            BorderThickness="0"
+            CornerRadius="0,0,18,18"
             IsTapEnabled="True"
             PointerEntered="IslandSurface_PointerEntered"
             PointerExited="IslandSurface_PointerExited"
