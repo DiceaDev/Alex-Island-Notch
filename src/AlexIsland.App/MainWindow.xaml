@@ -7,16 +7,36 @@
     <Grid Background="Transparent">
         <Border
             x:Name="IslandSurface"
-            Padding="22,14"
-            Background="#FF111318"
-            BorderBrush="#FF292D35"
+            Background="#FF050608"
+            BorderBrush="#FF202329"
             BorderThickness="1"
-            CornerRadius="28"
+            CornerRadius="0,0,19,19"
             IsTapEnabled="True"
+            IsPointerOver="False"
+            PointerEntered="IslandSurface_PointerEntered"
+            PointerExited="IslandSurface_PointerExited"
             Tapped="IslandSurface_Tapped"
-            AutomationProperties.Name="Expandir o contraer Alex Island">
+            AutomationProperties.Name="Alex Island">
 
-            <Grid RowSpacing="12">
+            <Grid>
+                <Grid x:Name="NotchContent" Visibility="Visible">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Ellipse
+                        Grid.Column="1"
+                        Width="6"
+                        Height="6"
+                        Fill="#FF171A20"
+                        Stroke="#FF252A32"
+                        StrokeThickness="1"
+                        VerticalAlignment="Top"
+                        Margin="0,7,0,0" />
+                </Grid>
+
+                <Grid x:Name="ExpandedContent" Visibility="Collapsed" Padding="22,14" RowSpacing="12">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
@@ -81,10 +101,11 @@
                             FontSize="11"
                             Foreground="#FF9AA3B2" />
                         <TextBlock
-                            Text="Haz clic nuevamente para contraer"
+                            Text="Haz clic para mantener abierto o cerrar el panel"
                             FontSize="10"
                             Foreground="#FF65D6AD" />
                     </StackPanel>
+                </Grid>
             </Grid>
         </Border>
     </Grid>
