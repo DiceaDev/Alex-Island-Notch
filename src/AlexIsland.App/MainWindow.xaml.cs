@@ -113,6 +113,8 @@ public sealed partial class MainWindow : Window
 
     private void IslandContainer_Tapped(object sender, TappedRoutedEventArgs e)
     {
+        // Los controles multimedia no deben alternar el estado fijado.
+        if (_isExpanded) return;
         _collapseTimer.Stop();
         _isPinned = !_isPinned;
         ApplyIslandState();
@@ -406,8 +408,7 @@ public sealed partial class MainWindow : Window
             var ratio = duration.TotalSeconds > 0
                 ? Math.Clamp(position.TotalSeconds / duration.TotalSeconds, 0, 1)
                 : 0;
-            var availableWidth = Math.Max(0, 920 - 68 - 100);
-            ProgressFill.Width = availableWidth * ratio;
+            ProgressFill.Width = Math.Max(0, ProgressBarTrack.ActualWidth) * ratio;
         }
         catch { }
     }
