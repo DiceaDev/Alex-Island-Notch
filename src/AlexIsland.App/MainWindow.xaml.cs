@@ -2,6 +2,7 @@ using AlexIsland.App.Native;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Input;
 using Windows.Graphics;
 using WinRT.Interop;
 
@@ -46,7 +47,7 @@ public sealed partial class MainWindow : Window
         titleBar.ExtendsContentIntoTitleBar = true;
     }
 
-    private void IslandButton_Click(object sender, RoutedEventArgs e)
+    private void IslandSurface_Tapped(object sender, TappedRoutedEventArgs e)
     {
         _isExpanded = !_isExpanded;
         ExpandedPanel.Visibility = _isExpanded ? Visibility.Visible : Visibility.Collapsed;
