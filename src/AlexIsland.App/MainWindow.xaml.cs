@@ -120,21 +120,21 @@ public sealed partial class MainWindow : Window
         if (_isPinned)
         {
             StatusText.Text = "Panel fijado · Windows 11";
-            IslandSurface.CornerRadius = new Microsoft.UI.Xaml.CornerRadius(28);
+            IslandSurface.CornerRadius = new Microsoft.UI.Xaml.CornerRadius(0, 0, 28, 28);
             IslandSurface.Padding = new Thickness(0);
             ResizeIsland(PinnedWidth, PinnedHeight);
         }
         else if (_isPointerInside)
         {
             StatusText.Text = "Núcleo iniciado · Windows 11";
-            IslandSurface.CornerRadius = new Microsoft.UI.Xaml.CornerRadius(26);
+            IslandSurface.CornerRadius = new Microsoft.UI.Xaml.CornerRadius(0, 0, 26, 26);
             IslandSurface.Padding = new Thickness(0);
             ResizeIsland(HoverWidth, HoverHeight);
         }
         else
         {
             StatusText.Text = "Núcleo iniciado · Windows 11";
-            IslandSurface.CornerRadius = new Microsoft.UI.Xaml.CornerRadius(18);
+            IslandSurface.CornerRadius = new Microsoft.UI.Xaml.CornerRadius(0, 0, 18, 18);
             IslandSurface.Padding = new Thickness(0);
             ResizeIsland(NotchWidth, NotchHeight);
         }
@@ -192,10 +192,13 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        var workArea = displayArea.WorkArea;
+        // Usar los límites físicos del monitor, no WorkArea: el notch debe
+        // quedar pegado al borde superior de la pantalla incluso si la barra
+        // de tareas está configurada arriba.
+        var bounds = displayArea.OuterBounds;
         var width = _isPinned ? PinnedWidth : _isPointerInside ? HoverWidth : NotchWidth;
-        var x = workArea.X + ((workArea.Width - width) / 2);
-        var y = workArea.Y;
+        var x = bounds.X + ((bounds.Width - width) / 2);
+        var y = bounds.Y;
 
         _appWindow.Move(new PointInt32(x, y));
     }
