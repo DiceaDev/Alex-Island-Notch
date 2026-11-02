@@ -4,140 +4,31 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="Alex Island">
 
-    <Grid Background="Transparent">
-        <Grid x:Name="IslandContainer"
-              Width="160"
-              Height="38"
-              HorizontalAlignment="Center"
-              VerticalAlignment="Top"
-              PointerEntered="IslandContainer_PointerEntered"
-              PointerExited="IslandContainer_PointerExited"
-              Tapped="IslandContainer_Tapped">
-            <Grid.RenderTransform>
-                <ScaleTransform x:Name="IslandScale" ScaleX="1" ScaleY="1"/>
-            </Grid.RenderTransform>
-
-            <Border x:Name="NotchBackground" Background="#F207090C" CornerRadius="14,14,14,14"/>
-            <Border x:Name="NotchBorderStroke" BorderBrush="#20FFFFFF" BorderThickness="1" CornerRadius="14,14,14,14" IsHitTestVisible="False"/>
-
-            <Grid x:Name="CompactContent" Margin="14,0" Height="38">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <Ellipse Width="9" Height="9" Fill="#00E676" VerticalAlignment="Center"/>
-                <TextBlock x:Name="CompactClock"
-                           Grid.Column="1"
-                           Text="Alex Island"
-                           Foreground="White"
-                           FontSize="12"
-                           FontWeight="SemiBold"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"/>
-                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
-                    <Border Width="2" Height="5" Background="White" CornerRadius="1"/>
-                    <Border Width="2" Height="9" Background="White" CornerRadius="1"/>
-                    <Border Width="2" Height="13" Background="White" CornerRadius="1"/>
-                    <Border Width="2" Height="7" Background="White" CornerRadius="1"/>
-                </StackPanel>
-            </Grid>
-
-            <Grid x:Name="ExpandedContent" Visibility="Collapsed" Opacity="0" Margin="34,18,34,16">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-
-                <Grid Grid.Row="0" Margin="0,0,0,18">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                        <Ellipse Width="12" Height="12" Stroke="#00E676" StrokeThickness="3"/>
-                        <TextBlock x:Name="HeaderClock" Text="lun 2 nov 2026 12:00"
-                                   Foreground="#FFF5F5F7" FontSize="14" FontWeight="SemiBold"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
-                        <Border Width="3" Height="7" Background="#FFF4F4F5" CornerRadius="1"/>
-                        <Border Width="3" Height="11" Background="#FFF4F4F5" CornerRadius="1"/>
-                        <Border Width="3" Height="15" Background="#FFF4F4F5" CornerRadius="1"/>
-                        <Border Width="3" Height="10" Background="#FFF4F4F5" CornerRadius="1"/>
-                    </StackPanel>
-                </Grid>
-
-                <Grid Grid.Row="1" ColumnSpacing="20">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="78"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <Border Width="78" Height="78" CornerRadius="8" Background="#FF24252B"
-                            VerticalAlignment="Top">
-                        <Grid>
-                            <Image x:Name="AlbumArt" Stretch="UniformToFill"/>
-                            <FontIcon x:Name="AlbumPlaceholder" Glyph="&#xE768;" FontSize="28"
-                                      Foreground="#FFB8BAC2" HorizontalAlignment="Center"
-                                      VerticalAlignment="Center"/>
-                        </Grid>
-                    </Border>
-
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="7">
-                        <TextBlock x:Name="TrackTitle" Text="No hay reproducción activa"
-                                   Foreground="White" FontSize="21" FontWeight="Bold"
-                                   TextTrimming="CharacterEllipsis"/>
-                        <TextBlock x:Name="TrackArtist" Text="Inicia música en Spotify o en tu navegador"
-                                   Foreground="#FFD0D0D5" FontSize="15"
-                                   TextTrimming="CharacterEllipsis"/>
-                        <TextBlock x:Name="PlaybackSource" Text="Windows Media Session"
-                                   Foreground="#FF8E929C" FontSize="11"/>
-                    </StackPanel>
-                </Grid>
-
-                <Grid Grid.Row="2" Margin="0,18,0,0" RowSpacing="12">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <Grid x:Name="ProgressTrack" Grid.Row="0" ColumnSpacing="10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock x:Name="ElapsedText" Text="00:00" Foreground="#FFD6D7DC"
-                                   FontSize="11" VerticalAlignment="Center"/>
-                        <Grid x:Name="ProgressBarTrack" Grid.Column="1" Height="4" VerticalAlignment="Center">
-                            <Border Background="#FF55565D" CornerRadius="2"/>
-                            <Border x:Name="ProgressFill" Background="#FFF2F2F4"
-                                    CornerRadius="2" HorizontalAlignment="Left" Width="0"/>
-                        </Grid>
-                        <TextBlock x:Name="RemainingText" Grid.Column="2" Text="--:--"
-                                   Foreground="#FFD6D7DC" FontSize="11" VerticalAlignment="Center"/>
-                    </Grid>
-
-                    <Grid Grid.Row="1">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Button Content="&#xE892;" FontFamily="Segoe MDL2 Assets"
-                                Click="PreviousButton_Click"
-                                Background="Transparent" Foreground="White" FontSize="18"
-                                HorizontalAlignment="Center"/>
-                        <Button x:Name="PlayPauseButton" Grid.Column="1" Content="&#xE768;"
-                                FontFamily="Segoe MDL2 Assets" Click="PlayPauseButton_Click"
-                                Width="48" Height="40" CornerRadius="20"
-                                Background="#FF34353C" Foreground="White" FontSize="18"/>
-                        <Button Grid.Column="2" Content="&#xE893;" FontFamily="Segoe MDL2 Assets"
-                                Click="NextButton_Click" Background="Transparent"
-                                Foreground="White" FontSize="18" HorizontalAlignment="Center"/>
-                    </Grid>
-                </Grid>
-            </Grid>
-        </Grid>
+    <Grid Background="#FF090B10">
+        <Border
+            Width="320"
+            Height="88"
+            Padding="24,16"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Top"
+            Margin="0,24,0,0"
+            Background="#FF11151D"
+            BorderBrush="#FF29313D"
+            BorderThickness="1"
+            CornerRadius="24">
+            <StackPanel Spacing="6" VerticalAlignment="Center">
+                <TextBlock
+                    Text="ALEX ISLAND"
+                    Foreground="#FFF5F7FA"
+                    FontSize="16"
+                    FontWeight="SemiBold"
+                    HorizontalAlignment="Center"/>
+                <TextBlock
+                    Text="Base limpia · Windows 11"
+                    Foreground="#FF9AA3B2"
+                    FontSize="12"
+                    HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
     </Grid>
 </Window>
