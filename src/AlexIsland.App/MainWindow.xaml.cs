@@ -80,7 +80,7 @@ public sealed partial class MainWindow : Window
         if (_isPinned)
         {
             StatusText.Text = "Panel fijado · Windows 11";
-            IslandSurface.CornerRadius = new Microsoft.UI.Xaml.CornerRadius(0, 0, 28, 28);
+            IslandSurface.CornerRadius = new Microsoft.UI.Xaml.CornerRadius(28);
             IslandSurface.Padding = new Thickness(0);
             ResizeIsland(PinnedWidth, PinnedHeight);
         }
