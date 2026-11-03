@@ -156,6 +156,16 @@ public static class IcsCalendarHelper
             return dtLocal;
         }
 
+        if (DateTimeOffset.TryParseExact(clean, "yyyyMMddTHHmmZ", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var dtUtcShort))
+        {
+            return dtUtcShort.ToLocalTime();
+        }
+
+        if (DateTimeOffset.TryParseExact(clean, "yyyyMMddTHHmm", CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var dtLocalShort))
+        {
+            return dtLocalShort;
+        }
+
         if (DateTimeOffset.TryParse(clean, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dtParsed))
         {
             return dtParsed;
@@ -200,7 +210,9 @@ public static class IcsCalendarHelper
     private static string UnescapeIcs(string text)
     {
         return text
+            .Replace(@"\N", "\n")
             .Replace(@"\n", "\n")
+            .Replace(@"\r", "")
             .Replace(@"\,", ",")
             .Replace(@"\;", ";")
             .Replace(@"\\", @"\");

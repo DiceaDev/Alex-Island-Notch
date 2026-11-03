@@ -78,7 +78,10 @@ public sealed class CalendarEventStore
 
         foreach (var ev in imported)
         {
-            var exists = existingList.Any(e => e.Id == ev.Id || (e.Title == ev.Title && e.StartTime == ev.StartTime));
+            var exists = existingList.Any(e =>
+                (!string.IsNullOrWhiteSpace(e.Id) && !string.IsNullOrWhiteSpace(ev.Id) && e.Id == ev.Id) ||
+                (e.Title.Equals(ev.Title, StringComparison.OrdinalIgnoreCase) && e.StartTime == ev.StartTime));
+
             if (!exists)
             {
                 existingList.Add(ev);

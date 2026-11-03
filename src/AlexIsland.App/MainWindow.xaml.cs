@@ -452,19 +452,25 @@ public sealed partial class MainWindow : Window
     {
         _activeAnimation?.Stop();
         var storyboard = new Storyboard();
+
+        // Expansión y contracción elástica estilo Apple Dynamic Island (Spring / BackEase)
         var scaleX = new DoubleAnimation
         {
-            From = expanding ? 0.96 : 1.0,
-            To = expanding ? 1.0 : 0.96,
-            Duration = TimeSpan.FromMilliseconds(220),
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            From = expanding ? 0.90 : 1.0,
+            To = expanding ? 1.0 : 0.94,
+            Duration = TimeSpan.FromMilliseconds(expanding ? 270 : 170),
+            EasingFunction = expanding
+                ? new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.22 }
+                : new CubicEase { EasingMode = EasingMode.EaseIn }
         };
         var scaleY = new DoubleAnimation
         {
-            From = expanding ? 0.93 : 1.0,
-            To = expanding ? 1.0 : 0.93,
-            Duration = TimeSpan.FromMilliseconds(220),
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            From = expanding ? 0.85 : 1.0,
+            To = expanding ? 1.0 : 0.90,
+            Duration = TimeSpan.FromMilliseconds(expanding ? 270 : 170),
+            EasingFunction = expanding
+                ? new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.22 }
+                : new CubicEase { EasingMode = EasingMode.EaseIn }
         };
         Storyboard.SetTarget(scaleX, IslandScale);
         Storyboard.SetTargetProperty(scaleX, "ScaleX");
@@ -472,8 +478,89 @@ public sealed partial class MainWindow : Window
         Storyboard.SetTargetProperty(scaleY, "ScaleY");
         storyboard.Children.Add(scaleX);
         storyboard.Children.Add(scaleY);
+
+        if (expanding)
+        {
+            var fade = new DoubleAnimation
+            {
+                From = 0.0,
+                To = 1.0,
+                Duration = TimeSpan.FromMilliseconds(220),
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+            Storyboard.SetTarget(fade, ExpandedContent);
+            Storyboard.SetTargetProperty(fade, "Opacity");
+            storyboard.Children.Add(fade);
+        }
+
         _activeAnimation = storyboard;
         storyboard.Begin();
+    }
+
+    private static void AnimateViewEntrance(FrameworkElement view)
+    {
+        if (view is null) return;
+        view.Opacity = 0.0;
+
+        var tt = view.RenderTransform as TranslateTransform;
+        if (tt is null)
+        {
+            tt = new TranslateTransform();
+            view.RenderTransform = tt;
+        }
+        tt.Y = 6.0;
+
+        var storyboard = new Storyboard();
+
+        var opacityAnim = new DoubleAnimation
+        {
+            From = 0.0,
+            To = 1.0,
+            Duration = TimeSpan.FromMilliseconds(200),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        Storyboard.SetTarget(opacityAnim, view);
+        Storyboard.SetTargetProperty(opacityAnim, "Opacity");
+        storyboard.Children.Add(opacityAnim);
+
+        var slideAnim = new DoubleAnimation
+        {
+            From = 6.0,
+            To = 0.0,
+            Duration = TimeSpan.FromMilliseconds(220),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        Storyboard.SetTarget(slideAnim, tt);
+        Storyboard.SetTargetProperty(slideAnim, "Y");
+        storyboard.Children.Add(slideAnim);
+
+        storyboard.Begin();
+    }
+
+    private void AnimateTabPillPulse()
+    {
+        var sb = new Storyboard();
+        var pulseX = new DoubleAnimation
+        {
+            From = 0.98,
+            To = 1.0,
+            Duration = TimeSpan.FromMilliseconds(160),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        var pulseY = new DoubleAnimation
+        {
+            From = 0.97,
+            To = 1.0,
+            Duration = TimeSpan.FromMilliseconds(160),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        Storyboard.SetTarget(pulseX, IslandScale);
+        Storyboard.SetTargetProperty(pulseX, "ScaleX");
+        Storyboard.SetTarget(pulseY, IslandScale);
+        Storyboard.SetTargetProperty(pulseY, "ScaleY");
+        sb.Children.Add(pulseX);
+        sb.Children.Add(pulseY);
+        sb.Begin();
     }
 
     private void ResizeIsland(int width, int height)
@@ -1111,12 +1198,14 @@ public sealed partial class MainWindow : Window
                 TabMediaButton.Background = new SolidColorBrush(ColorHelper.FromArgb(255, 42, 45, 55));
                 TabMediaLabel.Foreground = new SolidColorBrush(Colors.White);
                 MediaView.Visibility = Visibility.Visible;
+                AnimateViewEntrance(MediaView);
                 break;
 
             case IslandTab.Backlog:
                 TabBacklogButton.Background = new SolidColorBrush(ColorHelper.FromArgb(255, 42, 45, 55));
                 TabBacklogLabel.Foreground = new SolidColorBrush(Colors.White);
                 BacklogView.Visibility = Visibility.Visible;
+                AnimateViewEntrance(BacklogView);
                 NewTaskInput.Focus(FocusState.Programmatic);
                 break;
 
@@ -1124,6 +1213,7 @@ public sealed partial class MainWindow : Window
                 TabCalendarButton.Background = new SolidColorBrush(ColorHelper.FromArgb(255, 42, 45, 55));
                 TabCalendarLabel.Foreground = new SolidColorBrush(Colors.White);
                 CalendarView.Visibility = Visibility.Visible;
+                AnimateViewEntrance(CalendarView);
                 RenderCalendarView();
                 break;
 
@@ -1131,11 +1221,13 @@ public sealed partial class MainWindow : Window
                 TabPomodoroButton.Background = new SolidColorBrush(ColorHelper.FromArgb(255, 42, 45, 55));
                 TabPomodoroLabel.Foreground = new SolidColorBrush(Colors.White);
                 PomodoroView.Visibility = Visibility.Visible;
+                AnimateViewEntrance(PomodoroView);
                 PopulatePomodoroTaskCombo();
                 UpdatePomodoroUI();
                 break;
         }
 
+        AnimateTabPillPulse();
         ApplyIslandState();
     }
 
@@ -1328,6 +1420,10 @@ public sealed partial class MainWindow : Window
         CalMonthContainer.Visibility = _calendarSubMode == CalendarSubMode.Month ? Visibility.Visible : Visibility.Collapsed;
         CalEventFormOverlay.Visibility = Visibility.Collapsed;
         CalSyncOverlay.Visibility = Visibility.Collapsed;
+
+        if (_calendarSubMode == CalendarSubMode.Agenda) AnimateViewEntrance(CalAgendaContainer);
+        else if (_calendarSubMode == CalendarSubMode.Week) AnimateViewEntrance(CalWeekContainer);
+        else if (_calendarSubMode == CalendarSubMode.Month) AnimateViewEntrance(CalMonthContainer);
 
         RenderCalendarView();
     }
@@ -1840,6 +1936,7 @@ public sealed partial class MainWindow : Window
 
         CalEventFormOverlay.Visibility = Visibility.Visible;
         CalSyncOverlay.Visibility = Visibility.Collapsed;
+        AnimateViewEntrance(CalEventFormOverlay);
         FormEventTitle.Focus(FocusState.Programmatic);
     }
 
@@ -1863,6 +1960,7 @@ public sealed partial class MainWindow : Window
 
         CalEventFormOverlay.Visibility = Visibility.Visible;
         CalSyncOverlay.Visibility = Visibility.Collapsed;
+        AnimateViewEntrance(CalEventFormOverlay);
         FormEventTitle.Focus(FocusState.Programmatic);
     }
 
@@ -2022,15 +2120,156 @@ public sealed partial class MainWindow : Window
         CalEventFormOverlay.Visibility = Visibility.Collapsed;
     }
 
+    private DispatcherQueueTimer? _syncStatusTimer;
+
     private void CalSyncBtn_Click(object sender, RoutedEventArgs e)
     {
-        CalSyncOverlay.Visibility = CalSyncOverlay.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
-        CalEventFormOverlay.Visibility = Visibility.Collapsed;
+        if (CalSyncOverlay.Visibility == Visibility.Visible)
+        {
+            CalSyncOverlay.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            CalEventFormOverlay.Visibility = Visibility.Collapsed;
+            CalSyncOverlay.Visibility = Visibility.Visible;
+            SyncStatusMsg.Visibility = Visibility.Collapsed;
+            AnimateViewEntrance(CalSyncOverlay);
+        }
     }
 
     private void CloseSyncBtn_Click(object sender, RoutedEventArgs e)
     {
         CalSyncOverlay.Visibility = Visibility.Collapsed;
+    }
+
+    private async void ImportIcsFileBtn_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var picker = new Windows.Storage.Pickers.FileOpenPicker();
+            picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.Downloads;
+            picker.FileTypeFilter.Add(".ics");
+            picker.FileTypeFilter.Add(".ical");
+            picker.FileTypeFilter.Add("*");
+            InitializeWithWindow.Initialize(picker, _hwnd);
+
+            var file = await picker.PickSingleFileAsync();
+            if (file is null) return;
+
+            var content = await Windows.Storage.FileIO.ReadTextAsync(file);
+            await ProcessIcsImportAsync(content, file.Name);
+        }
+        catch (Exception ex)
+        {
+            ShowSyncStatus($"Error al seleccionar archivo: {ex.Message}", isError: true);
+        }
+    }
+
+    private async void ImportClipboardBtn_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var dataPackage = Windows.ApplicationModel.DataTransfer.Clipboard.GetContent();
+            if (dataPackage.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.Text))
+            {
+                var text = await dataPackage.GetTextAsync();
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    ShowSyncStatus("El portapapeles está vacío", isError: true);
+                    return;
+                }
+
+                var trimmed = text.Trim();
+                if (trimmed.StartsWith("webcal://", StringComparison.OrdinalIgnoreCase) ||
+                    (trimmed.StartsWith("http", StringComparison.OrdinalIgnoreCase) && (trimmed.EndsWith(".ics", StringComparison.OrdinalIgnoreCase) || trimmed.Contains("calendar"))))
+                {
+                    var url = trimmed.StartsWith("webcal://", StringComparison.OrdinalIgnoreCase)
+                        ? "https://" + trimmed[9..]
+                        : trimmed;
+
+                    ShowSyncStatus("Descargando calendario desde URL...", isError: false);
+                    using var client = new System.Net.Http.HttpClient();
+                    client.Timeout = TimeSpan.FromSeconds(10);
+                    var downloaded = await client.GetStringAsync(url);
+                    await ProcessIcsImportAsync(downloaded, "Enlace de Calendario");
+                    return;
+                }
+
+                await ProcessIcsImportAsync(text, "Portapapeles");
+            }
+            else
+            {
+                ShowSyncStatus("No se encontró texto o archivo en el portapapeles", isError: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowSyncStatus($"Error al importar: {ex.Message}", isError: true);
+        }
+    }
+
+    private async Task ProcessIcsImportAsync(string icsText, string sourceName)
+    {
+        try
+        {
+            var imported = IcsCalendarHelper.ParseIcs(icsText);
+            if (imported.Count == 0)
+            {
+                ShowSyncStatus("No se detectaron eventos válidos en formato .ics", isError: true);
+                return;
+            }
+
+            var added = 0;
+            foreach (var ev in imported)
+            {
+                var exists = _events.Any(e =>
+                    (!string.IsNullOrWhiteSpace(e.Id) && !string.IsNullOrWhiteSpace(ev.Id) && e.Id == ev.Id) ||
+                    (e.Title.Equals(ev.Title, StringComparison.OrdinalIgnoreCase) && e.StartTime == ev.StartTime));
+
+                if (!exists)
+                {
+                    _events.Add(ev);
+                    added++;
+                }
+            }
+
+            if (added > 0)
+            {
+                await _calendarStore.SaveAsync(_events);
+                UpdateCalendarBadges();
+                CheckUpcomingMeetings();
+                RenderCalendarView();
+                ShowSyncStatus($"✓ ¡{added} reunión(es) importada(s) con éxito!", isError: false);
+            }
+            else
+            {
+                ShowSyncStatus($"Todos los eventos ({imported.Count}) ya estaban agregados", isError: false);
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowSyncStatus($"Error al importar: {ex.Message}", isError: true);
+        }
+    }
+
+    private void ShowSyncStatus(string message, bool isError)
+    {
+        SyncStatusMsg.Text = message;
+        SyncStatusMsg.Foreground = new SolidColorBrush(isError
+            ? ColorHelper.FromArgb(255, 255, 167, 38)
+            : ColorHelper.FromArgb(255, 0, 230, 118));
+        SyncStatusMsg.Visibility = Visibility.Visible;
+
+        _syncStatusTimer?.Stop();
+        _syncStatusTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
+        _syncStatusTimer.Interval = TimeSpan.FromSeconds(3.5);
+        _syncStatusTimer.IsRepeating = false;
+        _syncStatusTimer.Tick += (_, _) =>
+        {
+            SyncStatusMsg.Visibility = Visibility.Collapsed;
+            _syncStatusTimer.Stop();
+        };
+        _syncStatusTimer.Start();
     }
 
     private async void ExportIcsFileBtn_Click(object sender, RoutedEventArgs e)
@@ -2045,6 +2284,8 @@ public sealed partial class MainWindow : Window
             await File.WriteAllTextAsync(filePath, ics);
 
             ExportIcsLabel.Text = "¡Exportado!";
+            ShowSyncStatus("✓ Calendario exportado y abierto en Outlook", isError: false);
+
             var timer = DispatcherQueue.GetForCurrentThread().CreateTimer();
             timer.Interval = TimeSpan.FromSeconds(2);
             timer.IsRepeating = false;
@@ -2058,8 +2299,9 @@ public sealed partial class MainWindow : Window
             // Abrir archivo .ics con el cliente predeterminado (Outlook / Calendario de Windows)
             await Windows.System.Launcher.LaunchUriAsync(new Uri(filePath));
         }
-        catch
+        catch (Exception ex)
         {
+            ShowSyncStatus($"Error al exportar: {ex.Message}", isError: true);
         }
     }
 
@@ -2073,6 +2315,8 @@ public sealed partial class MainWindow : Window
             Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
 
             CopyIcsLabel.Text = "¡Copiado!";
+            ShowSyncStatus("✓ Archivo .ics copiado para Google Calendar", isError: false);
+
             var timer = DispatcherQueue.GetForCurrentThread().CreateTimer();
             timer.Interval = TimeSpan.FromSeconds(2);
             timer.IsRepeating = false;
@@ -2083,8 +2327,9 @@ public sealed partial class MainWindow : Window
             };
             timer.Start();
         }
-        catch
+        catch (Exception ex)
         {
+            ShowSyncStatus($"Error al copiar: {ex.Message}", isError: true);
         }
     }
 

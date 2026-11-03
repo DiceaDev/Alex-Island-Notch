@@ -218,6 +218,9 @@
 
                 <!-- ================= VISTA 1: REPRODUCTOR MULTIMEDIA ================= -->
                 <Grid x:Name="MediaView" Grid.Row="2" Visibility="Visible">
+                    <Grid.RenderTransform>
+                        <TranslateTransform/>
+                    </Grid.RenderTransform>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
@@ -294,6 +297,9 @@
 
                 <!-- ================= VISTA 2: DEV BACKLOG / TO-DO ================= -->
                 <Grid x:Name="BacklogView" Grid.Row="2" Visibility="Collapsed">
+                    <Grid.RenderTransform>
+                        <TranslateTransform/>
+                    </Grid.RenderTransform>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
@@ -406,6 +412,9 @@
 
                 <!-- ================= VISTA 3: CALENDARIO Y AGENDA DEV ================= -->
                 <Grid x:Name="CalendarView" Grid.Row="2" Visibility="Collapsed">
+                    <Grid.RenderTransform>
+                        <TranslateTransform/>
+                    </Grid.RenderTransform>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
@@ -496,6 +505,9 @@
 
                         <!-- Panel 4: Formulario de Creación / Edición de Evento (Overlay) -->
                         <Grid x:Name="CalEventFormOverlay" Visibility="Collapsed" Background="#FF161820" CornerRadius="6" Padding="7,5">
+                            <Grid.RenderTransform>
+                                <TranslateTransform/>
+                            </Grid.RenderTransform>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
@@ -555,43 +567,88 @@
                             </Grid>
                         </Grid>
 
-                        <!-- Panel 5: Diálogo rápido de Sincronización (Google / Outlook / iCal) -->
-                        <Grid x:Name="CalSyncOverlay" Visibility="Collapsed" Background="#FF161820" CornerRadius="6" Padding="9,7">
+                        <!-- Panel 5: Diálogo de Sincronización e Importación (Google / Outlook / iCal) -->
+                        <Grid x:Name="CalSyncOverlay" Visibility="Collapsed" Background="#FF161820" CornerRadius="6" Padding="8,6">
+                            <Grid.RenderTransform>
+                                <TranslateTransform/>
+                            </Grid.RenderTransform>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
-                            <TextBlock Text="Sincronización con Outlook y Google Calendar" FontSize="10" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,3"/>
-                            <TextBlock Text="Exporta eventos en formato .ics estándar para abrir en Outlook o importar en Google Calendar, o copia el texto de sincronización." FontSize="8.5" Foreground="#FFA0A5B2" TextWrapping="Wrap" Margin="0,0,0,6"/>
-                            <Grid Grid.Row="2" ColumnSpacing="5">
+
+                            <!-- Fila 0: Encabezado (Título + Botón Cerrar) -->
+                            <Grid Grid.Row="0" Margin="0,0,0,3">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <Button x:Name="ExportIcsFileBtn" Click="ExportIcsFileBtn_Click" Height="23" HorizontalAlignment="Stretch" CornerRadius="4" Background="#FF222530" BorderThickness="1" BorderBrush="#FF3A3F52">
-                                    <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                    <FontIcon Glyph="&#xE8C8;" FontSize="10" Foreground="#FF00E676"/>
+                                    <TextBlock Text="Sincronización de Calendario" FontSize="9.5" FontWeight="SemiBold" Foreground="White"/>
+                                </StackPanel>
+                                <Button x:Name="CloseSyncBtn" Grid.Column="1" Click="CloseSyncBtn_Click" Height="19" Width="19" Padding="0" CornerRadius="3" Background="#FF282B36" BorderThickness="0">
+                                    <FontIcon Glyph="&#xE711;" FontSize="8" Foreground="#FFA0A5B2"/>
+                                </Button>
+                            </Grid>
+
+                            <!-- Fila 1: Subtítulo (bien separado, sin sobreponerse) -->
+                            <TextBlock Grid.Row="1" Text="Importa o exporta reuniones con Google Calendar u Outlook (.ics):" FontSize="8" Foreground="#FFA0A5B2" TextWrapping="Wrap" Margin="0,0,0,5"/>
+
+                            <!-- Fila 2: Acciones de IMPORTACIÓN de reuniones -->
+                            <Grid Grid.Row="2" ColumnSpacing="5" Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Button x:Name="ImportIcsFileBtn" Click="ImportIcsFileBtn_Click" Height="24" HorizontalAlignment="Stretch" CornerRadius="4" Background="#FF1C2633" BorderThickness="1" BorderBrush="#FF283E54">
+                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                        <FontIcon Glyph="&#xE8E5;" FontSize="8.5" Foreground="#FF42A5F5"/>
+                                        <TextBlock x:Name="ImportFileLabel" Text="Cargar archivo .ics" FontSize="8.5" Foreground="White" FontWeight="Medium"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="ImportClipboardBtn" Grid.Column="1" Click="ImportClipboardBtn_Click" Height="24" HorizontalAlignment="Stretch" CornerRadius="4" Background="#FF1B2B24" BorderThickness="1" BorderBrush="#FF254C39">
+                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                        <FontIcon Glyph="&#xE77F;" FontSize="8.5" Foreground="#FF00E676"/>
+                                        <TextBlock x:Name="ImportClipboardLabel" Text="Pegar de Portapapeles" FontSize="8.5" Foreground="White" FontWeight="Medium"/>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+
+                            <!-- Fila 3: Acciones de EXPORTACIÓN -->
+                            <Grid Grid.Row="3" ColumnSpacing="5" Margin="0,0,0,2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Button x:Name="ExportIcsFileBtn" Click="ExportIcsFileBtn_Click" Height="24" HorizontalAlignment="Stretch" CornerRadius="4" Background="#FF222530" BorderThickness="1" BorderBrush="#FF3A3F52">
+                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                                         <FontIcon Glyph="&#xE896;" FontSize="8.5" Foreground="#FF42A5F5"/>
                                         <TextBlock x:Name="ExportIcsLabel" Text="Abrir en Outlook" FontSize="8.5" Foreground="White"/>
                                     </StackPanel>
                                 </Button>
-                                <Button x:Name="CopyIcsBtn" Grid.Column="1" Click="CopyIcsBtn_Click" Height="23" HorizontalAlignment="Stretch" CornerRadius="4" Background="#FF222530" BorderThickness="1" BorderBrush="#FF3A3F52">
-                                    <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                <Button x:Name="CopyIcsBtn" Grid.Column="1" Click="CopyIcsBtn_Click" Height="24" HorizontalAlignment="Stretch" CornerRadius="4" Background="#FF222530" BorderThickness="1" BorderBrush="#FF3A3F52">
+                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                                         <FontIcon Glyph="&#xE8C8;" FontSize="8.5" Foreground="#FF00E676"/>
                                         <TextBlock x:Name="CopyIcsLabel" Text="Copiar .ics (Google)" FontSize="8.5" Foreground="White"/>
                                     </StackPanel>
                                 </Button>
-                                <Button x:Name="CloseSyncBtn" Grid.Column="2" Click="CloseSyncBtn_Click" Height="23" Width="23" Padding="0" CornerRadius="4" Background="#FF282B36" BorderThickness="0">
-                                    <FontIcon Glyph="&#xE711;" FontSize="8.5" Foreground="#FFA0A5B2"/>
-                                </Button>
                             </Grid>
+
+                            <!-- Fila 4: Mensaje dinámico de Estado / Feedback -->
+                            <TextBlock x:Name="SyncStatusMsg" Grid.Row="4" Text="" FontSize="8" Foreground="#FF00E676" FontWeight="SemiBold" TextAlignment="Center" Margin="0,3,0,0" Visibility="Collapsed"/>
                         </Grid>
                     </Grid>
                 </Grid>
 
                 <!-- ================= VISTA 4: TEMPORIZADOR POMODORO / DEEP WORK ================= -->
                 <Grid x:Name="PomodoroView" Grid.Row="2" Visibility="Collapsed">
+                    <Grid.RenderTransform>
+                        <TranslateTransform/>
+                    </Grid.RenderTransform>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
