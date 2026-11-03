@@ -1838,7 +1838,7 @@ public sealed partial class MainWindow : Window
     private async void ClearCompletedButton_Click(object sender, RoutedEventArgs e)
     {
         _tasks.RemoveAll(t => t.IsCompleted);
-        _ = _taskStore.SaveAsync(_tasks);
+        await SaveTasksSafelyAsync();
         UpdateBacklogUI();
     }
 
@@ -3009,7 +3009,7 @@ public sealed partial class MainWindow : Window
         if (_pomodoroRemaining <= TimeSpan.Zero) OnPomodoroIntervalFinished();
     }
 
-    private void OnPomodoroIntervalFinished()
+    private async void OnPomodoroIntervalFinished()
     {
         _pomodoroTimer.Stop();
         _pomodoroDeadlineUtc = null;
