@@ -24,7 +24,7 @@ public sealed class CalendarEventStore
         {
             if (!File.Exists(_filePath))
             {
-                var initial = GetInitialDevEvents();
+                var initial = new List<CalendarEvent>();
                 var tempFile = _filePath + ".tmp";
                 await using (var stream = File.Create(tempFile))
                 {
@@ -36,11 +36,11 @@ public sealed class CalendarEventStore
 
             await using var readStream = File.OpenRead(_filePath);
             var items = await JsonSerializer.DeserializeAsync<List<CalendarEvent>>(readStream, JsonOptions, cancellationToken);
-            return items ?? GetInitialDevEvents();
+            return items ?? [];
         }
         catch
         {
-            return GetInitialDevEvents();
+            return [];
         }
         finally
         {
@@ -97,42 +97,5 @@ public sealed class CalendarEventStore
         return addedCount;
     }
 
-    private static List<CalendarEvent> GetInitialDevEvents()
-    {
-        var today = DateTime.Today;
-        return
-        [
-            new CalendarEvent
-            {
-                Title = "Daily Standup - Equipo Dev",
-                Description = "Revisión rápida de backlog y bloqueos diarios.",
-                StartTime = new DateTimeOffset(today.AddHours(10), DateTimeOffset.Now.Offset),
-                EndTime = new DateTimeOffset(today.AddHours(10).AddMinutes(20), DateTimeOffset.Now.Offset),
-                MeetingUrl = "https://meet.google.com/abc-defg-hij",
-                Category = "MEETING",
-                Source = "GOOGLE"
-            },
-            new CalendarEvent
-            {
-                Title = "Code Review: Módulo Notch Island",
-                Description = "Revisión de pull request para optimización de renderizado.",
-                StartTime = new DateTimeOffset(today.AddHours(15), DateTimeOffset.Now.Offset),
-                EndTime = new DateTimeOffset(today.AddHours(16), DateTimeOffset.Now.Offset),
-                MeetingUrl = "https://teams.microsoft.com/l/meetup-join/alexisland-review",
-                Category = "REVIEW",
-                Source = "OUTLOOK"
-            },
-            new CalendarEvent
-            {
-                Title = "Sprint Planning & Refinamiento",
-                Description = "Estimación de backlog e historias de usuario de informática.",
-                StartTime = new DateTimeOffset(today.AddDays(1).AddHours(11), DateTimeOffset.Now.Offset),
-                EndTime = new DateTimeOffset(today.AddDays(1).AddHours(12), DateTimeOffset.Now.Offset),
-                MeetingUrl = "https://meet.google.com/xyz-uvwx-rst",
-                Category = "PLANNING",
-                Source = "GOOGLE"
-            }
-        ];
-    }
 }
 
