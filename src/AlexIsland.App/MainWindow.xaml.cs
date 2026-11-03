@@ -58,8 +58,8 @@ public sealed partial class MainWindow : Window
     private const int NotchHeight = 36;
     private const int RestingWidth = 146;
     private const int RestingHeight = 32;
-    private const int PeekWidth = 280;
-    private const int PeekHeight = 40;
+    private const int PeekWidth = 300;
+    private const int PeekHeight = 42;
     private const int ExpandedWidth = 440;
     private const int ExpandedHeight = 118;
     private const int ExpandedBacklogHeight = 188;
@@ -716,12 +716,12 @@ public sealed partial class MainWindow : Window
         CompactCenterDot.Visibility = Visibility.Collapsed;
         var angle = Math.Min(progress01 * 360.0, 359.9);
         var rad = (angle - 90.0) * Math.PI / 180.0;
-        var cx = 7.0;
-        var cy = 7.0;
+        var cx = 8.0;
+        var cy = 8.0;
         var r = 6.0;
 
-        var startX = 7.0;
-        var startY = 1.0;
+        var startX = 8.0;
+        var startY = 2.0;
         var endX = cx + r * Math.Cos(rad);
         var endY = cy + r * Math.Sin(rad);
 
@@ -758,12 +758,12 @@ public sealed partial class MainWindow : Window
 
         var angle = Math.Min(progress01 * 360.0, 359.9);
         var rad = (angle - 90.0) * Math.PI / 180.0;
-        var cx = 11.0;
-        var cy = 11.0;
+        var cx = 13.0;
+        var cy = 13.0;
         var r = 10.0;
 
-        var startX = 11.0;
-        var startY = 1.0;
+        var startX = 13.0;
+        var startY = 3.0;
         var endX = cx + r * Math.Cos(rad);
         var endY = cy + r * Math.Sin(rad);
 
@@ -854,7 +854,7 @@ public sealed partial class MainWindow : Window
 
         if (PeekRippleOuter.RenderTransform is not ScaleTransform stOuter)
         {
-            stOuter = new ScaleTransform { CenterX = 13, CenterY = 13 };
+            stOuter = new ScaleTransform { CenterX = 14, CenterY = 14 };
             PeekRippleOuter.RenderTransform = stOuter;
         }
 

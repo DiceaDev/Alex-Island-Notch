@@ -51,9 +51,10 @@
 
                 <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                     <!-- Anillo de progreso circular en vivo estilo Nusa -->
-                    <Grid Width="16" Height="16" VerticalAlignment="Center" Margin="1,0,2,0">
-                        <Ellipse Width="14" Height="14" Stroke="#26FFFFFF" StrokeThickness="2" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        <Path x:Name="CompactProgressArc" Stroke="#FF00E676" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <Grid Width="16" Height="16" VerticalAlignment="Center" Margin="1,0,3,0">
+                        <Ellipse Width="14" Height="14" Stroke="#26FFFFFF" StrokeThickness="1.8" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Path x:Name="CompactProgressArc" Width="16" Height="16" HorizontalAlignment="Left" VerticalAlignment="Top" Stretch="None"
+                              Stroke="#FF00E676" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
                         <Ellipse x:Name="CompactCenterDot" Width="4" Height="4" Fill="#FF00E676" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Grid>
 
@@ -184,7 +185,7 @@
             </Grid>
 
             <!-- Modo 3: Peek (Notificación emergente de Hardware / Auriculares / Batería estilo Nusa) -->
-            <Grid x:Name="PeekContent" Visibility="Collapsed" Margin="14,0,14,0" Height="40" VerticalAlignment="Center">
+            <Grid x:Name="PeekContent" Visibility="Collapsed" Margin="16,0,16,0" Height="42" VerticalAlignment="Center">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
@@ -192,24 +193,26 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- Izquierda: Anillo de batería/estado con icono Bluetooth/Rayo -->
-                <Grid Grid.Column="0" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0">
-                    <Ellipse Width="22" Height="22" Stroke="#2AFFFFFF" StrokeThickness="2" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    <Path x:Name="PeekProgressArc" Stroke="#FF42A5F5" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    <FontIcon x:Name="PeekIcon" Glyph="&#xE702;" FontSize="9.5" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Grid Grid.Column="0" Width="26" Height="26" VerticalAlignment="Center" Margin="0,0,12,0">
+                    <Ellipse Width="22" Height="22" Fill="#1EFFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <Ellipse Width="20" Height="20" Stroke="#28FFFFFF" StrokeThickness="2" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <Path x:Name="PeekProgressArc" Width="26" Height="26" HorizontalAlignment="Left" VerticalAlignment="Top" Stretch="None"
+                          Stroke="#FF42A5F5" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                    <FontIcon x:Name="PeekIcon" Glyph="&#xE702;" FontSize="10" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Grid>
 
-                <!-- Centro-Izquierda: Título y subtítulo -->
-                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
-                    <TextBlock x:Name="PeekTitle" Text="AirBuds Pro" FontSize="11" FontWeight="SemiBold" Foreground="White" TextTrimming="CharacterEllipsis" MaxLines="1"/>
-                    <TextBlock x:Name="PeekSubtitle" Text="Connected · 70%" FontSize="8.5" Foreground="#FFA0A5B2" TextTrimming="CharacterEllipsis" MaxLines="1"/>
+                <!-- Centro-Izquierda: Título y subtítulo con espaciado respirable -->
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1.5">
+                    <TextBlock x:Name="PeekTitle" Text="AirBuds Pro" FontSize="11.5" FontWeight="SemiBold" Foreground="White" TextTrimming="CharacterEllipsis" MaxLines="1"/>
+                    <TextBlock x:Name="PeekSubtitle" Text="Connected · 70%" FontSize="9" Foreground="#FFA0A5B2" TextTrimming="CharacterEllipsis" MaxLines="1"/>
                 </StackPanel>
 
                 <!-- Derecha: Icono de periférico con ondas concéntricas de sonido -->
-                <Grid Grid.Column="2" Width="26" Height="26" VerticalAlignment="Center">
-                    <Ellipse x:Name="PeekRippleOuter" Width="26" Height="26" Stroke="#2242A5F5" StrokeThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    <Ellipse x:Name="PeekRippleInner" Width="20" Height="20" Stroke="#4442A5F5" StrokeThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    <Ellipse Width="16" Height="16" Fill="#1A42A5F5" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    <FontIcon x:Name="PeekRightIcon" Glyph="&#xE7F6;" FontSize="9" Foreground="#FF42A5F5" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Grid Grid.Column="2" Width="28" Height="28" VerticalAlignment="Center" Margin="10,0,0,0">
+                    <Ellipse x:Name="PeekRippleOuter" Width="28" Height="28" Stroke="#2242A5F5" StrokeThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5"/>
+                    <Ellipse x:Name="PeekRippleInner" Width="21" Height="21" Stroke="#4442A5F5" StrokeThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5"/>
+                    <Ellipse Width="17" Height="17" Fill="#1E42A5F5" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <FontIcon x:Name="PeekRightIcon" Glyph="&#xE7F6;" FontSize="9.5" Foreground="#FF42A5F5" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Grid>
             </Grid>
 
