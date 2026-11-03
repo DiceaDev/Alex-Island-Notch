@@ -20,82 +20,39 @@ public sealed class CalendarEventStore
     public async Task<List<CalendarEvent>> LoadAsync(CancellationToken cancellationToken = default)
     {
         await _lock.WaitAsync(cancellationToken);
-        try
-        {
-            if (!File.Exists(_filePath))
-            {
-                var initial = new List<CalendarEvent>();
-                var tempFile = _filePath + ".tmp";
-                await using (var stream = File.Create(tempFile))
-                {
-                    await JsonSerializer.SerializeAsync(stream, initial, JsonOptions, cancellationToken);
-                }
-                File.Move(tempFile, _filePath, overwrite: true);
-                return initial;
-            }
-
-            await using var readStream = File.OpenRead(_filePath);
-            var items = await JsonSerializer.DeserializeAsync<List<CalendarEvent>>(readStream, JsonOptions, cancellationToken);
-            return items ?? [];
-        }
-        catch
-        {
-            return [];
-        }
-        finally
-        {
-            _lock.Release();
-        }
+        try { return await JsonFilePersistence.LoadAsync(_filePath, static () => new List<CalendarEvent>(), JsonOptions, cancellationToken); }
+        finally { _lock.Release(); }
     }
 
     public async Task SaveAsync(IEnumerable<CalendarEvent> events, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(events);
+        var snapshot = events.ToList();
+        var json = JsonSerializer.SerializeToUtf8Bytes(snapshot, JsonOptions);
         await _lock.WaitAsync(cancellationToken);
-        try
-        {
-            var tempFile = _filePath + ".tmp";
-            await using (var stream = File.Create(tempFile))
-            {
-                await JsonSerializer.SerializeAsync(stream, events, JsonOptions, cancellationToken);
-            }
-            File.Move(tempFile, _filePath, overwrite: true);
-        }
-        finally
-        {
-            _lock.Release();
-        }
+        try { await JsonFilePersistence.SaveAsync(_filePath, json, cancellationToken); }
+        finally { _lock.Release(); }
     }
 
     public static List<CalendarEvent> FindConflicts(CalendarEvent target, IEnumerable<CalendarEvent> allEvents)
-    {
-        return allEvents.Where(e => target.HasConflictWith(e)).ToList();
-    }
+        => allEvents.Where(e => target.HasConflictWith(e)).ToList();
 
     public async Task<int> ImportIcsAsync(string icsText, List<CalendarEvent> existingList)
     {
         var imported = IcsCalendarHelper.ParseIcs(icsText);
+        var snapshot = existingList.ToList();
         var addedCount = 0;
-
         foreach (var ev in imported)
         {
-            var exists = existingList.Any(e =>
+            var exists = snapshot.Any(e =>
                 (!string.IsNullOrWhiteSpace(e.Id) && !string.IsNullOrWhiteSpace(ev.Id) && e.Id == ev.Id) ||
                 (e.Title.Equals(ev.Title, StringComparison.OrdinalIgnoreCase) && e.StartTime == ev.StartTime));
-
-            if (!exists)
-            {
-                existingList.Add(ev);
-                addedCount++;
-            }
+            if (exists) continue;
+            existingList.Add(ev);
+            snapshot.Add(ev);
+            addedCount++;
         }
-
-        if (addedCount > 0)
-        {
-            await SaveAsync(existingList);
-        }
-
+        if (addedCount > 0) await SaveAsync(snapshot);
         return addedCount;
     }
-
 }
-
