@@ -122,6 +122,7 @@ public sealed partial class MainWindow : Window
     private PomodoroState _pomodoroState = PomodoroState.Stopped;
     private TimeSpan _pomodoroRemaining = TimeSpan.FromMinutes(25);
     private TimeSpan _pomodoroTotalDuration = TimeSpan.FromMinutes(25);
+    private DateTimeOffset? _pomodoroDeadlineUtc;
     private string? _linkedPomodoroTaskId;
 
     // Estado general de la isla
@@ -2877,6 +2878,7 @@ public sealed partial class MainWindow : Window
         if (resetTimer)
         {
             _pomodoroRemaining = _pomodoroTotalDuration;
+            _pomodoroDeadlineUtc = null;
             _pomodoroState = PomodoroState.Stopped;
             _pomodoroTimer.Stop();
         }
@@ -2979,21 +2981,20 @@ public sealed partial class MainWindow : Window
     {
         if (_pomodoroState != PomodoroState.Running) return;
 
-        if (_pomodoroRemaining > TimeSpan.Zero)
-        {
-            _pomodoroRemaining = _pomodoroRemaining.Subtract(TimeSpan.FromSeconds(1));
-            UpdatePomodoroUI();
-        }
+        // El temporizador visual puede retrasarse; el tiempo real se calcula desde una fecha límite UTC.
+        _pomodoroDeadlineUtc ??= DateTimeOffset.UtcNow + _pomodoroRemaining;
+        _pomodoroRemaining = _pomodoroDeadlineUtc.Value - DateTimeOffset.UtcNow;
+        if (_pomodoroRemaining < TimeSpan.Zero) _pomodoroRemaining = TimeSpan.Zero;
 
-        if (_pomodoroRemaining <= TimeSpan.Zero)
-        {
-            OnPomodoroIntervalFinished();
-        }
+        UpdatePomodoroUI();
+        if (_pomodoroRemaining <= TimeSpan.Zero) OnPomodoroIntervalFinished();
     }
 
     private void OnPomodoroIntervalFinished()
     {
         _pomodoroTimer.Stop();
+        _pomodoroDeadlineUtc = null;
+        _pomodoroRemaining = TimeSpan.Zero;
         _pomodoroState = PomodoroState.Stopped;
 
         // Alerta sonora
@@ -3033,11 +3034,23 @@ public sealed partial class MainWindow : Window
     {
         if (_pomodoroState == PomodoroState.Running)
         {
+            if (_pomodoroDeadlineUtc is not null)
+            {
+                _pomodoroRemaining = _pomodoroDeadlineUtc.Value - DateTimeOffset.UtcNow;
+                if (_pomodoroRemaining < TimeSpan.Zero) _pomodoroRemaining = TimeSpan.Zero;
+            }
+            _pomodoroDeadlineUtc = null;
             _pomodoroState = PomodoroState.Paused;
             _pomodoroTimer.Stop();
+            if (_pomodoroRemaining <= TimeSpan.Zero)
+            {
+                OnPomodoroIntervalFinished();
+                return;
+            }
         }
         else
         {
+            _pomodoroDeadlineUtc = DateTimeOffset.UtcNow + _pomodoroRemaining;
             _pomodoroState = PomodoroState.Running;
             _pomodoroTimer.Start();
         }
