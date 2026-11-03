@@ -49,99 +49,94 @@
                 </StackPanel>
             </Grid>
 
-            <Grid x:Name="ExpandedContent" Visibility="Collapsed" Opacity="0" Margin="34,16,34,16">
+            <!-- Contenido expandido sutil, compacto y elegante estilo Dynamic Island de Mac -->
+            <Grid x:Name="ExpandedContent" Visibility="Collapsed" Opacity="0" Margin="20,8,20,10">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <Grid Grid.Row="0" Margin="0,0,0,18">
+                <!-- Fila 0: Mini cabecera con hora y origen -->
+                <Grid Grid.Row="0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                        <Ellipse Width="12" Height="12" Stroke="#00E676" StrokeThickness="3"/>
-                        <TextBlock x:Name="HeaderClock" Text="lun 2 nov 2026 12:00"
-                                   Foreground="#FFF5F5F7" FontSize="14" FontWeight="SemiBold"/>
+                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <Ellipse Width="6" Height="6" Fill="#FF00E676"/>
+                        <TextBlock x:Name="HeaderClock" Text="lun 2 nov · 18:15"
+                                   Foreground="#FFA0A5B2" FontSize="11" FontWeight="Medium"/>
                     </StackPanel>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
-                        <Border Width="3" Height="7" Background="#FFF4F4F5" CornerRadius="1"/>
-                        <Border Width="3" Height="11" Background="#FFF4F4F5" CornerRadius="1"/>
-                        <Border Width="3" Height="15" Background="#FFF4F4F5" CornerRadius="1"/>
-                        <Border Width="3" Height="10" Background="#FFF4F4F5" CornerRadius="1"/>
-                    </StackPanel>
+                    <TextBlock x:Name="PlaybackSource" Grid.Column="1" Text="Windows Media"
+                               Foreground="#FF707582" FontSize="10" VerticalAlignment="Center"/>
                 </Grid>
 
-                <Grid Grid.Row="1" ColumnSpacing="20">
+                <!-- Fila 1: Carátula, Título, Artista y Controles multimedia inline -->
+                <Grid Grid.Row="1" Margin="0,6,0,6" ColumnSpacing="10">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="78"/>
+                        <ColumnDefinition Width="44"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <Border Width="78" Height="78" CornerRadius="8" Background="#FF24252B"
-                            VerticalAlignment="Top">
+                    <!-- Carátula compacta -->
+                    <Border Width="44" Height="44" CornerRadius="7" Background="#FF222329"
+                            VerticalAlignment="Center">
                         <Grid>
                             <Image x:Name="AlbumArt" Stretch="UniformToFill"/>
-                            <FontIcon x:Name="AlbumPlaceholder" Glyph="&#xE768;" FontSize="28"
-                                      Foreground="#FFB8BAC2" HorizontalAlignment="Center"
+                            <FontIcon x:Name="AlbumPlaceholder" Glyph="&#xE768;" FontSize="18"
+                                      Foreground="#FF8E929C" HorizontalAlignment="Center"
                                       VerticalAlignment="Center"/>
                         </Grid>
                     </Border>
 
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="7">
+                    <!-- Información de pista -->
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                         <TextBlock x:Name="TrackTitle" Text="No hay reproducción activa"
-                                   Foreground="White" FontSize="21" FontWeight="Bold"
-                                   TextTrimming="CharacterEllipsis"/>
-                        <TextBlock x:Name="TrackArtist" Text="Inicia música en Spotify o en tu navegador"
-                                   Foreground="#FFD0D0D5" FontSize="15"
-                                   TextTrimming="CharacterEllipsis"/>
-                        <TextBlock x:Name="PlaybackSource" Text="Windows Media Session"
-                                   Foreground="#FF8E929C" FontSize="11"/>
+                                   Foreground="White" FontSize="12.5" FontWeight="SemiBold"
+                                   TextTrimming="CharacterEllipsis" MaxLines="1"/>
+                        <TextBlock x:Name="TrackArtist" Text="Inicia música en Spotify o navegador"
+                                   Foreground="#FFA4A7B0" FontSize="11"
+                                   TextTrimming="CharacterEllipsis" MaxLines="1"/>
+                    </StackPanel>
+
+                    <!-- Botones de control compactos -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                        <Button Content="&#xE892;" FontFamily="Segoe MDL2 Assets"
+                                Click="PreviousButton_Click"
+                                Background="Transparent" Foreground="#FFD0D2D8" FontSize="12"
+                                Width="26" Height="26" Padding="0"
+                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Button x:Name="PlayPauseButton" Content="&#xE768;"
+                                FontFamily="Segoe MDL2 Assets" Click="PlayPauseButton_Click"
+                                Width="30" Height="30" CornerRadius="15"
+                                Background="#FF2D2F36" Foreground="White" FontSize="13"
+                                Padding="0" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Button Content="&#xE893;" FontFamily="Segoe MDL2 Assets"
+                                Click="NextButton_Click" Background="Transparent"
+                                Foreground="#FFD0D2D8" FontSize="12"
+                                Width="26" Height="26" Padding="0"
+                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Grid>
 
-                <Grid Grid.Row="2" Margin="0,18,0,0" RowSpacing="12">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <Grid x:Name="ProgressTrack" Grid.Row="0" ColumnSpacing="10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock x:Name="ElapsedText" Text="00:00" Foreground="#FFD6D7DC"
-                                   FontSize="11" VerticalAlignment="Center"/>
-                        <Grid x:Name="ProgressBarTrack" Grid.Column="1" Height="4" VerticalAlignment="Center">
-                            <Border Background="#FF55565D" CornerRadius="2"/>
-                            <Border x:Name="ProgressFill" Background="#FFF2F2F4"
-                                    CornerRadius="2" HorizontalAlignment="Left" Width="0"/>
-                        </Grid>
-                        <TextBlock x:Name="RemainingText" Grid.Column="2" Text="--:--"
-                                   Foreground="#FFD6D7DC" FontSize="11" VerticalAlignment="Center"/>
+                <!-- Fila 2: Barra de progreso sutil con tiempos -->
+                <Grid x:Name="ProgressTrack" Grid.Row="2" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="ElapsedText" Text="00:00" Foreground="#FF858A96"
+                               FontSize="10" VerticalAlignment="Center"/>
+                    <Grid x:Name="ProgressBarTrack" Grid.Column="1" Height="3" VerticalAlignment="Center">
+                        <Border Background="#FF3A3C44" CornerRadius="1.5"/>
+                        <Border x:Name="ProgressFill" Background="#FFFFFFFF"
+                                CornerRadius="1.5" HorizontalAlignment="Left" Width="0"/>
                     </Grid>
-
-                    <Grid Grid.Row="1">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Button Content="&#xE892;" FontFamily="Segoe MDL2 Assets"
-                                Click="PreviousButton_Click"
-                                Background="Transparent" Foreground="White" FontSize="18"
-                                HorizontalAlignment="Center"/>
-                        <Button x:Name="PlayPauseButton" Grid.Column="1" Content="&#xE768;"
-                                FontFamily="Segoe MDL2 Assets" Click="PlayPauseButton_Click"
-                                Width="48" Height="40" CornerRadius="20"
-                                Background="#FF34353C" Foreground="White" FontSize="18"/>
-                        <Button Grid.Column="2" Content="&#xE893;" FontFamily="Segoe MDL2 Assets"
-                                Click="NextButton_Click" Background="Transparent"
-                                Foreground="White" FontSize="18" HorizontalAlignment="Center"/>
-                    </Grid>
+                    <TextBlock x:Name="RemainingText" Grid.Column="2" Text="--:--"
+                               Foreground="#FF858A96" FontSize="10" VerticalAlignment="Center"/>
                 </Grid>
             </Grid>
         </Grid>

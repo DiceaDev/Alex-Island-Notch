@@ -18,8 +18,8 @@ public sealed partial class MainWindow : Window
 {
     private const int NotchWidth = 196;
     private const int NotchHeight = 36;
-    private const int ExpandedWidth = 900;
-    private const int ExpandedHeight = 340;
+    private const int ExpandedWidth = 430;
+    private const int ExpandedHeight = 118;
     private const double EarRadius = 12.0;
 
     private readonly AppWindow _appWindow;
@@ -91,7 +91,7 @@ public sealed partial class MainWindow : Window
         try
         {
             NativeMethods.ConfigureIslandWindow(_hwnd);
-            UpdateWindowRegion((int)IslandContainer.Width, (int)IslandContainer.Height, EarRadius, _isExpanded ? 24.0 : 16.0);
+            UpdateWindowRegion((int)IslandContainer.Width, (int)IslandContainer.Height, EarRadius, _isExpanded ? 18.0 : 16.0);
         }
         catch
         {
@@ -185,7 +185,7 @@ public sealed partial class MainWindow : Window
         if (width <= 0 || height <= 0) return;
 
         var earRadius = EarRadius;
-        var bottomRadius = _isExpanded ? 24.0 : 16.0;
+        var bottomRadius = _isExpanded ? 18.0 : 16.0;
         var bodyWidth = width - 2 * earRadius;
         if (bodyWidth <= 0) bodyWidth = width;
 
@@ -335,14 +335,14 @@ public sealed partial class MainWindow : Window
         {
             From = expanding ? 0.96 : 1.0,
             To = expanding ? 1.0 : 0.96,
-            Duration = TimeSpan.FromMilliseconds(240),
+            Duration = TimeSpan.FromMilliseconds(220),
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
         };
         var scaleY = new DoubleAnimation
         {
-            From = expanding ? 0.94 : 1.0,
-            To = expanding ? 1.0 : 0.94,
-            Duration = TimeSpan.FromMilliseconds(240),
+            From = expanding ? 0.93 : 1.0,
+            To = expanding ? 1.0 : 0.93,
+            Duration = TimeSpan.FromMilliseconds(220),
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
         };
         Storyboard.SetTarget(scaleX, IslandScale);
@@ -605,7 +605,7 @@ public sealed partial class MainWindow : Window
     {
         var now = DateTime.Now;
         var culture = CultureInfo.GetCultureInfo("es-CL");
-        var stamp = now.ToString("ddd d MMM yyyy  HH:mm", culture);
+        var stamp = now.ToString("ddd d MMM · HH:mm", culture);
         HeaderClock.Text = stamp;
         CompactClock.Text = now.ToString("HH:mm");
     }
