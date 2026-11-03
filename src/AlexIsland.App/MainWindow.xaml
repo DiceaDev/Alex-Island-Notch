@@ -101,14 +101,79 @@
                     </Border>
                 </StackPanel>
 
-                <TextBlock x:Name="CompactClock"
-                           Grid.Column="1"
-                           Text="13:40"
-                           Foreground="#FFF5F5F7"
-                           FontSize="12"
-                           FontWeight="SemiBold"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"/>
+                <!-- Centro Dinámico: Título en negrita blanca y subtítulo de estado o reloj -->
+                <Grid x:Name="CompactCenterContainer"
+                      Grid.Column="1"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Center"
+                      Background="Transparent"
+                      Tapped="CompactCenter_Tapped"
+                      Padding="2,0"
+                      ToolTipService.ToolTip="Clic para alternar entre hora e información de reproducción/enfoque">
+                    
+                    <!-- 1. Reloj digital elegante -->
+                    <TextBlock x:Name="CompactClock"
+                               Text="13:40"
+                               Foreground="#FFF5F5F7"
+                               FontSize="11.5"
+                               FontWeight="SemiBold"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Visibility="Collapsed"/>
+
+                    <!-- 2. Información multimedia dinámica: Título en negrita blanca + Subtítulo de artista -->
+                    <StackPanel x:Name="CompactMediaInfo"
+                                Orientation="Vertical"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="0.5"
+                                MaxWidth="150"
+                                Visibility="Visible">
+                        <TextBlock x:Name="CompactTrackTitle"
+                                   Text="No hay reproducción activa"
+                                   FontSize="10"
+                                   FontWeight="SemiBold"
+                                   Foreground="White"
+                                   HorizontalAlignment="Center"
+                                   TextAlignment="Center"
+                                   TextTrimming="CharacterEllipsis"
+                                   MaxLines="1"/>
+                        <TextBlock x:Name="CompactTrackArtist"
+                                   Text="Windows Media Session"
+                                   FontSize="8"
+                                   Foreground="#FFA0A5B2"
+                                   HorizontalAlignment="Center"
+                                   TextAlignment="Center"
+                                   TextTrimming="CharacterEllipsis"
+                                   MaxLines="1"/>
+                    </StackPanel>
+
+                    <!-- 3. Información de Pomodoro / Enfoque -->
+                    <StackPanel x:Name="CompactFocusInfo"
+                                Orientation="Vertical"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="0.5"
+                                MaxWidth="150"
+                                Visibility="Collapsed">
+                        <TextBlock x:Name="CompactFocusTitle"
+                                   Text="Enfoque Activo"
+                                   FontSize="10"
+                                   FontWeight="SemiBold"
+                                   Foreground="#FFEF5350"
+                                   HorizontalAlignment="Center"
+                                   TextAlignment="Center"
+                                   TextTrimming="CharacterEllipsis"
+                                   MaxLines="1"/>
+                        <TextBlock x:Name="CompactFocusTime"
+                                   Text="25:00"
+                                   FontSize="8"
+                                   Foreground="#FFA0A5B2"
+                                   HorizontalAlignment="Center"
+                                   TextAlignment="Center"
+                                   MaxLines="1"/>
+                    </StackPanel>
+                </Grid>
 
                 <StackPanel x:Name="WaveformPanel" Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center" Margin="0,0,2,0">
                     <Border x:Name="WaveBar1" Width="2" Height="5" Background="#FF00E676" CornerRadius="1"/>

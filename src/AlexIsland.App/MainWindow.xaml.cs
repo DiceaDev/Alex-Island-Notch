@@ -54,6 +54,7 @@ public sealed partial class MainWindow : Window
     }
 
     private const int NotchWidth = 196;
+    private const int NotchPlayingWidth = 236;
     private const int NotchHeight = 36;
     private const int RestingWidth = 146;
     private const int RestingHeight = 32;
@@ -67,8 +68,14 @@ public sealed partial class MainWindow : Window
     private const double EarRadius = 12.0;
 
     [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern short GetAsyncKeyState(int vKey);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
     private static extern short GetKeyState(int nVirtKey);
     private const int VK_CAPITAL = 0x14;
+    private bool _lastCapsKeyWasDown;
+    private bool _showClockInCompactCenter;
+    private int _demoPeekIndex = 0;
 
     private static readonly string[] AvailableTags = ["TODO", "FEAT", "FIX", "REFACTOR", "DOCS"];
     private static readonly string[] EventCategories = ["MEETING", "DEV", "REVIEW", "PLANNING", "GENERAL"];
@@ -361,13 +368,14 @@ public sealed partial class MainWindow : Window
 
         _isExpanded = _isPinned || _isPointerInside;
 
-        if (_isExpanded)
-        {
-            _currentDisplayMode = NotchDisplayMode.Expanded;
-        }
-        else if (_isPeekActive)
+        if (_isPeekActive)
         {
             _currentDisplayMode = NotchDisplayMode.Peek;
+            _isExpanded = false;
+        }
+        else if (_isExpanded)
+        {
+            _currentDisplayMode = NotchDisplayMode.Expanded;
         }
         else if (_isPlaying || _pomodoroState == PomodoroState.Running || _isRecentInteraction)
         {
@@ -387,7 +395,7 @@ public sealed partial class MainWindow : Window
         var (width, height) = _currentDisplayMode switch
         {
             NotchDisplayMode.Resting => (RestingWidth, RestingHeight),
-            NotchDisplayMode.Closed => (NotchWidth, NotchHeight),
+            NotchDisplayMode.Closed => (_isPlaying ? NotchPlayingWidth : NotchWidth, NotchHeight),
             NotchDisplayMode.Peek => (PeekWidth, PeekHeight),
             NotchDisplayMode.Expanded => (
                 ExpandedWidth,
@@ -452,6 +460,8 @@ public sealed partial class MainWindow : Window
         {
             AnimateIsland(_isExpanded, _currentDisplayMode);
         }
+
+        UpdateCompactCenter();
     }
 
     private void UpdateNotchGeometry(double width, double height)
@@ -785,7 +795,9 @@ public sealed partial class MainWindow : Window
         string? rightGlyph = null,
         Windows.UI.Color? accentColor = null)
     {
-        if (_isExpanded) return;
+        _isPinned = false;
+        _isPointerInside = false;
+        _isExpanded = false;
 
         _isPeekActive = true;
         _isRecentInteraction = true;
@@ -870,15 +882,25 @@ public sealed partial class MainWindow : Window
     {
         try
         {
-            var isCaps = (GetKeyState(VK_CAPITAL) & 0x0001) != 0;
-            if (isCaps != _lastCapsLockState)
+            var keyState = GetAsyncKeyState(VK_CAPITAL);
+            var isDown = (keyState & 0x8000) != 0;
+
+            if (isDown && !_lastCapsKeyWasDown)
             {
-                _lastCapsLockState = isCaps;
+                _lastCapsKeyWasDown = true;
+                var isToggled = (GetKeyState(VK_CAPITAL) & 0x0001) != 0;
+                var newCaps = !_lastCapsLockState;
+                _lastCapsLockState = newCaps;
+
                 ShowHardwarePeek(
                     HardwarePeekType.CapsLock,
                     "Bloq Mayús",
-                    isCaps ? "ACTIVADO" : "DESACTIVADO",
-                    percent01: isCaps ? 1.0 : 0.0);
+                    newCaps ? "ACTIVADO" : "DESACTIVADO",
+                    percent01: newCaps ? 1.0 : 0.0);
+            }
+            else if (!isDown)
+            {
+                _lastCapsKeyWasDown = false;
             }
         }
         catch { }
@@ -888,13 +910,86 @@ public sealed partial class MainWindow : Window
     {
         _isPinned = false;
         _isPointerInside = false;
-        ApplyIslandState();
+        _isExpanded = false;
+        _demoPeekIndex = (_demoPeekIndex + 1) % 4;
 
-        ShowHardwarePeek(
-            HardwarePeekType.Headphones,
-            "AirBuds Pro",
-            "Connected · 70%",
-            percent01: 0.70);
+        switch (_demoPeekIndex)
+        {
+            case 0:
+                ShowHardwarePeek(
+                    HardwarePeekType.Headphones,
+                    "AirBuds Pro",
+                    "Connected · 70%",
+                    percent01: 0.70);
+                break;
+            case 1:
+                ShowHardwarePeek(
+                    HardwarePeekType.Charging,
+                    "Cargador conectado",
+                    "Cargando · 85%",
+                    percent01: 0.85);
+                break;
+            case 2:
+                ShowHardwarePeek(
+                    HardwarePeekType.Battery,
+                    "Batería en uso",
+                    "68% restante",
+                    percent01: 0.68);
+                break;
+            case 3:
+                ShowHardwarePeek(
+                    HardwarePeekType.CapsLock,
+                    "Bloq Mayús",
+                    "ACTIVADO",
+                    percent01: 1.0);
+                break;
+        }
+    }
+
+    private void CompactCenter_Tapped(object sender, TappedRoutedEventArgs e)
+    {
+        e.Handled = true;
+        _showClockInCompactCenter = !_showClockInCompactCenter;
+        UpdateCompactCenter();
+    }
+
+    private void UpdateCompactCenter()
+    {
+        if (CompactClock is null || CompactMediaInfo is null || CompactFocusInfo is null) return;
+
+        if (_showClockInCompactCenter)
+        {
+            CompactClock.Visibility = Visibility.Visible;
+            CompactMediaInfo.Visibility = Visibility.Collapsed;
+            CompactFocusInfo.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        if (_pomodoroState == PomodoroState.Running)
+        {
+            CompactClock.Visibility = Visibility.Collapsed;
+            CompactMediaInfo.Visibility = Visibility.Collapsed;
+            CompactFocusInfo.Visibility = Visibility.Visible;
+            var isBreak = _pomodoroMode != PomodoroMode.Work;
+            CompactFocusTitle.Text = isBreak ? "Pausa de Descanso" : "Enfoque Activo";
+            CompactFocusTitle.Foreground = new SolidColorBrush(isBreak
+                ? ColorHelper.FromArgb(255, 0, 230, 118)
+                : ColorHelper.FromArgb(255, 239, 83, 80));
+            CompactFocusTime.Text = $"{_pomodoroRemaining:mm\\:ss}";
+            return;
+        }
+
+        if (_isPlaying && !string.IsNullOrWhiteSpace(CompactTrackTitle.Text) && CompactTrackTitle.Text != "No hay reproducción activa")
+        {
+            CompactClock.Visibility = Visibility.Collapsed;
+            CompactMediaInfo.Visibility = Visibility.Visible;
+            CompactFocusInfo.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        CompactClock.Visibility = Visibility.Visible;
+        CompactMediaInfo.Visibility = Visibility.Collapsed;
+        CompactFocusInfo.Visibility = Visibility.Collapsed;
     }
 
     private static void AnimateViewEntrance(FrameworkElement view)
@@ -1126,6 +1221,10 @@ public sealed partial class MainWindow : Window
             TrackArtist.Text = string.IsNullOrWhiteSpace(properties.Artist)
                 ? _mediaSession.SourceAppUserModelId
                 : properties.Artist;
+
+            CompactTrackTitle.Text = TrackTitle.Text;
+            CompactTrackArtist.Text = TrackArtist.Text;
+            UpdateCompactCenter();
             AlbumPlaceholder.Visibility = Visibility.Visible;
             AlbumArt.Source = null;
 
@@ -1155,6 +1254,8 @@ public sealed partial class MainWindow : Window
     {
         TrackTitle.Text = "No hay reproducción activa";
         TrackArtist.Text = "Inicia música en Spotify o en tu navegador";
+        CompactTrackTitle.Text = "No hay reproducción activa";
+        CompactTrackArtist.Text = "Windows Media Session";
         AlbumArt.Source = null;
         AlbumPlaceholder.Visibility = Visibility.Visible;
         PlayPauseButton.Content = "\uE768";
@@ -1168,6 +1269,8 @@ public sealed partial class MainWindow : Window
         _lastPositionSyncTime = DateTimeOffset.UtcNow;
         _waveformTimer.Stop();
         ResetWaveform();
+        UpdateCompactCenter();
+        ApplyIslandState();
     }
 
     private void UpdatePlaybackState()
@@ -1177,6 +1280,7 @@ public sealed partial class MainWindow : Window
             _isPlaying = false;
             _waveformTimer.Stop();
             ResetWaveform();
+            UpdateCompactCenter();
             return;
         }
 
@@ -1199,6 +1303,8 @@ public sealed partial class MainWindow : Window
                 _waveformTimer.Stop();
                 ResetWaveform();
             }
+            UpdateCompactCenter();
+            ApplyIslandState();
         }
 
         SyncTimelineSnapshot();
@@ -1303,6 +1409,7 @@ public sealed partial class MainWindow : Window
         var stamp = now.ToString("ddd d MMM · HH:mm", culture);
         HeaderClock.Text = stamp;
         CompactClock.Text = now.ToString("HH:mm");
+        UpdateCompactCenter();
     }
 
     private async void ProgressBarTrack_Tapped(object sender, TappedRoutedEventArgs e)
@@ -2848,6 +2955,8 @@ public sealed partial class MainWindow : Window
                 UpdateCompactProgress(0.0);
             }
         }
+
+        UpdateCompactCenter();
     }
 
     private void UpdatePomodoroProgressBar()
