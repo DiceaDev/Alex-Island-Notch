@@ -36,7 +36,7 @@ public static class IcsCalendarHelper
             sb.AppendLine($"SUMMARY:{EscapeIcs(ev.Title)}");
             if (!string.IsNullOrWhiteSpace(ev.Description)) sb.AppendLine($"DESCRIPTION:{EscapeIcs(ev.Description)}");
             if (!string.IsNullOrWhiteSpace(ev.Location)) sb.AppendLine($"LOCATION:{EscapeIcs(ev.Location)}");
-            if (!string.IsNullOrWhiteSpace(ev.MeetingUrl)) sb.AppendLine($"URL:{ev.MeetingUrl}");
+            if (!string.IsNullOrWhiteSpace(ev.MeetingUrl) && Uri.TryCreate(ev.MeetingUrl, UriKind.Absolute, out var meetingUri) && (meetingUri.Scheme == Uri.UriSchemeHttps || meetingUri.Scheme == Uri.UriSchemeHttp)) sb.AppendLine($"URL:{meetingUri.AbsoluteUri}");
             if (!string.IsNullOrWhiteSpace(ev.Category)) sb.AppendLine($"CATEGORIES:{EscapeIcs(ev.Category)}");
             sb.AppendLine("END:VEVENT");
         }
@@ -139,7 +139,7 @@ public static class IcsCalendarHelper
                     }
                     else
                     {
-                        current.EndTime = parsed;
+                        current.EndTime = current.IsAllDay && isAllDay ? parsed.AddDays(-1) : parsed;
                         hasEnd = true;
                     }
                     break;
