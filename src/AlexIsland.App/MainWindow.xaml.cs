@@ -135,6 +135,8 @@ public sealed partial class MainWindow : Window
     private bool _isDisposed;
     private bool _isPlaying;
     private Storyboard? _activeAnimation;
+    private long _mediaSessionGeneration;
+    private long _mediaRefreshVersion;
 
     // Estado sincronizado del timeline del reproductor
     private TimeSpan _basePosition = TimeSpan.Zero;
@@ -298,6 +300,7 @@ public sealed partial class MainWindow : Window
         if (_mediaManager is not null)
         {
             _mediaManager.CurrentSessionChanged -= MediaManager_CurrentSessionChanged;
+            _mediaManager = null;
         }
         DetachMediaSession();
     }
@@ -1130,13 +1133,17 @@ public sealed partial class MainWindow : Window
     {
         try
         {
-            _mediaManager = await GlobalSystemMediaTransportControlsSessionManager.RequestAsync();
-            _mediaManager.CurrentSessionChanged += MediaManager_CurrentSessionChanged;
+            var manager = await GlobalSystemMediaTransportControlsSessionManager.RequestAsync();
+            if (_isDisposed) return;
+            _mediaManager = manager;
+            manager.CurrentSessionChanged += MediaManager_CurrentSessionChanged;
             await AttachCurrentSessionAsync();
         }
-        catch
+        catch (Exception ex)
         {
+            if (_isDisposed) return;
             SetNoMediaSession();
+            ShowSyncStatus($"No se pudo iniciar el control multimedia: {ex.Message}", isError: true);
         }
     }
 
@@ -1145,17 +1152,24 @@ public sealed partial class MainWindow : Window
         CurrentSessionChangedEventArgs args)
     {
         if (_isDisposed) return;
-        DispatcherQueue.TryEnqueue(() => _ = AttachCurrentSessionAsync());
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            if (!_isDisposed && ReferenceEquals(sender, _mediaManager))
+                _ = AttachCurrentSessionAsync();
+        });
     }
 
     private async Task AttachCurrentSessionAsync()
     {
         if (_isDisposed || _mediaManager is null) return;
         var next = _mediaManager.GetCurrentSession();
+
         if (!ReferenceEquals(next, _mediaSession))
         {
             DetachMediaSession();
             _mediaSession = next;
+            _mediaSessionGeneration++;
+
             if (_mediaSession is not null)
             {
                 _mediaSession.MediaPropertiesChanged += MediaSession_MediaPropertiesChanged;
@@ -1163,15 +1177,28 @@ public sealed partial class MainWindow : Window
                 _mediaSession.TimelinePropertiesChanged += MediaSession_TimelinePropertiesChanged;
             }
         }
-        await RefreshMediaAsync();
+
+        var session = _mediaSession;
+        var generation = _mediaSessionGeneration;
+        if (session is null)
+        {
+            SetNoMediaSession();
+            return;
+        }
+
+        await RefreshMediaAsync(session, generation);
     }
 
     private void DetachMediaSession()
     {
-        if (_mediaSession is null) return;
-        _mediaSession.MediaPropertiesChanged -= MediaSession_MediaPropertiesChanged;
-        _mediaSession.PlaybackInfoChanged -= MediaSession_PlaybackInfoChanged;
-        _mediaSession.TimelinePropertiesChanged -= MediaSession_TimelinePropertiesChanged;
+        _mediaSessionGeneration++;
+        _mediaRefreshVersion++;
+        var session = _mediaSession;
+        if (session is null) return;
+
+        session.MediaPropertiesChanged -= MediaSession_MediaPropertiesChanged;
+        session.PlaybackInfoChanged -= MediaSession_PlaybackInfoChanged;
+        session.TimelinePropertiesChanged -= MediaSession_TimelinePropertiesChanged;
         _mediaSession = null;
     }
 
@@ -1179,80 +1206,110 @@ public sealed partial class MainWindow : Window
         GlobalSystemMediaTransportControlsSession sender,
         MediaPropertiesChangedEventArgs args)
     {
-        if (!_isDisposed)
-            DispatcherQueue.TryEnqueue(() => _ = RefreshMediaAsync());
+        if (_isDisposed) return;
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            if (!_isDisposed && ReferenceEquals(sender, _mediaSession))
+                _ = RefreshMediaAsync(sender, _mediaSessionGeneration);
+        });
     }
 
     private void MediaSession_PlaybackInfoChanged(
         GlobalSystemMediaTransportControlsSession sender,
         PlaybackInfoChangedEventArgs args)
     {
-        if (!_isDisposed)
-            _ = DispatcherQueue.TryEnqueue(UpdatePlaybackState);
+        if (_isDisposed) return;
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            if (!_isDisposed && ReferenceEquals(sender, _mediaSession))
+                UpdatePlaybackState(sender);
+        });
     }
 
     private void MediaSession_TimelinePropertiesChanged(
         GlobalSystemMediaTransportControlsSession sender,
         TimelinePropertiesChangedEventArgs args)
     {
-        if (!_isDisposed)
+        if (_isDisposed) return;
+        DispatcherQueue.TryEnqueue(() =>
         {
-            DispatcherQueue.TryEnqueue(() =>
-            {
-                SyncTimelineSnapshot();
-                UpdateTimeline();
-            });
-        }
+            if (_isDisposed || !ReferenceEquals(sender, _mediaSession)) return;
+            SyncTimelineSnapshot(sender);
+            UpdateTimeline();
+        });
     }
 
-    private async Task RefreshMediaAsync()
+    private async Task RefreshMediaAsync(
+        GlobalSystemMediaTransportControlsSession session,
+        long sessionGeneration)
     {
-        if (_mediaSession is null)
-        {
-            SetNoMediaSession();
+        if (_isDisposed || !ReferenceEquals(session, _mediaSession) ||
+            sessionGeneration != _mediaSessionGeneration)
             return;
-        }
 
+        var refreshVersion = ++_mediaRefreshVersion;
         try
         {
-            var properties = await _mediaSession.TryGetMediaPropertiesAsync();
-            TrackTitle.Text = string.IsNullOrWhiteSpace(properties.Title)
+            var properties = await session.TryGetMediaPropertiesAsync();
+            if (!IsCurrentMediaOperation(session, sessionGeneration, refreshVersion)) return;
+
+            var title = string.IsNullOrWhiteSpace(properties.Title)
                 ? "Reproducción multimedia"
                 : properties.Title;
-            TrackArtist.Text = string.IsNullOrWhiteSpace(properties.Artist)
-                ? _mediaSession.SourceAppUserModelId
+            var artist = string.IsNullOrWhiteSpace(properties.Artist)
+                ? session.SourceAppUserModelId
                 : properties.Artist;
 
-            CompactTrackTitle.Text = TrackTitle.Text;
-            CompactTrackArtist.Text = TrackArtist.Text;
+            TrackTitle.Text = title;
+            TrackArtist.Text = artist;
+            CompactTrackTitle.Text = title;
+            CompactTrackArtist.Text = artist;
             UpdateCompactCenter();
-            AlbumPlaceholder.Visibility = Visibility.Visible;
+
             AlbumArt.Source = null;
+            AlbumPlaceholder.Visibility = Visibility.Visible;
 
             if (properties.Thumbnail is not null)
             {
                 using var stream = await properties.Thumbnail.OpenReadAsync();
+                if (!IsCurrentMediaOperation(session, sessionGeneration, refreshVersion)) return;
+
                 if (stream.Size > 0)
                 {
                     var bitmap = new BitmapImage();
                     await bitmap.SetSourceAsync(stream);
+                    if (!IsCurrentMediaOperation(session, sessionGeneration, refreshVersion)) return;
                     AlbumArt.Source = bitmap;
                     AlbumPlaceholder.Visibility = Visibility.Collapsed;
                 }
             }
 
-            UpdatePlaybackState();
-            SyncTimelineSnapshot();
+            if (!IsCurrentMediaOperation(session, sessionGeneration, refreshVersion)) return;
+            UpdatePlaybackState(session);
+            SyncTimelineSnapshot(session);
             UpdateTimeline();
         }
-        catch
+        catch (Exception ex)
         {
-            SetNoMediaSession();
+            if (!IsCurrentMediaOperation(session, sessionGeneration, refreshVersion)) return;
+            ShowSyncStatus($"No se pudieron actualizar los datos multimedia: {ex.Message}", isError: true);
         }
+    }
+
+    private bool IsCurrentMediaOperation(
+        GlobalSystemMediaTransportControlsSession session,
+        long sessionGeneration,
+        long refreshVersion)
+    {
+        return !_isDisposed &&
+            ReferenceEquals(session, _mediaSession) &&
+            sessionGeneration == _mediaSessionGeneration &&
+            refreshVersion == _mediaRefreshVersion;
     }
 
     private void SetNoMediaSession()
     {
+        if (_isDisposed) return;
         TrackTitle.Text = "No hay reproducción activa";
         TrackArtist.Text = "Inicia música en Spotify o en tu navegador";
         CompactTrackTitle.Text = "No hay reproducción activa";
@@ -1274,50 +1331,62 @@ public sealed partial class MainWindow : Window
         ApplyIslandState();
     }
 
-    private void UpdatePlaybackState()
+    private void UpdatePlaybackState(GlobalSystemMediaTransportControlsSession? session = null)
     {
-        if (_mediaSession is null)
+        session ??= _mediaSession;
+        if (_isDisposed || session is null || !ReferenceEquals(session, _mediaSession))
         {
-            _isPlaying = false;
-            _waveformTimer.Stop();
-            ResetWaveform();
-            UpdateCompactCenter();
+            if (session is null && !_isDisposed)
+            {
+                _isPlaying = false;
+                _waveformTimer.Stop();
+                ResetWaveform();
+                UpdateCompactCenter();
+            }
             return;
         }
 
-        var playback = _mediaSession.GetPlaybackInfo();
-        var wasPlaying = _isPlaying;
-        _isPlaying = playback.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing;
-        PlayPauseButton.Content = _isPlaying ? "\uE769" : "\uE768";
-
-        if (wasPlaying != _isPlaying)
-        {
-            if (_isPlaying)
-            {
-                _lastPositionSyncTime = DateTimeOffset.UtcNow;
-                _waveformTimer.Start();
-            }
-            else
-            {
-                _basePosition = GetCurrentPosition();
-                _lastPositionSyncTime = DateTimeOffset.UtcNow;
-                _waveformTimer.Stop();
-                ResetWaveform();
-            }
-            UpdateCompactCenter();
-            ApplyIslandState();
-        }
-
-        SyncTimelineSnapshot();
-        UpdateTimeline();
-    }
-
-    private void SyncTimelineSnapshot()
-    {
-        if (_mediaSession is null) return;
         try
         {
-            var timeline = _mediaSession.GetTimelineProperties();
+            var playback = session.GetPlaybackInfo();
+            var wasPlaying = _isPlaying;
+            _isPlaying = playback.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing;
+            PlayPauseButton.Content = _isPlaying ? "\uE769" : "\uE768";
+
+            if (wasPlaying != _isPlaying)
+            {
+                if (_isPlaying)
+                {
+                    _lastPositionSyncTime = DateTimeOffset.UtcNow;
+                    _waveformTimer.Start();
+                }
+                else
+                {
+                    _basePosition = GetCurrentPosition();
+                    _lastPositionSyncTime = DateTimeOffset.UtcNow;
+                    _waveformTimer.Stop();
+                    ResetWaveform();
+                }
+                UpdateCompactCenter();
+                ApplyIslandState();
+            }
+
+            SyncTimelineSnapshot(session);
+            UpdateTimeline();
+        }
+        catch (Exception ex)
+        {
+            ShowSyncStatus($"No se pudo consultar el estado multimedia: {ex.Message}", isError: true);
+        }
+    }
+
+    private void SyncTimelineSnapshot(GlobalSystemMediaTransportControlsSession? session = null)
+    {
+        session ??= _mediaSession;
+        if (_isDisposed || session is null || !ReferenceEquals(session, _mediaSession)) return;
+        try
+        {
+            var timeline = session.GetTimelineProperties();
             var duration = timeline.EndTime - timeline.StartTime;
             if (duration <= TimeSpan.Zero) duration = timeline.EndTime;
             if (duration > TimeSpan.Zero) _duration = duration;
@@ -1327,72 +1396,58 @@ public sealed partial class MainWindow : Window
             {
                 _lastSmtcPosition = newPos;
                 _basePosition = newPos;
-                if (timeline.LastUpdatedTime > DateTimeOffset.MinValue && timeline.LastUpdatedTime <= DateTimeOffset.Now.AddSeconds(5))
-                {
+                if (timeline.LastUpdatedTime > DateTimeOffset.MinValue &&
+                    timeline.LastUpdatedTime <= DateTimeOffset.Now.AddSeconds(5))
                     _lastPositionSyncTime = timeline.LastUpdatedTime;
-                }
                 else
-                {
                     _lastPositionSyncTime = DateTimeOffset.UtcNow;
-                }
             }
         }
-        catch
+        catch (Exception ex)
         {
+            ShowSyncStatus($"No se pudo sincronizar el progreso multimedia: {ex.Message}", isError: true);
         }
     }
 
     private TimeSpan GetCurrentPosition()
     {
-        if (!_isPlaying || _duration <= TimeSpan.Zero)
-        {
-            return _basePosition;
-        }
-
+        if (!_isPlaying || _duration <= TimeSpan.Zero) return _basePosition;
         var elapsed = DateTimeOffset.UtcNow - _lastPositionSyncTime.ToUniversalTime();
         if (elapsed < TimeSpan.Zero) elapsed = TimeSpan.Zero;
         var current = _basePosition + elapsed;
-        if (_duration > TimeSpan.Zero && current > _duration)
-        {
-            current = _duration;
-        }
-        return current;
+        return current > _duration ? _duration : current;
     }
 
     private void UpdateTimeline()
     {
-        if (_mediaSession is null) return;
-        try
+        if (_isDisposed || _mediaSession is null) return;
+        var currentPosition = GetCurrentPosition();
+        ElapsedText.Text = FormatTime(currentPosition);
+
+        if (_duration > TimeSpan.Zero)
         {
-            SyncTimelineSnapshot();
-
-            var currentPosition = GetCurrentPosition();
-            ElapsedText.Text = FormatTime(currentPosition);
-
-            if (_duration > TimeSpan.Zero)
-            {
-                var remaining = _duration - currentPosition;
-                if (remaining < TimeSpan.Zero) remaining = TimeSpan.Zero;
-                RemainingText.Text = "-" + FormatTime(remaining);
-
-                var ratio = Math.Clamp(currentPosition.TotalSeconds / _duration.TotalSeconds, 0, 1);
-                var trackWidth = ProgressBarTrack.ActualWidth;
-                ProgressFill.Width = Math.Max(0, trackWidth) * ratio;
-
-                if (_pomodoroState != PomodoroState.Running)
-                {
-                    UpdateCompactProgress(ratio, ColorHelper.FromArgb(255, 0, 230, 118));
-                }
-            }
-            else
-            {
-                RemainingText.Text = "--:--";
-                ProgressFill.Width = 0;
-            }
+            var remaining = _duration - currentPosition;
+            if (remaining < TimeSpan.Zero) remaining = TimeSpan.Zero;
+            RemainingText.Text = "-" + FormatTime(remaining);
+            var ratio = Math.Clamp(currentPosition.TotalSeconds / _duration.TotalSeconds, 0, 1);
+            ProgressFill.Width = Math.Max(0, ProgressBarTrack.ActualWidth) * ratio;
+            if (_pomodoroState != PomodoroState.Running)
+                UpdateCompactProgress(ratio, ColorHelper.FromArgb(255, 0, 230, 118));
         }
-        catch
+        else
         {
+            RemainingText.Text = "--:--";
+            ProgressFill.Width = 0;
         }
+    }
+
+    private void UpdateClock()
+    {
+        var now = DateTime.Now;
+        var culture = CultureInfo.GetCultureInfo("es-CL");
+        HeaderClock.Text = now.ToString("ddd d MMM · HH:mm", culture);
+        CompactClock.Text = now.ToString("HH:mm");
+        UpdateCompactCenter();
     }
 
     private static string FormatTime(TimeSpan value)
@@ -1415,7 +1470,9 @@ public sealed partial class MainWindow : Window
 
     private async void ProgressBarTrack_Tapped(object sender, TappedRoutedEventArgs e)
     {
-        if (_mediaSession is null || _duration <= TimeSpan.Zero) return;
+        var session = _mediaSession;
+        var generation = _mediaSessionGeneration;
+        if (_isDisposed || session is null || _duration <= TimeSpan.Zero) return;
         var trackWidth = ProgressBarTrack.ActualWidth;
         if (trackWidth <= 0) return;
 
@@ -1430,10 +1487,16 @@ public sealed partial class MainWindow : Window
 
         try
         {
-            await _mediaSession.TryChangePlaybackPositionAsync(targetTicks);
+            await session.TryChangePlaybackPositionAsync(targetTicks);
+            if (_isDisposed || !ReferenceEquals(session, _mediaSession) ||
+                generation != _mediaSessionGeneration)
+                return;
         }
-        catch
+        catch (Exception ex)
         {
+            if (!_isDisposed && ReferenceEquals(session, _mediaSession) &&
+                generation == _mediaSessionGeneration)
+                ShowSyncStatus($"No se pudo cambiar la posición: {ex.Message}", isError: true);
         }
     }
 
@@ -1444,26 +1507,48 @@ public sealed partial class MainWindow : Window
 
     private async void PreviousButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_mediaSession is not null)
-            await _mediaSession.TrySkipPreviousAsync();
+        await ExecuteMediaCommandAsync(
+            session => session.TrySkipPreviousAsync(),
+            "No se pudo reproducir la pista anterior.");
     }
 
     private async void PlayPauseButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_mediaSession is not null)
-            await _mediaSession.TryTogglePlayPauseAsync();
-        UpdatePlaybackState();
+        await ExecuteMediaCommandAsync(
+            session => session.TryTogglePlayPauseAsync(),
+            "No se pudo cambiar el estado de reproducción.");
     }
 
     private async void NextButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_mediaSession is not null)
-            await _mediaSession.TrySkipNextAsync();
+        await ExecuteMediaCommandAsync(
+            session => session.TrySkipNextAsync(),
+            "No se pudo reproducir la pista siguiente.");
     }
 
-    // ==============================================================
-    // SECCIÓN DEV BACKLOG / TO-DO
-    // ==============================================================
+    private async Task ExecuteMediaCommandAsync(
+        Func<GlobalSystemMediaTransportControlsSession, Task<bool>> command,
+        string errorMessage)
+    {
+        var session = _mediaSession;
+        var generation = _mediaSessionGeneration;
+        if (_isDisposed || session is null) return;
+
+        try
+        {
+            await command(session);
+            if (_isDisposed || !ReferenceEquals(session, _mediaSession) ||
+                generation != _mediaSessionGeneration)
+                return;
+            UpdatePlaybackState(session);
+        }
+        catch (Exception ex)
+        {
+            if (!_isDisposed && ReferenceEquals(session, _mediaSession) &&
+                generation == _mediaSessionGeneration)
+                ShowSyncStatus($"{errorMessage} {ex.Message}", isError: true);
+        }
+    }
 
     private async Task LoadTasksAsync()
     {
