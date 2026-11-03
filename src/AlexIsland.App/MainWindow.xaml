@@ -36,6 +36,21 @@
                 <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" Margin="2,0,0,0">
                     <Ellipse x:Name="StatusDot" Width="7" Height="7" Fill="#FF00E676" VerticalAlignment="Center"/>
                     
+                    <!-- Badge de Pomodoro / Focus activo en modo compacto -->
+                    <Border x:Name="CompactPomodoroBadge"
+                            Visibility="Collapsed"
+                            Background="#FF2A1B1D"
+                            BorderBrush="#FFEF5350"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Padding="3,1"
+                            VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                            <TextBlock x:Name="CompactPomodoroIcon" Text="🍅" FontSize="7.5" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="CompactPomodoroText" Text="25:00" Foreground="#FFEF5350" FontSize="8" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
                     <!-- Badge sutil de reunión próxima en modo compacto -->
                     <Border x:Name="CompactMeetingBadge"
                             Visibility="Collapsed"
@@ -47,7 +62,7 @@
                             VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
                             <FontIcon Glyph="&#xE717;" FontSize="7.5" Foreground="#FF00E676"/>
-                            <TextBlock x:Name="CompactMeetingText" Text="10:00" Foreground="#FF00E676" FontSize="8.5" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="CompactMeetingText" Text="10:00" Foreground="#FF00E676" FontSize="8" FontWeight="SemiBold" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
 
@@ -59,8 +74,8 @@
                             Padding="3,1"
                             VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
-                            <TextBlock Text="⚡" FontSize="8" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="CompactTaskCount" Text="0" Foreground="#FFA0A5B2" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <TextBlock Text="⚡" FontSize="7.5" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="CompactTaskCount" Text="0" Foreground="#FFA0A5B2" FontSize="8" FontWeight="SemiBold" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -90,7 +105,7 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- Fila 0: Cabecera con fecha/hora y selector por pestañas [ Música | Backlog | Calendario ] -->
+                <!-- Fila 0: Cabecera con fecha/hora y selector por pestañas [ Música | Backlog | Calendario | Focus ] -->
                 <Grid Grid.Row="0" Margin="0,0,0,5">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -110,13 +125,13 @@
                             <Button x:Name="TabMediaButton"
                                     Click="TabMediaButton_Click"
                                     CornerRadius="8"
-                                    Padding="6,2"
+                                    Padding="5,2"
                                     Height="21"
                                     Background="#FF2A2D37"
                                     BorderThickness="0">
                                 <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
-                                    <FontIcon Glyph="&#xE768;" FontSize="9" Foreground="White"/>
-                                    <TextBlock x:Name="TabMediaLabel" Text="Música" FontSize="9" Foreground="White" FontWeight="Medium"/>
+                                    <FontIcon Glyph="&#xE768;" FontSize="8.5" Foreground="White"/>
+                                    <TextBlock x:Name="TabMediaLabel" Text="Música" FontSize="8.5" Foreground="White" FontWeight="Medium"/>
                                 </StackPanel>
                             </Button>
 
@@ -124,15 +139,15 @@
                             <Button x:Name="TabBacklogButton"
                                     Click="TabBacklogButton_Click"
                                     CornerRadius="8"
-                                    Padding="6,2"
+                                    Padding="5,2"
                                     Height="21"
                                     Background="Transparent"
                                     BorderThickness="0">
                                 <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
-                                    <FontIcon Glyph="&#xE756;" FontSize="9" Foreground="#FFA0A5B2"/>
-                                    <TextBlock x:Name="TabBacklogLabel" Text="Backlog" FontSize="9" Foreground="#FFA0A5B2" FontWeight="Medium"/>
+                                    <FontIcon Glyph="&#xE756;" FontSize="8.5" Foreground="#FFA0A5B2"/>
+                                    <TextBlock x:Name="TabBacklogLabel" Text="Backlog" FontSize="8.5" Foreground="#FFA0A5B2" FontWeight="Medium"/>
                                     <Border x:Name="HeaderBacklogBadge" Background="#FF3E4251" CornerRadius="5" Padding="3,0" Margin="1,0,0,0">
-                                        <TextBlock x:Name="HeaderBacklogCount" Text="0" FontSize="8" Foreground="White" FontWeight="Bold"/>
+                                        <TextBlock x:Name="HeaderBacklogCount" Text="0" FontSize="7.5" Foreground="White" FontWeight="Bold"/>
                                     </Border>
                                 </StackPanel>
                             </Button>
@@ -141,15 +156,32 @@
                             <Button x:Name="TabCalendarButton"
                                     Click="TabCalendarButton_Click"
                                     CornerRadius="8"
-                                    Padding="6,2"
+                                    Padding="5,2"
                                     Height="21"
                                     Background="Transparent"
                                     BorderThickness="0">
                                 <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
-                                    <FontIcon Glyph="&#xE787;" FontSize="9" Foreground="#FFA0A5B2"/>
-                                    <TextBlock x:Name="TabCalendarLabel" Text="Calendario" FontSize="9" Foreground="#FFA0A5B2" FontWeight="Medium"/>
+                                    <FontIcon Glyph="&#xE787;" FontSize="8.5" Foreground="#FFA0A5B2"/>
+                                    <TextBlock x:Name="TabCalendarLabel" Text="Agenda" FontSize="8.5" Foreground="#FFA0A5B2" FontWeight="Medium"/>
                                     <Border x:Name="HeaderCalendarBadge" Background="#FF3E4251" CornerRadius="5" Padding="3,0" Margin="1,0,0,0">
-                                        <TextBlock x:Name="HeaderCalendarCount" Text="0" FontSize="8" Foreground="White" FontWeight="Bold"/>
+                                        <TextBlock x:Name="HeaderCalendarCount" Text="0" FontSize="7.5" Foreground="White" FontWeight="Bold"/>
+                                    </Border>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Pestaña Focus / Pomodoro -->
+                            <Button x:Name="TabPomodoroButton"
+                                    Click="TabPomodoroButton_Click"
+                                    CornerRadius="8"
+                                    Padding="5,2"
+                                    Height="21"
+                                    Background="Transparent"
+                                    BorderThickness="0">
+                                <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                    <TextBlock Text="🍅" FontSize="8" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="TabPomodoroLabel" Text="Focus" FontSize="8.5" Foreground="#FFA0A5B2" FontWeight="Medium"/>
+                                    <Border x:Name="HeaderPomodoroBadge" Background="#FF3E4251" CornerRadius="5" Padding="3,0" Margin="1,0,0,0">
+                                        <TextBlock x:Name="HeaderPomodoroCount" Text="0" FontSize="7.5" Foreground="White" FontWeight="Bold"/>
                                     </Border>
                                 </StackPanel>
                             </Button>
@@ -555,6 +587,115 @@
                                 </Button>
                             </Grid>
                         </Grid>
+                    </Grid>
+                </Grid>
+
+                <!-- ================= VISTA 4: TEMPORIZADOR POMODORO / DEEP WORK ================= -->
+                <Grid x:Name="PomodoroView" Grid.Row="2" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Fila 0: Selector de Modo [ 🎯 Trabajo (25m) | ☕ Pausa (5m) | 🌴 Largo (15m) ] + Conteo -->
+                    <Grid Grid.Row="0" Margin="0,0,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Border Background="#1AFFFFFF" CornerRadius="8" Padding="2" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="1">
+                                <Button x:Name="PomoModeWorkBtn" Click="PomoModeWorkBtn_Click" CornerRadius="6" Padding="6,2" Height="20" Background="#FF2A2D37" BorderThickness="0">
+                                    <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                        <TextBlock Text="🎯" FontSize="8"/>
+                                        <TextBlock x:Name="PomoModeWorkLabel" Text="Trabajo (25m)" FontSize="8.5" Foreground="White" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="PomoModeShortBtn" Click="PomoModeShortBtn_Click" CornerRadius="6" Padding="6,2" Height="20" Background="Transparent" BorderThickness="0">
+                                    <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                        <TextBlock Text="☕" FontSize="8"/>
+                                        <TextBlock x:Name="PomoModeShortLabel" Text="Pausa (5m)" FontSize="8.5" Foreground="#FFA0A5B2"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="PomoModeLongBtn" Click="PomoModeLongBtn_Click" CornerRadius="6" Padding="6,2" Height="20" Background="Transparent" BorderThickness="0">
+                                    <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                        <TextBlock Text="🌴" FontSize="8"/>
+                                        <TextBlock x:Name="PomoModeLongLabel" Text="Largo (15m)" FontSize="8.5" Foreground="#FFA0A5B2"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Contador de pomodoros completados hoy -->
+                        <Border Grid.Column="1" Background="#20EF5350" CornerRadius="6" Padding="6,2" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                <TextBlock Text="🍅" FontSize="8.5"/>
+                                <TextBlock x:Name="PomodoroCompletedCountLabel" Text="0 hoy" FontSize="8.5" FontWeight="Bold" Foreground="#FFEF5350"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Fila 1: Display del Temporizador Central + Barra de Progreso + Vínculo a Backlog -->
+                    <Grid Grid.Row="1" Margin="0,2,0,4">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Tiempo en formato grande y elegante con estado -->
+                        <StackPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,0,0,2">
+                            <TextBlock x:Name="PomodoroTimerDisplay" Text="25:00" FontSize="30" FontWeight="Bold" Foreground="#FFF5F5F7" HorizontalAlignment="Center" Margin="0,-4,0,-4"/>
+                            <TextBlock x:Name="PomodoroStateSubtitle" Text="Sesión de Concentración" FontSize="9" Foreground="#FFA0A5B2" HorizontalAlignment="Center"/>
+                        </StackPanel>
+
+                        <!-- Barra de progreso sutil del intervalo -->
+                        <Grid x:Name="PomodoroTrackGrid" Grid.Row="1" Height="4" Margin="24,2,24,4" SizeChanged="PomodoroTrackGrid_SizeChanged">
+                            <Border Background="#FF252833" CornerRadius="2"/>
+                            <Border x:Name="PomodoroProgressBar" Background="#FFEF5350" CornerRadius="2" HorizontalAlignment="Left" Width="0"/>
+                        </Grid>
+
+                        <!-- Vínculo a tarea de Backlog -->
+                        <Grid Grid.Row="2" ColumnSpacing="6" Margin="14,1,14,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="🎯 Tarea:" FontSize="8.5" Foreground="#FFA0A5B2" VerticalAlignment="Center"/>
+                            <ComboBox x:Name="PomoTaskLinkCombo" Grid.Column="1" Height="22" FontSize="8.5" PlaceholderText="Seleccionar tarea del backlog..." Background="#FF1A1C23" BorderBrush="#FF2F3342" CornerRadius="4" HorizontalAlignment="Stretch" SelectionChanged="PomoTaskLinkCombo_SelectionChanged"/>
+                        </Grid>
+                    </Grid>
+
+                    <!-- Fila 2: Botones de Control (Play/Pause, Reset, Skip) -->
+                    <Grid Grid.Row="2" Margin="0,2,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Botón Reiniciar -->
+                        <Button x:Name="PomoResetBtn" Grid.Column="0" Click="PomoResetBtn_Click" Height="23" Padding="8,0" CornerRadius="5" Background="#FF20232C" BorderThickness="1" BorderBrush="#FF323645" HorizontalAlignment="Right" Margin="0,0,8,0">
+                            <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                <FontIcon Glyph="&#xE72C;" FontSize="8" Foreground="#FFA0A5B2"/>
+                                <TextBlock Text="Reiniciar" FontSize="8.5" Foreground="#FFA0A5B2"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Botón Principal Play / Pause -->
+                        <Button x:Name="PomoPlayPauseBtn" Grid.Column="1" Click="PomoPlayPauseBtn_Click" Width="34" Height="34" CornerRadius="17" Background="#FFEF5350" Foreground="White" BorderThickness="0" HorizontalAlignment="Center">
+                            <FontIcon x:Name="PomoPlayPauseIcon" Glyph="&#xE768;" FontSize="12" FontWeight="Bold"/>
+                        </Button>
+
+                        <!-- Botón Saltar Intervalo -->
+                        <Button x:Name="PomoSkipBtn" Grid.Column="2" Click="PomoSkipBtn_Click" Height="23" Padding="8,0" CornerRadius="5" Background="#FF20232C" BorderThickness="1" BorderBrush="#FF323645" HorizontalAlignment="Left" Margin="8,0,0,0">
+                            <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                <TextBlock Text="Saltar" FontSize="8.5" Foreground="#FFA0A5B2"/>
+                                <FontIcon Glyph="&#xE893;" FontSize="8" Foreground="#FFA0A5B2"/>
+                            </StackPanel>
+                        </Button>
                     </Grid>
                 </Grid>
             </Grid>
