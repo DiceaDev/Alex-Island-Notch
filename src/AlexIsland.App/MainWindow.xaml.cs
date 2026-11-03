@@ -1429,6 +1429,7 @@ public sealed partial class MainWindow : Window
     private void UpdateTimeline()
     {
         if (_isDisposed || _mediaSession is null) return;
+        SyncTimelineSnapshot();
         var currentPosition = GetCurrentPosition();
         ElapsedText.Text = FormatTime(currentPosition);
 
