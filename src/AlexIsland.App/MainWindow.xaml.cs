@@ -1162,31 +1162,39 @@ public sealed partial class MainWindow : Window
     private async Task AttachCurrentSessionAsync()
     {
         if (_isDisposed || _mediaManager is null) return;
-        var next = _mediaManager.GetCurrentSession();
 
-        if (!ReferenceEquals(next, _mediaSession))
+        try
         {
-            DetachMediaSession();
-            _mediaSession = next;
-            _mediaSessionGeneration++;
-
-            if (_mediaSession is not null)
+            var next = _mediaManager.GetCurrentSession();
+            if (!ReferenceEquals(next, _mediaSession))
             {
-                _mediaSession.MediaPropertiesChanged += MediaSession_MediaPropertiesChanged;
-                _mediaSession.PlaybackInfoChanged += MediaSession_PlaybackInfoChanged;
-                _mediaSession.TimelinePropertiesChanged += MediaSession_TimelinePropertiesChanged;
+                DetachMediaSession();
+                _mediaSession = next;
+                _mediaSessionGeneration++;
+
+                if (_mediaSession is not null)
+                {
+                    _mediaSession.MediaPropertiesChanged += MediaSession_MediaPropertiesChanged;
+                    _mediaSession.PlaybackInfoChanged += MediaSession_PlaybackInfoChanged;
+                    _mediaSession.TimelinePropertiesChanged += MediaSession_TimelinePropertiesChanged;
+                }
             }
-        }
 
-        var session = _mediaSession;
-        var generation = _mediaSessionGeneration;
-        if (session is null)
+            var session = _mediaSession;
+            var generation = _mediaSessionGeneration;
+            if (session is null)
+            {
+                SetNoMediaSession();
+                return;
+            }
+
+            await RefreshMediaAsync(session, generation);
+        }
+        catch (Exception ex)
         {
-            SetNoMediaSession();
-            return;
+            if (!_isDisposed)
+                ShowSyncStatus($"No se pudo cambiar la sesión multimedia: {ex.Message}", isError: true);
         }
-
-        await RefreshMediaAsync(session, generation);
     }
 
     private void DetachMediaSession()
@@ -1536,10 +1544,17 @@ public sealed partial class MainWindow : Window
 
         try
         {
-            await command(session);
+            var succeeded = await command(session);
             if (_isDisposed || !ReferenceEquals(session, _mediaSession) ||
                 generation != _mediaSessionGeneration)
                 return;
+
+            if (!succeeded)
+            {
+                ShowSyncStatus(errorMessage, isError: true);
+                return;
+            }
+
             UpdatePlaybackState(session);
         }
         catch (Exception ex)
