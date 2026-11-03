@@ -74,7 +74,7 @@ public static class IcsCalendarHelper
                     hasStart &&
                     hasEnd &&
                     !string.IsNullOrWhiteSpace(current.Title) &&
-                    current.EndTime > current.StartTime)
+                    (current.IsAllDay ? current.EndTime.Date >= current.StartTime.Date : current.EndTime > current.StartTime))
                 {
                     current.MeetingUrl ??= CalendarEvent.TryExtractMeetingUrl(current.Description)
                                            ?? CalendarEvent.TryExtractMeetingUrl(current.Location);
