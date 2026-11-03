@@ -50,6 +50,16 @@ internal static class NativeMethods
     }
 
     [DllImport("user32.dll", SetLastError = true)]
+    private static extern uint GetDpiForWindow(nint hwnd);
+
+    internal static double GetScaleFactor(nint hwnd)
+    {
+        if (hwnd == 0) return 1.0;
+        var dpi = GetDpiForWindow(hwnd);
+        return dpi >= 48 ? dpi / 96.0 : 1.0;
+    }
+
+    [DllImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GetCursorPos(out NativePoint point);
 
