@@ -12,14 +12,14 @@ public static class IcsCalendarHelper
         sb.AppendLine("BEGIN:VCALENDAR");
         sb.AppendLine("VERSION:2.0");
         sb.AppendLine("PRODID:-//AlexIsland//NotchCalendar//ES");
-        sb.AppendLine($"X-WR-CALNAME:{calendarName}");
+        sb.AppendLine($"X-WR-CALNAME:{EscapeIcs(calendarName)}");
         sb.AppendLine("CALSCALE:GREGORIAN");
         sb.AppendLine("METHOD:PUBLISH");
 
         foreach (var ev in events)
         {
             sb.AppendLine("BEGIN:VEVENT");
-            sb.AppendLine($"UID:{ev.Id}@alexisland.local");
+            sb.AppendLine($"UID:{EscapeIcs(ev.Id)}@alexisland.local");
             sb.AppendLine($"DTSTAMP:{DateTime.UtcNow:yyyyMMddTHHmmssZ}");
 
             if (ev.IsAllDay)
@@ -34,27 +34,10 @@ public static class IcsCalendarHelper
             }
 
             sb.AppendLine($"SUMMARY:{EscapeIcs(ev.Title)}");
-
-            if (!string.IsNullOrWhiteSpace(ev.Description))
-            {
-                sb.AppendLine($"DESCRIPTION:{EscapeIcs(ev.Description)}");
-            }
-
-            if (!string.IsNullOrWhiteSpace(ev.Location))
-            {
-                sb.AppendLine($"LOCATION:{EscapeIcs(ev.Location)}");
-            }
-
-            if (!string.IsNullOrWhiteSpace(ev.MeetingUrl))
-            {
-                sb.AppendLine($"URL:{ev.MeetingUrl}");
-            }
-
-            if (!string.IsNullOrWhiteSpace(ev.Category))
-            {
-                sb.AppendLine($"CATEGORIES:{ev.Category}");
-            }
-
+            if (!string.IsNullOrWhiteSpace(ev.Description)) sb.AppendLine($"DESCRIPTION:{EscapeIcs(ev.Description)}");
+            if (!string.IsNullOrWhiteSpace(ev.Location)) sb.AppendLine($"LOCATION:{EscapeIcs(ev.Location)}");
+            if (!string.IsNullOrWhiteSpace(ev.MeetingUrl)) sb.AppendLine($"URL:{ev.MeetingUrl}");
+            if (!string.IsNullOrWhiteSpace(ev.Category)) sb.AppendLine($"CATEGORIES:{EscapeIcs(ev.Category)}");
             sb.AppendLine("END:VEVENT");
         }
 
@@ -67,26 +50,37 @@ public static class IcsCalendarHelper
         var results = new List<CalendarEvent>();
         if (string.IsNullOrWhiteSpace(icsContent)) return results;
 
-        var lines = UnfoldIcsLines(icsContent);
         CalendarEvent? current = null;
+        var hasStart = false;
+        var hasEnd = false;
+        var invalidDate = false;
 
-        foreach (var rawLine in lines)
+        foreach (var rawLine in UnfoldIcsLines(icsContent))
         {
             var line = rawLine.Trim();
             if (line.Equals("BEGIN:VEVENT", StringComparison.OrdinalIgnoreCase))
             {
                 current = new CalendarEvent { Source = defaultSource };
+                hasStart = false;
+                hasEnd = false;
+                invalidDate = false;
                 continue;
             }
 
             if (line.Equals("END:VEVENT", StringComparison.OrdinalIgnoreCase))
             {
-                if (current is not null && !string.IsNullOrWhiteSpace(current.Title))
+                if (current is not null &&
+                    !invalidDate &&
+                    hasStart &&
+                    hasEnd &&
+                    !string.IsNullOrWhiteSpace(current.Title) &&
+                    current.EndTime > current.StartTime)
                 {
                     current.MeetingUrl ??= CalendarEvent.TryExtractMeetingUrl(current.Description)
                                            ?? CalendarEvent.TryExtractMeetingUrl(current.Location);
                     results.Add(current);
                 }
+
                 current = null;
                 continue;
             }
@@ -98,14 +92,21 @@ public static class IcsCalendarHelper
 
             var keyPart = line[..colonIdx];
             var valuePart = line[(colonIdx + 1)..];
-
-            var paramIdx = keyPart.IndexOf(';');
-            var propName = (paramIdx > 0 ? keyPart[..paramIdx] : keyPart).ToUpperInvariant();
+            var segments = keyPart.Split(';');
+            var propName = segments[0].ToUpperInvariant();
+            var tzid = segments
+                .Skip(1)
+                .FirstOrDefault(p => p.StartsWith("TZID=", StringComparison.OrdinalIgnoreCase))?
+                .Substring(5)
+                .Trim('"');
 
             switch (propName)
             {
                 case "UID":
-                    if (!string.IsNullOrWhiteSpace(valuePart)) current.Id = valuePart.Replace("@alexisland.local", "");
+                    if (!string.IsNullOrWhiteSpace(valuePart))
+                        current.Id = valuePart.EndsWith("@alexisland.local", StringComparison.Ordinal)
+                            ? valuePart[..^"@alexisland.local".Length]
+                            : valuePart;
                     break;
                 case "SUMMARY":
                     current.Title = UnescapeIcs(valuePart);
@@ -120,14 +121,27 @@ public static class IcsCalendarHelper
                     current.MeetingUrl = valuePart.Trim();
                     break;
                 case "CATEGORIES":
-                    current.Category = valuePart.Split(',')[0].Trim().ToUpperInvariant();
+                    current.Category = UnescapeIcs(valuePart.Split(',')[0]).Trim().ToUpperInvariant();
                     break;
                 case "DTSTART":
-                    current.StartTime = ParseIcsDateTime(valuePart, out var isAllDay);
-                    current.IsAllDay = isAllDay;
-                    break;
                 case "DTEND":
-                    current.EndTime = ParseIcsDateTime(valuePart, out _);
+                    if (!TryParseIcsDateTime(valuePart, tzid, out var parsed, out var isAllDay))
+                    {
+                        invalidDate = true;
+                        break;
+                    }
+
+                    if (propName == "DTSTART")
+                    {
+                        current.StartTime = parsed;
+                        current.IsAllDay = isAllDay;
+                        hasStart = true;
+                    }
+                    else
+                    {
+                        current.EndTime = parsed;
+                        hasEnd = true;
+                    }
                     break;
             }
         }
@@ -135,58 +149,67 @@ public static class IcsCalendarHelper
         return results;
     }
 
-    private static DateTimeOffset ParseIcsDateTime(string value, out bool isAllDay)
+    private static bool TryParseIcsDateTime(
+        string value,
+        string? timeZoneId,
+        out DateTimeOffset result,
+        out bool isAllDay)
     {
+        result = default;
         isAllDay = false;
         var clean = value.Trim();
 
-        if (clean.Length == 8 && DateTime.TryParseExact(clean, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dateOnly))
+        if (DateTime.TryParseExact(clean, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dateOnly))
         {
             isAllDay = true;
-            return new DateTimeOffset(dateOnly, TimeSpan.Zero);
+            result = new DateTimeOffset(DateTime.SpecifyKind(dateOnly.Date, DateTimeKind.Unspecified), TimeSpan.Zero);
+            return true;
         }
 
-        if (DateTimeOffset.TryParseExact(clean, "yyyyMMddTHHmmssZ", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var dtUtc))
+        var formats = new[] { "yyyyMMdd'T'HHmmss'Z'", "yyyyMMdd'T'HHmm'Z'", "yyyyMMdd'T'HHmmss", "yyyyMMdd'T'HHmm" };
+        if (!DateTime.TryParseExact(clean, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
+            return false;
+
+        if (clean.EndsWith('Z'))
         {
-            return dtUtc.ToLocalTime();
+            result = new DateTimeOffset(DateTime.SpecifyKind(parsed, DateTimeKind.Utc));
+            return true;
         }
 
-        if (DateTimeOffset.TryParseExact(clean, "yyyyMMddTHHmmss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var dtLocal))
+        parsed = DateTime.SpecifyKind(parsed, DateTimeKind.Unspecified);
+        TimeZoneInfo zone;
+        try
         {
-            return dtLocal;
+            zone = string.IsNullOrWhiteSpace(timeZoneId)
+                ? TimeZoneInfo.Local
+                : TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
         }
-
-        if (DateTimeOffset.TryParseExact(clean, "yyyyMMddTHHmmZ", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var dtUtcShort))
+        catch (TimeZoneNotFoundException)
         {
-            return dtUtcShort.ToLocalTime();
+            return false;
         }
-
-        if (DateTimeOffset.TryParseExact(clean, "yyyyMMddTHHmm", CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var dtLocalShort))
+        catch (InvalidTimeZoneException)
         {
-            return dtLocalShort;
+            return false;
         }
 
-        if (DateTimeOffset.TryParse(clean, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dtParsed))
-        {
-            return dtParsed;
-        }
+        if (zone.IsInvalidTime(parsed)) return false;
 
-        return DateTimeOffset.Now;
+        var offset = zone.GetUtcOffset(parsed);
+        result = new DateTimeOffset(parsed, offset);
+        return true;
     }
 
     private static List<string> UnfoldIcsLines(string ics)
     {
-        var rawLines = ics.Replace("\r\n", "\n").Split('\n');
+        var rawLines = ics.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
         var unfolded = new List<string>();
 
         foreach (var line in rawLines)
         {
             if (line.StartsWith(' ') || line.StartsWith('\t'))
             {
-                if (unfolded.Count > 0)
-                {
-                    unfolded[^1] += line[1..];
-                }
+                if (unfolded.Count > 0) unfolded[^1] += line[1..];
             }
             else
             {
@@ -218,4 +241,3 @@ public static class IcsCalendarHelper
             .Replace(@"\\", @"\");
     }
 }
-
