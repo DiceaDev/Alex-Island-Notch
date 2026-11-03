@@ -1909,7 +1909,7 @@ public sealed partial class MainWindow : Window
 
     private async void UpcomingBannerJoinBtn_Click(object sender, RoutedEventArgs e)
     {
-        if (!string.IsNullOrWhiteSpace(_upcomingMeetingUrl) && Uri.TryCreate(_upcomingMeetingUrl, UriKind.Absolute, out var uri))
+        if (TryGetSafeMeetingUri(_upcomingMeetingUrl, out var uri))
         {
             try
             {
@@ -2037,7 +2037,7 @@ public sealed partial class MainWindow : Window
         container.Children.Clear();
 
         var dayEvents = _events
-            .Where(e => e.StartTime.Date == targetDate)
+            .Where(e => e.StartTime.Date <= targetDate && e.EndTime.Date >= targetDate)
             .OrderBy(e => e.StartTime)
             .ToList();
 
@@ -2087,7 +2087,9 @@ public sealed partial class MainWindow : Window
                 VerticalAlignment = VerticalAlignment.Center,
                 Child = new TextBlock
                 {
-                    Text = ev.IsAllDay ? "Todo el día" : $"{ev.StartTime:HH:mm}-{ev.EndTime:HH:mm}",
+                    Text = ev.IsAllDay
+                        ? (ev.StartTime.Date == ev.EndTime.Date ? "Todo el día" : $"Todo el día · {ev.StartTime:dd/MM}-{ev.EndTime:dd/MM}")
+                        : (ev.StartTime.Date == ev.EndTime.Date ? $"{ev.StartTime:HH:mm}-{ev.EndTime:HH:mm}" : $"{ev.StartTime:dd/MM HH:mm} → {ev.EndTime:dd/MM HH:mm}"),
                     FontSize = 8.5,
                     FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                     Foreground = ev.IsHappeningNow()
@@ -2210,7 +2212,7 @@ public sealed partial class MainWindow : Window
                 };
                 joinBtn.Click += async (_, _) =>
                 {
-                    if (Uri.TryCreate(ev.MeetingUrl, UriKind.Absolute, out var uri))
+                    if (TryGetSafeMeetingUri(ev.MeetingUrl, out var uri))
                     {
                         try { await Windows.System.Launcher.LaunchUriAsync(uri); } catch { }
                     }
@@ -2371,7 +2373,7 @@ public sealed partial class MainWindow : Window
             var thisDate = new DateTime(_selectedMonth.Year, _selectedMonth.Month, day);
             var isToday = thisDate == DateTime.Today;
             var isSelected = thisDate == _selectedCalendarDate.Date;
-            var dayEvents = _events.Where(e => e.StartTime.Date == thisDate).ToList();
+            var dayEvents = _events.Where(e => e.StartTime.Date <= thisDate && e.EndTime.Date >= thisDate).ToList();
 
             var cellBtn = new Button
             {
@@ -2572,17 +2574,40 @@ public sealed partial class MainWindow : Window
         start = DateTimeOffset.MinValue;
         end = DateTimeOffset.MinValue;
 
-        if (!DateTime.TryParse(FormEventDate.Text, out var date)) return false;
-        if (!TimeSpan.TryParse(FormStartTime.Text, out var startTime)) return false;
-        if (!TimeSpan.TryParse(FormEndTime.Text, out var endTime)) return false;
+        if (!DateTime.TryParseExact(FormEventDate.Text.Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+            return false;
+        if (!TimeSpan.TryParseExact(FormStartTime.Text.Trim(), @"hh\:mm", CultureInfo.InvariantCulture, out var startTime))
+            return false;
+        if (!TimeSpan.TryParseExact(FormEndTime.Text.Trim(), @"hh\:mm", CultureInfo.InvariantCulture, out var endTime))
+            return false;
+        if (startTime < TimeSpan.Zero || startTime >= TimeSpan.FromDays(1) || endTime < TimeSpan.Zero || endTime >= TimeSpan.FromDays(1))
+            return false;
 
-        var startDt = date.Date + startTime;
-        var endDt = date.Date + endTime;
-        if (endDt <= startDt) endDt = startDt.AddMinutes(30);
+        var zone = TimeZoneInfo.Local;
+        var startLocal = DateTime.SpecifyKind(date.Date + startTime, DateTimeKind.Unspecified);
+        var endLocal = DateTime.SpecifyKind(date.Date + endTime, DateTimeKind.Unspecified);
+        if (endLocal <= startLocal || zone.IsInvalidTime(startLocal) || zone.IsInvalidTime(endLocal))
+            return false;
 
-        start = new DateTimeOffset(startDt, DateTimeOffset.Now.Offset);
-        end = new DateTimeOffset(endDt, DateTimeOffset.Now.Offset);
-        return true;
+        static DateTimeOffset ConvertLocal(DateTime local, TimeZoneInfo timeZone)
+        {
+            var offset = timeZone.IsAmbiguousTime(local)
+                ? timeZone.GetAmbiguousTimeOffsets(local).Max()
+                : timeZone.GetUtcOffset(local);
+            return new DateTimeOffset(local, offset);
+        }
+
+        start = ConvertLocal(startLocal, zone);
+        end = ConvertLocal(endLocal, zone);
+        return end > start;
+    }
+
+    private static bool TryGetSafeMeetingUri(string? value, out Uri uri)
+    {
+        uri = null!;
+        return Uri.TryCreate(value, UriKind.Absolute, out var parsed)
+            && (parsed.Scheme == Uri.UriSchemeHttps || parsed.Scheme == Uri.UriSchemeHttp)
+            && (uri = parsed) is not null;
     }
 
     private async void FormSaveBtn_Click(object sender, RoutedEventArgs e)
@@ -2592,11 +2617,16 @@ public sealed partial class MainWindow : Window
 
         if (!TryParseFormTimes(out var start, out var end))
         {
-            start = _selectedCalendarDate;
-            end = _selectedCalendarDate.AddMinutes(30);
+            ShowSyncStatus("Revisa la fecha y las horas: deben ser válidas y la hora de término debe ser posterior al inicio.", isError: true);
+            return;
         }
 
         var meetingUrl = FormMeetingUrl.Text.Trim();
+        if (!string.IsNullOrWhiteSpace(meetingUrl) && !TryGetSafeMeetingUri(meetingUrl, out _))
+        {
+            ShowSyncStatus("El enlace de reunión debe comenzar con http:// o https://.", isError: true);
+            return;
+        }
         if (string.IsNullOrWhiteSpace(meetingUrl))
         {
             meetingUrl = CalendarEvent.TryExtractMeetingUrl(title) ?? string.Empty;
