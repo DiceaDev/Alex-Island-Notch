@@ -1858,8 +1858,9 @@ public sealed partial class MainWindow : Window
             CheckUpcomingMeetings();
             RenderCalendarView();
         }
-        catch
+        catch (Exception ex)
         {
+            ShowSyncStatus($"No se pudo cargar el calendario: {ex.Message}", isError: true);
         }
     }
 
@@ -2877,8 +2878,9 @@ public sealed partial class MainWindow : Window
             SetPomodoroMode(PomodoroMode.Work, resetTimer: true);
             UpdatePomodoroUI();
         }
-        catch
+        catch (Exception ex)
         {
+            ShowSyncStatus($"No se pudo cargar Pomodoro: {ex.Message}", isError: true);
         }
     }
 
