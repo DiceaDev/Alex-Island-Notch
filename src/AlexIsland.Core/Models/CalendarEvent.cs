@@ -46,11 +46,15 @@ public sealed partial class CalendarEvent
 
     public bool HasConflictWith(CalendarEvent other)
     {
-        if (Id == other.Id) return false;
+        if (other is null || string.Equals(Id, other.Id, StringComparison.Ordinal)) return false;
 
         if (IsAllDay || other.IsAllDay)
         {
-            return StartTime.Date == other.StartTime.Date;
+            var thisStart = StartTime.Date;
+            var thisEnd = (IsAllDay ? EndTime.Date : EndTime.Date);
+            var otherStart = other.StartTime.Date;
+            var otherEnd = other.EndTime.Date;
+            return thisStart <= otherEnd && thisEnd >= otherStart;
         }
 
         return StartTime < other.EndTime && EndTime > other.StartTime;
@@ -59,11 +63,14 @@ public sealed partial class CalendarEvent
     public bool IsHappeningNow()
     {
         var now = DateTimeOffset.Now;
-        return now >= StartTime && now <= EndTime;
+        if (IsAllDay)
+            return now.Date >= StartTime.Date && now.Date <= EndTime.Date;
+        return now >= StartTime && now < EndTime;
     }
 
     public bool IsStartingSoon(TimeSpan threshold)
     {
+        if (IsAllDay) return false;
         var now = DateTimeOffset.Now;
         return StartTime > now && (StartTime - now) <= threshold;
     }
