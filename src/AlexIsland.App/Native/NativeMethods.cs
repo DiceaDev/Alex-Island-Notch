@@ -54,9 +54,9 @@ internal static class NativeMethods
 
     internal static double GetScaleFactor(nint hwnd)
     {
-        if (hwnd == 0) return 1.0;
+        if (hwnd == 0) return 0.0;
         var dpi = GetDpiForWindow(hwnd);
-        return dpi >= 48 ? dpi / 96.0 : 1.0;
+        return dpi >= 48 ? dpi / 96.0 : 0.0;
     }
 
     [DllImport("user32.dll", SetLastError = true)]
