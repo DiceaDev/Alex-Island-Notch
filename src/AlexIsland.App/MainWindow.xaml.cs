@@ -1474,8 +1474,9 @@ public sealed partial class MainWindow : Window
             _tasks.AddRange(loaded);
             UpdateBacklogUI();
         }
-        catch
+        catch (Exception ex)
         {
+            ShowSyncStatus($"No se pudo cargar el backlog: {ex.Message}", isError: true);
         }
     }
 
