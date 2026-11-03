@@ -25,17 +25,38 @@
                   HorizontalAlignment="Left"
                   VerticalAlignment="Top"/>
 
-            <!-- Contenido compacto con estilo exacto de Mac -->
-            <Grid x:Name="CompactContent" Margin="18,0,18,0" Height="36">
+            <!-- Modo 1: Resting (Ojitos interactivos estilo mascota robot de Nusa) -->
+            <Grid x:Name="RestingContent" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center" Height="32">
+                <StackPanel Orientation="Horizontal" Spacing="9" VerticalAlignment="Center">
+                    <Border x:Name="LeftEye" Width="6" Height="9" Background="White" CornerRadius="3">
+                        <Border.RenderTransform>
+                            <ScaleTransform x:Name="LeftEyeScale" CenterX="3" CenterY="4.5"/>
+                        </Border.RenderTransform>
+                    </Border>
+                    <Border x:Name="RightEye" Width="6" Height="9" Background="White" CornerRadius="3">
+                        <Border.RenderTransform>
+                            <ScaleTransform x:Name="RightEyeScale" CenterX="3" CenterY="4.5"/>
+                        </Border.RenderTransform>
+                    </Border>
+                </StackPanel>
+            </Grid>
+
+            <!-- Modo 2: Closed (Contenido compacto con anillo de progreso circular estilo Nusa) -->
+            <Grid x:Name="CompactContent" Margin="14,0,14,0" Height="36">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" Margin="2,0,0,0">
-                    <Ellipse x:Name="StatusDot" Width="7" Height="7" Fill="#FF00E676" VerticalAlignment="Center"/>
-                    
+                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                    <!-- Anillo de progreso circular en vivo estilo Nusa -->
+                    <Grid Width="16" Height="16" VerticalAlignment="Center" Margin="1,0,2,0">
+                        <Ellipse Width="14" Height="14" Stroke="#26FFFFFF" StrokeThickness="2" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Path x:Name="CompactProgressArc" Stroke="#FF00E676" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Ellipse x:Name="CompactCenterDot" Width="4" Height="4" Fill="#FF00E676" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Grid>
+
                     <!-- Badge de Pomodoro / Focus activo en modo compacto -->
                     <Border x:Name="CompactPomodoroBadge"
                             Visibility="Collapsed"
@@ -82,7 +103,7 @@
 
                 <TextBlock x:Name="CompactClock"
                            Grid.Column="1"
-                           Text="17:43"
+                           Text="13:40"
                            Foreground="#FFF5F5F7"
                            FontSize="12"
                            FontWeight="SemiBold"
@@ -95,6 +116,36 @@
                     <Border x:Name="WaveBar3" Width="2" Height="14" Background="#FF00E676" CornerRadius="1"/>
                     <Border x:Name="WaveBar4" Width="2" Height="7" Background="#FF00E676" CornerRadius="1"/>
                 </StackPanel>
+            </Grid>
+
+            <!-- Modo 3: Peek (Notificación emergente de Hardware / Auriculares / Batería estilo Nusa) -->
+            <Grid x:Name="PeekContent" Visibility="Collapsed" Margin="14,0,14,0" Height="40" VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Izquierda: Anillo de batería/estado con icono Bluetooth/Rayo -->
+                <Grid Grid.Column="0" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0">
+                    <Ellipse Width="22" Height="22" Stroke="#2AFFFFFF" StrokeThickness="2" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <Path x:Name="PeekProgressArc" Stroke="#FF42A5F5" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <FontIcon x:Name="PeekIcon" Glyph="&#xE702;" FontSize="9.5" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Grid>
+
+                <!-- Centro-Izquierda: Título y subtítulo -->
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                    <TextBlock x:Name="PeekTitle" Text="AirBuds Pro" FontSize="11" FontWeight="SemiBold" Foreground="White" TextTrimming="CharacterEllipsis" MaxLines="1"/>
+                    <TextBlock x:Name="PeekSubtitle" Text="Connected · 70%" FontSize="8.5" Foreground="#FFA0A5B2" TextTrimming="CharacterEllipsis" MaxLines="1"/>
+                </StackPanel>
+
+                <!-- Derecha: Icono de periférico con ondas concéntricas de sonido -->
+                <Grid Grid.Column="2" Width="26" Height="26" VerticalAlignment="Center">
+                    <Ellipse x:Name="PeekRippleOuter" Width="26" Height="26" Stroke="#2242A5F5" StrokeThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <Ellipse x:Name="PeekRippleInner" Width="20" Height="20" Stroke="#4442A5F5" StrokeThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <Ellipse Width="16" Height="16" Fill="#1A42A5F5" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <FontIcon x:Name="PeekRightIcon" Glyph="&#xE7F6;" FontSize="9" Foreground="#FF42A5F5" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Grid>
             </Grid>
 
             <!-- Contenido expandido sutil, compacto y elegante estilo Dynamic Island de Mac -->
@@ -116,6 +167,11 @@
                         <Ellipse Width="6" Height="6" Fill="#FF00E676"/>
                         <TextBlock x:Name="HeaderClock" Text="mar 3 nov · 09:14"
                                    Foreground="#FFA0A5B2" FontSize="10.5" FontWeight="Medium"/>
+                        <!-- Botón de vista previa de Peek de Hardware (AirBuds Pro / Auriculares) -->
+                        <Button x:Name="DemoPeekBtn" Click="DemoPeekBtn_Click" ToolTipService.ToolTip="Probar Peek AirBuds Pro"
+                                Width="18" Height="18" Padding="0" Margin="4,0,0,0" Background="Transparent" BorderThickness="0">
+                            <FontIcon Glyph="&#xE7F6;" FontSize="8.5" Foreground="#FF42A5F5"/>
+                        </Button>
                     </StackPanel>
 
                     <!-- Selector segmentado tipo pestaña estilo Dynamic Island -->

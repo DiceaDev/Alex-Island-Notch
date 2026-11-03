@@ -36,14 +36,39 @@ public sealed partial class MainWindow : Window
         Month
     }
 
+    private enum NotchDisplayMode
+    {
+        Resting,
+        Closed,
+        Peek,
+        Expanded
+    }
+
+    public enum HardwarePeekType
+    {
+        Headphones,
+        Charging,
+        Battery,
+        CapsLock,
+        Custom
+    }
+
     private const int NotchWidth = 196;
     private const int NotchHeight = 36;
+    private const int RestingWidth = 146;
+    private const int RestingHeight = 32;
+    private const int PeekWidth = 280;
+    private const int PeekHeight = 40;
     private const int ExpandedWidth = 440;
     private const int ExpandedHeight = 118;
     private const int ExpandedBacklogHeight = 188;
     private const int ExpandedCalendarHeight = 226;
     private const int ExpandedPomodoroHeight = 188;
     private const double EarRadius = 12.0;
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern short GetKeyState(int nVirtKey);
+    private const int VK_CAPITAL = 0x14;
 
     private static readonly string[] AvailableTags = ["TODO", "FEAT", "FIX", "REFACTOR", "DOCS"];
     private static readonly string[] EventCategories = ["MEETING", "DEV", "REVIEW", "PLANNING", "GENERAL"];
@@ -56,7 +81,17 @@ public sealed partial class MainWindow : Window
     private readonly DispatcherQueueTimer _waveformTimer;
     private readonly DispatcherQueueTimer _reminderTimer;
     private readonly DispatcherQueueTimer _pomodoroTimer;
+    private readonly DispatcherQueueTimer _blinkTimer;
+    private readonly DispatcherQueueTimer _capsLockTimer;
+    private readonly DispatcherQueueTimer _idleTimer;
+    private DispatcherQueueTimer? _peekTimer;
     private readonly Random _random = new();
+
+    // Estado de visualización y hardware de la isla
+    private NotchDisplayMode _currentDisplayMode = NotchDisplayMode.Closed;
+    private bool _isPeekActive;
+    private bool _isRecentInteraction = true;
+    private bool _lastCapsLockState;
 
     // Módulo Backlog
     private readonly DevTaskStore _taskStore = new();
@@ -155,6 +190,69 @@ public sealed partial class MainWindow : Window
         _pomodoroTimer.IsRepeating = true;
         _pomodoroTimer.Tick += (_, _) => PomodoroTimer_Tick();
 
+        // Ojitos parpadeantes para modo Resting
+        _blinkTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
+        _blinkTimer.Interval = TimeSpan.FromSeconds(3.5);
+        _blinkTimer.IsRepeating = true;
+        _blinkTimer.Tick += (_, _) => TriggerEyeBlink();
+
+        // Monitor de tecla Bloq Mayús (Caps Lock)
+        _capsLockTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
+        _capsLockTimer.Interval = TimeSpan.FromMilliseconds(220);
+        _capsLockTimer.IsRepeating = true;
+        _capsLockTimer.Tick += (_, _) => CheckCapsLockState();
+        _capsLockTimer.Start();
+
+        // Inactividad para entrar suavemente al modo Resting
+        _idleTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
+        _idleTimer.Interval = TimeSpan.FromSeconds(5);
+        _idleTimer.IsRepeating = false;
+        _idleTimer.Tick += (_, _) =>
+        {
+            _idleTimer.Stop();
+            if (!_isPlaying && _pomodoroState != PomodoroState.Running && !_isExpanded && !_isPeekActive)
+            {
+                _isRecentInteraction = false;
+                ApplyIslandState();
+            }
+        };
+
+        // Monitoreo de estado de batería / cargador de Windows
+        try
+        {
+            Windows.System.Power.PowerManager.BatteryStatusChanged += (_, _) =>
+            {
+                DispatcherQueue.TryEnqueue(() =>
+                {
+                    var isCharging = Windows.System.Power.PowerManager.BatteryStatus == Windows.System.Power.BatteryStatus.Charging;
+                    var pct = Windows.System.Power.PowerManager.RemainingChargePercent;
+                    ShowHardwarePeek(
+                        isCharging ? HardwarePeekType.Charging : HardwarePeekType.Battery,
+                        isCharging ? "Cargador conectado" : "Batería en uso",
+                        isCharging ? $"Cargando · {pct}%" : $"{pct}% restante",
+                        percent01: pct / 100.0);
+                });
+            };
+        }
+        catch { }
+
+        // Monitoreo de salida de audio / auriculares
+        try
+        {
+            Windows.Media.Devices.MediaDevice.DefaultAudioRenderDeviceChanged += (_, _) =>
+            {
+                DispatcherQueue.TryEnqueue(() =>
+                {
+                    ShowHardwarePeek(
+                        HardwarePeekType.Headphones,
+                        "Auriculares",
+                        "Dispositivo de audio conectado",
+                        percent01: 0.85);
+                });
+            };
+        }
+        catch { }
+
         UpdateClock();
         ApplyIslandState();
         _ = InitializeMediaAsync();
@@ -184,6 +282,11 @@ public sealed partial class MainWindow : Window
         _waveformTimer.Stop();
         _reminderTimer.Stop();
         _pomodoroTimer.Stop();
+        _blinkTimer.Stop();
+        _capsLockTimer.Stop();
+        _idleTimer.Stop();
+        _peekTimer?.Stop();
+        _syncStatusTimer?.Stop();
         if (_mediaManager is not null)
         {
             _mediaManager.CurrentSessionChanged -= MediaManager_CurrentSessionChanged;
@@ -194,6 +297,8 @@ public sealed partial class MainWindow : Window
     private void IslandContainer_PointerEntered(object sender, PointerRoutedEventArgs e)
     {
         _collapseTimer.Stop();
+        _idleTimer.Stop();
+        _isRecentInteraction = true;
         if (_isPointerInside) return;
         _isPointerInside = true;
         ApplyIslandState();
@@ -205,6 +310,9 @@ public sealed partial class MainWindow : Window
         _isPointerInside = false;
         _collapseTimer.Stop();
         _collapseTimer.Start();
+
+        _idleTimer.Stop();
+        _idleTimer.Start();
     }
 
     private void CollapseTimer_Tick(DispatcherQueueTimer sender, object args)
@@ -249,22 +357,49 @@ public sealed partial class MainWindow : Window
     private void ApplyIslandState()
     {
         var wasExpanded = _isExpanded;
+        var previousMode = _currentDisplayMode;
+
         _isExpanded = _isPinned || _isPointerInside;
 
-        CompactContent.Visibility = _isExpanded ? Visibility.Collapsed : Visibility.Visible;
-        ExpandedContent.Visibility = _isExpanded ? Visibility.Visible : Visibility.Collapsed;
-        ExpandedContent.Opacity = _isExpanded ? 1 : 0;
+        if (_isExpanded)
+        {
+            _currentDisplayMode = NotchDisplayMode.Expanded;
+        }
+        else if (_isPeekActive)
+        {
+            _currentDisplayMode = NotchDisplayMode.Peek;
+        }
+        else if (_isPlaying || _pomodoroState == PomodoroState.Running || _isRecentInteraction)
+        {
+            _currentDisplayMode = NotchDisplayMode.Closed;
+        }
+        else
+        {
+            _currentDisplayMode = NotchDisplayMode.Resting;
+        }
 
-        var width = _isExpanded ? ExpandedWidth : NotchWidth;
-        var height = _isExpanded
-            ? (_activeTab switch
-            {
-                IslandTab.Calendar => ExpandedCalendarHeight,
-                IslandTab.Backlog => ExpandedBacklogHeight,
-                IslandTab.Pomodoro => ExpandedPomodoroHeight,
-                _ => ExpandedHeight
-            })
-            : NotchHeight;
+        RestingContent.Visibility = _currentDisplayMode == NotchDisplayMode.Resting ? Visibility.Visible : Visibility.Collapsed;
+        CompactContent.Visibility = _currentDisplayMode == NotchDisplayMode.Closed ? Visibility.Visible : Visibility.Collapsed;
+        PeekContent.Visibility = _currentDisplayMode == NotchDisplayMode.Peek ? Visibility.Visible : Visibility.Collapsed;
+        ExpandedContent.Visibility = _currentDisplayMode == NotchDisplayMode.Expanded ? Visibility.Visible : Visibility.Collapsed;
+        ExpandedContent.Opacity = _currentDisplayMode == NotchDisplayMode.Expanded ? 1 : 0;
+
+        var (width, height) = _currentDisplayMode switch
+        {
+            NotchDisplayMode.Resting => (RestingWidth, RestingHeight),
+            NotchDisplayMode.Closed => (NotchWidth, NotchHeight),
+            NotchDisplayMode.Peek => (PeekWidth, PeekHeight),
+            NotchDisplayMode.Expanded => (
+                ExpandedWidth,
+                _activeTab switch
+                {
+                    IslandTab.Calendar => ExpandedCalendarHeight,
+                    IslandTab.Backlog => ExpandedBacklogHeight,
+                    IslandTab.Pomodoro => ExpandedPomodoroHeight,
+                    _ => ExpandedHeight
+                }),
+            _ => (NotchWidth, NotchHeight)
+        };
 
         IslandContainer.Width = width;
         IslandContainer.Height = height;
@@ -273,11 +408,27 @@ public sealed partial class MainWindow : Window
         ResizeIsland(width, height);
         PositionAtTopCenter();
 
-        if (_isExpanded)
+        if (_currentDisplayMode == NotchDisplayMode.Resting)
+        {
+            _blinkTimer?.Start();
+        }
+        else
+        {
+            _blinkTimer?.Stop();
+        }
+
+        if (_isExpanded || _currentDisplayMode == NotchDisplayMode.Closed)
         {
             _clockTimer.Start();
             UpdateClock();
+        }
+        else
+        {
+            _clockTimer.Stop();
+        }
 
+        if (_isExpanded)
+        {
             if (_activeTab == IslandTab.Media)
             {
                 _timelineTimer.Start();
@@ -294,11 +445,13 @@ public sealed partial class MainWindow : Window
         }
         else
         {
-            _clockTimer.Stop();
             _timelineTimer.Stop();
         }
 
-        if (wasExpanded != _isExpanded) AnimateIsland(_isExpanded);
+        if (wasExpanded != _isExpanded || previousMode != _currentDisplayMode)
+        {
+            AnimateIsland(_isExpanded, _currentDisplayMode);
+        }
     }
 
     private void UpdateNotchGeometry(double width, double height)
@@ -306,7 +459,7 @@ public sealed partial class MainWindow : Window
         if (width <= 0 || height <= 0) return;
 
         var earRadius = EarRadius;
-        var bottomRadius = _isExpanded ? 18.0 : 16.0;
+        var bottomRadius = _isExpanded ? 18.0 : (_currentDisplayMode == NotchDisplayMode.Resting ? 13.0 : 16.0);
         var bodyWidth = width - 2 * earRadius;
         if (bodyWidth <= 0) bodyWidth = width;
 
@@ -448,27 +601,30 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private void AnimateIsland(bool expanding)
+    private void AnimateIsland(bool expanding, NotchDisplayMode mode = NotchDisplayMode.Expanded)
     {
         _activeAnimation?.Stop();
         var storyboard = new Storyboard();
 
+        var isPeek = mode == NotchDisplayMode.Peek;
+        var durationMs = expanding ? 270 : (isPeek ? 240 : 180);
+
         // Expansión y contracción elástica estilo Apple Dynamic Island (Spring / BackEase)
         var scaleX = new DoubleAnimation
         {
-            From = expanding ? 0.90 : 1.0,
-            To = expanding ? 1.0 : 0.94,
-            Duration = TimeSpan.FromMilliseconds(expanding ? 270 : 170),
-            EasingFunction = expanding
+            From = (expanding || isPeek) ? 0.90 : 1.0,
+            To = (expanding || isPeek) ? 1.0 : 0.94,
+            Duration = TimeSpan.FromMilliseconds(durationMs),
+            EasingFunction = (expanding || isPeek)
                 ? new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.22 }
                 : new CubicEase { EasingMode = EasingMode.EaseIn }
         };
         var scaleY = new DoubleAnimation
         {
-            From = expanding ? 0.85 : 1.0,
-            To = expanding ? 1.0 : 0.90,
-            Duration = TimeSpan.FromMilliseconds(expanding ? 270 : 170),
-            EasingFunction = expanding
+            From = (expanding || isPeek) ? 0.85 : 1.0,
+            To = (expanding || isPeek) ? 1.0 : 0.90,
+            Duration = TimeSpan.FromMilliseconds(durationMs),
+            EasingFunction = (expanding || isPeek)
                 ? new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.22 }
                 : new CubicEase { EasingMode = EasingMode.EaseIn }
         };
@@ -479,7 +635,7 @@ public sealed partial class MainWindow : Window
         storyboard.Children.Add(scaleX);
         storyboard.Children.Add(scaleY);
 
-        if (expanding)
+        if (mode == NotchDisplayMode.Expanded)
         {
             var fade = new DoubleAnimation
             {
@@ -492,9 +648,253 @@ public sealed partial class MainWindow : Window
             Storyboard.SetTargetProperty(fade, "Opacity");
             storyboard.Children.Add(fade);
         }
+        else if (mode == NotchDisplayMode.Peek)
+        {
+            AnimateViewEntrance(PeekContent);
+        }
 
         _activeAnimation = storyboard;
         storyboard.Begin();
+    }
+
+    private void TriggerEyeBlink()
+    {
+        if (_currentDisplayMode != NotchDisplayMode.Resting) return;
+
+        var sb = new Storyboard();
+
+        var blinkY = new DoubleAnimationUsingKeyFrames();
+        blinkY.KeyFrames.Add(new DiscreteDoubleKeyFrame { KeyTime = TimeSpan.Zero, Value = 1.0 });
+        blinkY.KeyFrames.Add(new LinearDoubleKeyFrame { KeyTime = TimeSpan.FromMilliseconds(60), Value = 0.1 });
+        blinkY.KeyFrames.Add(new LinearDoubleKeyFrame { KeyTime = TimeSpan.FromMilliseconds(140), Value = 1.0 });
+
+        Storyboard.SetTarget(blinkY, LeftEyeScale);
+        Storyboard.SetTargetProperty(blinkY, "ScaleY");
+        sb.Children.Add(blinkY);
+
+        var blinkRightY = new DoubleAnimationUsingKeyFrames();
+        blinkRightY.KeyFrames.Add(new DiscreteDoubleKeyFrame { KeyTime = TimeSpan.Zero, Value = 1.0 });
+        blinkRightY.KeyFrames.Add(new LinearDoubleKeyFrame { KeyTime = TimeSpan.FromMilliseconds(60), Value = 0.1 });
+        blinkRightY.KeyFrames.Add(new LinearDoubleKeyFrame { KeyTime = TimeSpan.FromMilliseconds(140), Value = 1.0 });
+
+        Storyboard.SetTarget(blinkRightY, RightEyeScale);
+        Storyboard.SetTargetProperty(blinkRightY, "ScaleY");
+        sb.Children.Add(blinkRightY);
+
+        sb.Begin();
+
+        if (_blinkTimer is not null)
+        {
+            _blinkTimer.Interval = TimeSpan.FromMilliseconds(_random.Next(3000, 6000));
+        }
+    }
+
+    private void UpdateCompactProgress(double progress01, Windows.UI.Color? color = null)
+    {
+        progress01 = Math.Clamp(progress01, 0.0, 1.0);
+        var strokeColor = color ?? ColorHelper.FromArgb(255, 0, 230, 118);
+        CompactProgressArc.Stroke = new SolidColorBrush(strokeColor);
+        CompactCenterDot.Fill = new SolidColorBrush(strokeColor);
+
+        if (progress01 <= 0.02)
+        {
+            CompactProgressArc.Data = null;
+            CompactCenterDot.Visibility = Visibility.Visible;
+            return;
+        }
+
+        CompactCenterDot.Visibility = Visibility.Collapsed;
+        var angle = Math.Min(progress01 * 360.0, 359.9);
+        var rad = (angle - 90.0) * Math.PI / 180.0;
+        var cx = 7.0;
+        var cy = 7.0;
+        var r = 6.0;
+
+        var startX = 7.0;
+        var startY = 1.0;
+        var endX = cx + r * Math.Cos(rad);
+        var endY = cy + r * Math.Sin(rad);
+
+        var figure = new PathFigure
+        {
+            StartPoint = new Windows.Foundation.Point(startX, startY),
+            IsClosed = false,
+            IsFilled = false
+        };
+
+        figure.Segments.Add(new ArcSegment
+        {
+            Point = new Windows.Foundation.Point(endX, endY),
+            Size = new Windows.Foundation.Size(r, r),
+            IsLargeArc = angle > 180.0,
+            SweepDirection = SweepDirection.Clockwise
+        });
+
+        var geo = new PathGeometry();
+        geo.Figures.Add(figure);
+        CompactProgressArc.Data = geo;
+    }
+
+    private void UpdatePeekProgress(double progress01, Windows.UI.Color color)
+    {
+        progress01 = Math.Clamp(progress01, 0.0, 1.0);
+        PeekProgressArc.Stroke = new SolidColorBrush(color);
+
+        if (progress01 <= 0.01)
+        {
+            PeekProgressArc.Data = null;
+            return;
+        }
+
+        var angle = Math.Min(progress01 * 360.0, 359.9);
+        var rad = (angle - 90.0) * Math.PI / 180.0;
+        var cx = 11.0;
+        var cy = 11.0;
+        var r = 10.0;
+
+        var startX = 11.0;
+        var startY = 1.0;
+        var endX = cx + r * Math.Cos(rad);
+        var endY = cy + r * Math.Sin(rad);
+
+        var figure = new PathFigure
+        {
+            StartPoint = new Windows.Foundation.Point(startX, startY),
+            IsClosed = false,
+            IsFilled = false
+        };
+
+        figure.Segments.Add(new ArcSegment
+        {
+            Point = new Windows.Foundation.Point(endX, endY),
+            Size = new Windows.Foundation.Size(r, r),
+            IsLargeArc = angle > 180.0,
+            SweepDirection = SweepDirection.Clockwise
+        });
+
+        var geo = new PathGeometry();
+        geo.Figures.Add(figure);
+        PeekProgressArc.Data = geo;
+    }
+
+    public void ShowHardwarePeek(
+        HardwarePeekType type,
+        string title,
+        string subtitle,
+        double percent01 = 1.0,
+        string? rightGlyph = null,
+        Windows.UI.Color? accentColor = null)
+    {
+        if (_isExpanded) return;
+
+        _isPeekActive = true;
+        _isRecentInteraction = true;
+
+        PeekTitle.Text = title;
+        PeekSubtitle.Text = subtitle;
+
+        var (iconGlyph, defaultRightGlyph, defaultColor) = type switch
+        {
+            HardwarePeekType.Headphones => ("\uE702", "\uE7F6", ColorHelper.FromArgb(255, 66, 165, 245)),
+            HardwarePeekType.Charging => ("\uE945", "\uE83E", ColorHelper.FromArgb(255, 0, 230, 118)),
+            HardwarePeekType.Battery => ("\uE850", "\uE7BA", ColorHelper.FromArgb(255, 255, 167, 38)),
+            HardwarePeekType.CapsLock => ("\uE765", "\uE72E", ColorHelper.FromArgb(255, 171, 71, 188)),
+            _ => ("\uE702", "\uE7F6", ColorHelper.FromArgb(255, 66, 165, 245))
+        };
+
+        var color = accentColor ?? defaultColor;
+        PeekIcon.Glyph = iconGlyph;
+        PeekRightIcon.Glyph = rightGlyph ?? defaultRightGlyph;
+        PeekRightIcon.Foreground = new SolidColorBrush(color);
+        PeekRippleInner.Stroke = new SolidColorBrush(color) { Opacity = 0.4 };
+        PeekRippleOuter.Stroke = new SolidColorBrush(color) { Opacity = 0.2 };
+
+        UpdatePeekProgress(percent01, color);
+        TriggerPeekRippleAnimation();
+
+        ApplyIslandState();
+
+        _peekTimer?.Stop();
+        _peekTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
+        _peekTimer.Interval = TimeSpan.FromSeconds(3.5);
+        _peekTimer.IsRepeating = false;
+        _peekTimer.Tick += (_, _) =>
+        {
+            _peekTimer.Stop();
+            _isPeekActive = false;
+            ApplyIslandState();
+        };
+        _peekTimer.Start();
+    }
+
+    private void TriggerPeekRippleAnimation()
+    {
+        var sb = new Storyboard();
+        var rippleAnim = new DoubleAnimation
+        {
+            From = 0.85,
+            To = 1.15,
+            Duration = TimeSpan.FromMilliseconds(650),
+            AutoReverse = true,
+            RepeatBehavior = new RepeatBehavior(3),
+            EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+        };
+
+        if (PeekRippleOuter.RenderTransform is not ScaleTransform stOuter)
+        {
+            stOuter = new ScaleTransform { CenterX = 13, CenterY = 13 };
+            PeekRippleOuter.RenderTransform = stOuter;
+        }
+
+        Storyboard.SetTarget(rippleAnim, stOuter);
+        Storyboard.SetTargetProperty(rippleAnim, "ScaleX");
+        sb.Children.Add(rippleAnim);
+
+        var rippleY = new DoubleAnimation
+        {
+            From = 0.85,
+            To = 1.15,
+            Duration = TimeSpan.FromMilliseconds(650),
+            AutoReverse = true,
+            RepeatBehavior = new RepeatBehavior(3),
+            EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+        };
+        Storyboard.SetTarget(rippleY, stOuter);
+        Storyboard.SetTargetProperty(rippleY, "ScaleY");
+        sb.Children.Add(rippleY);
+
+        sb.Begin();
+    }
+
+    private void CheckCapsLockState()
+    {
+        try
+        {
+            var isCaps = (GetKeyState(VK_CAPITAL) & 0x0001) != 0;
+            if (isCaps != _lastCapsLockState)
+            {
+                _lastCapsLockState = isCaps;
+                ShowHardwarePeek(
+                    HardwarePeekType.CapsLock,
+                    "Bloq Mayús",
+                    isCaps ? "ACTIVADO" : "DESACTIVADO",
+                    percent01: isCaps ? 1.0 : 0.0);
+            }
+        }
+        catch { }
+    }
+
+    private void DemoPeekBtn_Click(object sender, RoutedEventArgs e)
+    {
+        _isPinned = false;
+        _isPointerInside = false;
+        ApplyIslandState();
+
+        ShowHardwarePeek(
+            HardwarePeekType.Headphones,
+            "AirBuds Pro",
+            "Connected · 70%",
+            percent01: 0.70);
     }
 
     private static void AnimateViewEntrance(FrameworkElement view)
@@ -871,6 +1271,11 @@ public sealed partial class MainWindow : Window
                 var ratio = Math.Clamp(currentPosition.TotalSeconds / _duration.TotalSeconds, 0, 1);
                 var trackWidth = ProgressBarTrack.ActualWidth;
                 ProgressFill.Width = Math.Max(0, trackWidth) * ratio;
+
+                if (_pomodoroState != PomodoroState.Running)
+                {
+                    UpdateCompactProgress(ratio, ColorHelper.FromArgb(255, 0, 230, 118));
+                }
             }
             else
             {
@@ -2427,10 +2832,21 @@ public sealed partial class MainWindow : Window
                 : ColorHelper.FromArgb(255, 0, 230, 118);
             CompactPomodoroText.Foreground = new SolidColorBrush(color);
             CompactPomodoroBadge.BorderBrush = new SolidColorBrush(color);
+
+            if (_pomodoroTotalDuration > TimeSpan.Zero)
+            {
+                var elapsedSeconds = (_pomodoroTotalDuration - _pomodoroRemaining).TotalSeconds;
+                var ratio = Math.Clamp(elapsedSeconds / _pomodoroTotalDuration.TotalSeconds, 0, 1);
+                UpdateCompactProgress(ratio, color);
+            }
         }
         else
         {
             CompactPomodoroBadge.Visibility = Visibility.Collapsed;
+            if (!_isPlaying)
+            {
+                UpdateCompactProgress(0.0);
+            }
         }
     }
 
