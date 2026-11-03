@@ -139,7 +139,7 @@ public static class IcsCalendarHelper
                     }
                     else
                     {
-                        current.EndTime = current.IsAllDay && isAllDay ? parsed.AddDays(-1) : parsed;
+                        current.EndTime = isAllDay ? parsed.AddDays(-1) : parsed;
                         hasEnd = true;
                     }
                     break;
