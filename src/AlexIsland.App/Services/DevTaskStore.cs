@@ -24,16 +24,16 @@ public sealed class DevTaskStore
         {
             if (!File.Exists(_filePath))
             {
-                return GetDefaultTasks();
+                return [];
             }
 
             await using var stream = File.OpenRead(_filePath);
             var items = await JsonSerializer.DeserializeAsync<List<DevTask>>(stream, JsonOptions, cancellationToken);
-            return items ?? GetDefaultTasks();
+            return items ?? [];
         }
         catch
         {
-            return GetDefaultTasks();
+            return [];
         }
         finally
         {
@@ -82,23 +82,5 @@ public sealed class DevTaskStore
         return sb.ToString();
     }
 
-    private static List<DevTask> GetDefaultTasks()
-    {
-        return
-        [
-            new DevTask
-            {
-                Title = "Revisar backlog de programación",
-                Category = "FEAT",
-                IsCompleted = false
-            },
-            new DevTask
-            {
-                Title = "Optimizar consumo y rendimiento",
-                Category = "REFACTOR",
-                IsCompleted = true
-            }
-        ];
-    }
 }
 
