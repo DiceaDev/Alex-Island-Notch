@@ -2745,16 +2745,20 @@ public sealed partial class MainWindow : Window
 
                 var trimmed = text.Trim();
                 if (trimmed.StartsWith("webcal://", StringComparison.OrdinalIgnoreCase) ||
-                    (trimmed.StartsWith("http", StringComparison.OrdinalIgnoreCase) && (trimmed.EndsWith(".ics", StringComparison.OrdinalIgnoreCase) || trimmed.Contains("calendar"))))
+                    (trimmed.StartsWith("https://", StringComparison.OrdinalIgnoreCase) && (trimmed.Contains(".ics", StringComparison.OrdinalIgnoreCase) || trimmed.Contains("calendar", StringComparison.OrdinalIgnoreCase))))
                 {
                     var url = trimmed.StartsWith("webcal://", StringComparison.OrdinalIgnoreCase)
                         ? "https://" + trimmed[9..]
                         : trimmed;
 
+                    if (!Uri.TryCreate(url, UriKind.Absolute, out var calendarUri) || calendarUri.Scheme != Uri.UriSchemeHttps)
+                    {
+                        ShowSyncStatus("Solo se permiten enlaces de calendario HTTPS.", isError: true);
+                        return;
+                    }
+
                     ShowSyncStatus("Descargando calendario desde URL...", isError: false);
-                    using var client = new System.Net.Http.HttpClient();
-                    client.Timeout = TimeSpan.FromSeconds(10);
-                    var downloaded = await client.GetStringAsync(url);
+                    var downloaded = await DownloadCalendarIcsAsync(calendarUri);
                     await ProcessIcsImportAsync(downloaded, "Enlace de Calendario");
                     return;
                 }
@@ -2770,6 +2774,30 @@ public sealed partial class MainWindow : Window
         {
             ShowSyncStatus($"Error al importar: {ex.Message}", isError: true);
         }
+    }
+
+    private static async Task<string> DownloadCalendarIcsAsync(Uri uri, CancellationToken cancellationToken = default)
+    {
+        const int maxBytes = 5 * 1024 * 1024;
+        using var client = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+        using var response = await client.GetAsync(uri, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        if (response.Content.Headers.ContentLength is > maxBytes)
+            throw new InvalidDataException("El calendario supera el límite permitido de 5 MB.");
+
+        await using var input = await response.Content.ReadAsStreamAsync(cancellationToken);
+        using var output = new MemoryStream();
+        var buffer = new byte[81920];
+        int read;
+        while ((read = await input.ReadAsync(buffer, cancellationToken)) > 0)
+        {
+            if (output.Length + read > maxBytes)
+                throw new InvalidDataException("El calendario supera el límite permitido de 5 MB.");
+            await output.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
+        }
+
+        return System.Text.Encoding.UTF8.GetString(output.ToArray());
     }
 
     private async Task ProcessIcsImportAsync(string icsText, string sourceName)
