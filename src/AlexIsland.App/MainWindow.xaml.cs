@@ -208,6 +208,10 @@ public sealed partial class MainWindow : Window
         _blinkTimer.IsRepeating = true;
         _blinkTimer.Tick += (_, _) => TriggerEyeBlink();
 
+        // Capturar el estado real inicial evita mostrar una notificación incorrecta
+        // si la aplicación se inicia con Bloq Mayús ya activado.
+        _lastCapsLockState = (GetKeyState(VK_CAPITAL) & 0x0001) != 0;
+
         // Monitor de tecla Bloq Mayús (Caps Lock)
         _capsLockTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
         _capsLockTimer.Interval = TimeSpan.FromMilliseconds(220);
@@ -952,21 +956,29 @@ public sealed partial class MainWindow : Window
             {
                 _lastCapsKeyWasDown = true;
                 var isToggled = (GetKeyState(VK_CAPITAL) & 0x0001) != 0;
-                var newCaps = !_lastCapsLockState;
-                _lastCapsLockState = newCaps;
 
-                ShowHardwarePeek(
-                    HardwarePeekType.CapsLock,
-                    "Bloq Mayús",
-                    newCaps ? "ACTIVADO" : "DESACTIVADO",
-                    percent01: newCaps ? 1.0 : 0.0);
+                // El bit de alternancia de Windows es la fuente de verdad.
+                // No inferir el estado invirtiendo una copia local: la app puede
+                // iniciarse con Bloq Mayús ya activado o perder una pulsación.
+                if (isToggled != _lastCapsLockState)
+                {
+                    _lastCapsLockState = isToggled;
+                    ShowHardwarePeek(
+                        HardwarePeekType.CapsLock,
+                        "Bloq Mayús",
+                        isToggled ? "ACTIVADO" : "DESACTIVADO",
+                        percent01: isToggled ? 1.0 : 0.0);
+                }
             }
             else if (!isDown)
             {
                 _lastCapsKeyWasDown = false;
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"No se pudo consultar Bloq Mayús: {ex}");
+        }
     }
 
     private void DemoPeekBtn_Click(object sender, RoutedEventArgs e)
