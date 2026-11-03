@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlexIsland.App", "src\AlexI
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlexIsland.Core", "src\AlexIsland.Core\AlexIsland.Core.csproj", "{C7A40F2D-9A91-4F37-9B6A-8D41E6A2F320}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlexIsland.Core.Tests", "tests\AlexIsland.Core.Tests\AlexIsland.Core.Tests.csproj", "{B46E8B17-9B7C-4F45-9D33-5B6A9D7C1021}"
+EndProject
 Global
  GlobalSection(SolutionConfigurationPlatforms) = preSolution
   Debug|Any CPU = Debug|Any CPU
@@ -20,5 +22,9 @@ Global
   {C7A40F2D-9A91-4F37-9B6A-8D41E6A2F320}.Debug|Any CPU.Build.0 = Debug|Any CPU
   {C7A40F2D-9A91-4F37-9B6A-8D41E6A2F320}.Release|Any CPU.ActiveCfg = Release|Any CPU
   {C7A40F2D-9A91-4F37-9B6A-8D41E6A2F320}.Release|Any CPU.Build.0 = Release|Any CPU
+  {B46E8B17-9B7C-4F45-9D33-5B6A9D7C1021}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+  {B46E8B17-9B7C-4F45-9D33-5B6A9D7C1021}.Debug|Any CPU.Build.0 = Debug|Any CPU
+  {B46E8B17-9B7C-4F45-9D33-5B6A9D7C1021}.Release|Any CPU.ActiveCfg = Release|Any CPU
+  {B46E8B17-9B7C-4F45-9D33-5B6A9D7C1021}.Release|Any CPU.Build.0 = Release|Any CPU
  EndGlobalSection
 EndGlobal
