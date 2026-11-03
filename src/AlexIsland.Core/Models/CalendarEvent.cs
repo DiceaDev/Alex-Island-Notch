@@ -51,7 +51,7 @@ public sealed partial class CalendarEvent
         if (IsAllDay || other.IsAllDay)
         {
             var thisStart = StartTime.Date;
-            var thisEnd = (IsAllDay ? EndTime.Date : EndTime.Date);
+            var thisEnd = EndTime.Date;
             var otherStart = other.StartTime.Date;
             var otherEnd = other.EndTime.Date;
             return thisStart <= otherEnd && thisEnd >= otherStart;
