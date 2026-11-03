@@ -322,9 +322,6 @@ public sealed partial class MainWindow : Window
         {
             var width = IslandContainer.Width;
             var height = IslandContainer.Height;
-            var bottomRadius = _isExpanded ? 18.0 :
-                (_currentDisplayMode == NotchDisplayMode.Resting ? 13.0 : 16.0);
-
             UpdateNotchGeometry(width, height);
             ResizeIsland((int)Math.Round(width), (int)Math.Round(height));
             PositionAtTopCenter();
@@ -1144,7 +1141,7 @@ public sealed partial class MainWindow : Window
     {
         if (_isDisposed) return;
 
-        var display = DisplayArea.GetFromWindowId(_appWindow.Id, DisplayAreaFallback.Primary)
+        var display = DisplayArea.GetFromWindowId(_appWindow.Id, DisplayAreaFallback.Nearest)
             ?? DisplayArea.Primary;
         if (display is null) return;
 
