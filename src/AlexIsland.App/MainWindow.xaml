@@ -33,8 +33,24 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center" Margin="2,0,0,0">
+                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" Margin="2,0,0,0">
                     <Ellipse x:Name="StatusDot" Width="7" Height="7" Fill="#FF00E676" VerticalAlignment="Center"/>
+                    
+                    <!-- Badge sutil de reunión próxima en modo compacto -->
+                    <Border x:Name="CompactMeetingBadge"
+                            Visibility="Collapsed"
+                            Background="#FF133322"
+                            BorderBrush="#FF00E676"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Padding="3,1"
+                            VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                            <FontIcon Glyph="&#xE717;" FontSize="7.5" Foreground="#FF00E676"/>
+                            <TextBlock x:Name="CompactMeetingText" Text="10:00" Foreground="#FF00E676" FontSize="8.5" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
                     <!-- Badge sutil de backlog pendiente en modo compacto -->
                     <Border x:Name="CompactTaskBadge"
                             Visibility="Collapsed"
@@ -67,53 +83,73 @@
             </Grid>
 
             <!-- Contenido expandido sutil, compacto y elegante estilo Dynamic Island de Mac -->
-            <Grid x:Name="ExpandedContent" Visibility="Collapsed" Opacity="0" Margin="20,8,20,10">
+            <Grid x:Name="ExpandedContent" Visibility="Collapsed" Opacity="0" Margin="18,6,18,8">
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- Fila 0: Cabecera con fecha/hora y selector por pestañas [ Música | Backlog ] -->
-                <Grid Grid.Row="0" Margin="0,0,0,6">
+                <!-- Fila 0: Cabecera con fecha/hora y selector por pestañas [ Música | Backlog | Calendario ] -->
+                <Grid Grid.Row="0" Margin="0,0,0,5">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
                         <Ellipse Width="6" Height="6" Fill="#FF00E676"/>
                         <TextBlock x:Name="HeaderClock" Text="mar 3 nov · 09:14"
-                                   Foreground="#FFA0A5B2" FontSize="11" FontWeight="Medium"/>
+                                   Foreground="#FFA0A5B2" FontSize="10.5" FontWeight="Medium"/>
                     </StackPanel>
 
                     <!-- Selector segmentado tipo pestaña estilo Dynamic Island -->
-                    <Border Grid.Column="1" Background="#1FFFFFFF" CornerRadius="11" Padding="2" VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal" Spacing="2">
+                    <Border Grid.Column="1" Background="#1FFFFFFF" CornerRadius="10" Padding="2" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="1">
+                            <!-- Pestaña Multimedia -->
                             <Button x:Name="TabMediaButton"
                                     Click="TabMediaButton_Click"
-                                    CornerRadius="9"
-                                    Padding="7,2"
-                                    Height="22"
+                                    CornerRadius="8"
+                                    Padding="6,2"
+                                    Height="21"
                                     Background="#FF2A2D37"
                                     BorderThickness="0">
-                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                    <FontIcon Glyph="&#xE768;" FontSize="9.5" Foreground="White"/>
-                                    <TextBlock x:Name="TabMediaLabel" Text="Música" FontSize="9.5" Foreground="White" FontWeight="Medium"/>
+                                <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                    <FontIcon Glyph="&#xE768;" FontSize="9" Foreground="White"/>
+                                    <TextBlock x:Name="TabMediaLabel" Text="Música" FontSize="9" Foreground="White" FontWeight="Medium"/>
                                 </StackPanel>
                             </Button>
 
+                            <!-- Pestaña Backlog -->
                             <Button x:Name="TabBacklogButton"
                                     Click="TabBacklogButton_Click"
-                                    CornerRadius="9"
-                                    Padding="7,2"
-                                    Height="22"
+                                    CornerRadius="8"
+                                    Padding="6,2"
+                                    Height="21"
                                     Background="Transparent"
                                     BorderThickness="0">
-                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                    <FontIcon Glyph="&#xE756;" FontSize="9.5" Foreground="#FFA0A5B2"/>
-                                    <TextBlock x:Name="TabBacklogLabel" Text="Backlog" FontSize="9.5" Foreground="#FFA0A5B2" FontWeight="Medium"/>
+                                <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                    <FontIcon Glyph="&#xE756;" FontSize="9" Foreground="#FFA0A5B2"/>
+                                    <TextBlock x:Name="TabBacklogLabel" Text="Backlog" FontSize="9" Foreground="#FFA0A5B2" FontWeight="Medium"/>
                                     <Border x:Name="HeaderBacklogBadge" Background="#FF3E4251" CornerRadius="5" Padding="3,0" Margin="1,0,0,0">
-                                        <TextBlock x:Name="HeaderBacklogCount" Text="0" FontSize="8.5" Foreground="White" FontWeight="Bold"/>
+                                        <TextBlock x:Name="HeaderBacklogCount" Text="0" FontSize="8" Foreground="White" FontWeight="Bold"/>
+                                    </Border>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Pestaña Calendario -->
+                            <Button x:Name="TabCalendarButton"
+                                    Click="TabCalendarButton_Click"
+                                    CornerRadius="8"
+                                    Padding="6,2"
+                                    Height="21"
+                                    Background="Transparent"
+                                    BorderThickness="0">
+                                <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                    <FontIcon Glyph="&#xE787;" FontSize="9" Foreground="#FFA0A5B2"/>
+                                    <TextBlock x:Name="TabCalendarLabel" Text="Calendario" FontSize="9" Foreground="#FFA0A5B2" FontWeight="Medium"/>
+                                    <Border x:Name="HeaderCalendarBadge" Background="#FF3E4251" CornerRadius="5" Padding="3,0" Margin="1,0,0,0">
+                                        <TextBlock x:Name="HeaderCalendarCount" Text="0" FontSize="8" Foreground="White" FontWeight="Bold"/>
                                     </Border>
                                 </StackPanel>
                             </Button>
@@ -121,8 +157,35 @@
                     </Border>
                 </Grid>
 
+                <!-- Fila 1: Banner dinámico de reunión próxima o en curso con acceso rápido a videollamada -->
+                <Border x:Name="UpcomingMeetingBanner"
+                        Grid.Row="1"
+                        Visibility="Collapsed"
+                        Background="#FF133322"
+                        BorderBrush="#FF00E676"
+                        BorderThickness="1"
+                        CornerRadius="5"
+                        Padding="6,3"
+                        Margin="0,0,0,5">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Glyph="&#xE717;" FontSize="9.5" Foreground="#FF00E676" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <TextBlock x:Name="UpcomingBannerTitle" Grid.Column="1" Text="Reunión en 5 min" FontSize="9.5" FontWeight="SemiBold" Foreground="White" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                        <Button x:Name="UpcomingBannerJoinBtn" Grid.Column="2" Click="UpcomingBannerJoinBtn_Click" Height="19" Padding="6,0" CornerRadius="4" Background="#FF00E676" Foreground="#FF0A0B0E" BorderThickness="0">
+                            <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                <FontIcon Glyph="&#xE717;" FontSize="8.5" FontWeight="Bold"/>
+                                <TextBlock Text="Unirse" FontSize="8.5" FontWeight="Bold"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </Border>
+
                 <!-- ================= VISTA 1: REPRODUCTOR MULTIMEDIA ================= -->
-                <Grid x:Name="MediaView" Grid.Row="1" Visibility="Visible">
+                <Grid x:Name="MediaView" Grid.Row="2" Visibility="Visible">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
@@ -198,7 +261,7 @@
                 </Grid>
 
                 <!-- ================= VISTA 2: DEV BACKLOG / TO-DO ================= -->
-                <Grid x:Name="BacklogView" Grid.Row="1" Visibility="Collapsed">
+                <Grid x:Name="BacklogView" Grid.Row="2" Visibility="Collapsed">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
@@ -306,6 +369,192 @@
                                 </StackPanel>
                             </Button>
                         </StackPanel>
+                    </Grid>
+                </Grid>
+
+                <!-- ================= VISTA 3: CALENDARIO Y AGENDA DEV ================= -->
+                <Grid x:Name="CalendarView" Grid.Row="2" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Fila 0: Barra superior de submodos [ Agenda | Semana | Mes ] + Navegación + [ + Evento ] + [ 🔄 Sync ] -->
+                    <Grid Grid.Row="0" Margin="0,0,0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Selector de submódo del calendario -->
+                        <Border Background="#1AFFFFFF" CornerRadius="8" Padding="2" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="1">
+                                <Button x:Name="CalSubAgendaBtn" Click="CalSubAgendaBtn_Click" CornerRadius="6" Padding="6,2" Height="20" Background="#FF2A2D37" BorderThickness="0">
+                                    <TextBlock x:Name="CalSubAgendaLabel" Text="Agenda" FontSize="8.5" Foreground="White" FontWeight="SemiBold"/>
+                                </Button>
+                                <Button x:Name="CalSubWeekBtn" Click="CalSubWeekBtn_Click" CornerRadius="6" Padding="6,2" Height="20" Background="Transparent" BorderThickness="0">
+                                    <TextBlock x:Name="CalSubWeekLabel" Text="Semana" FontSize="8.5" Foreground="#FFA0A5B2"/>
+                                </Button>
+                                <Button x:Name="CalSubMonthBtn" Click="CalSubMonthBtn_Click" CornerRadius="6" Padding="6,2" Height="20" Background="Transparent" BorderThickness="0">
+                                    <TextBlock x:Name="CalSubMonthLabel" Text="Mes" FontSize="8.5" Foreground="#FFA0A5B2"/>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Navegación de fecha activa (< Día/Mes >) -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="3" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Button x:Name="CalPrevDateBtn" Click="CalPrevDateBtn_Click" Width="18" Height="18" Padding="0" Background="Transparent" BorderThickness="0">
+                                <FontIcon Glyph="&#xE76B;" FontSize="7.5" Foreground="#FFA0A5B2"/>
+                            </Button>
+                            <TextBlock x:Name="CalCurrentTitleLabel" Text="Hoy" FontSize="10" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center"/>
+                            <Button x:Name="CalNextDateBtn" Click="CalNextDateBtn_Click" Width="18" Height="18" Padding="0" Background="Transparent" BorderThickness="0">
+                                <FontIcon Glyph="&#xE76C;" FontSize="7.5" Foreground="#FFA0A5B2"/>
+                            </Button>
+                        </StackPanel>
+
+                        <!-- Botones de Acción: Nuevo Evento y Sincronización -->
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                            <Button x:Name="CalNewEventBtn" Click="CalNewEventBtn_Click" Height="21" Padding="6,0" CornerRadius="5" Background="#FF00E676" Foreground="#FF0A0B0E" BorderThickness="0">
+                                <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                    <FontIcon Glyph="&#xE710;" FontSize="8.5" FontWeight="Bold"/>
+                                    <TextBlock Text="Evento" FontSize="8.5" FontWeight="Bold"/>
+                                </StackPanel>
+                            </Button>
+                            <Button x:Name="CalSyncBtn" Click="CalSyncBtn_Click" Height="21" Width="21" Padding="0" CornerRadius="5" Background="#FF222530" BorderThickness="1" BorderBrush="#FF323645">
+                                <FontIcon Glyph="&#xE895;" FontSize="9" Foreground="#FFA0A5B2"/>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Fila 1: Área de contenido dinámico (Agenda, Semana o Mes) o Formularios Overlay -->
+                    <Grid Grid.Row="1">
+                        <!-- Panel 1: Agenda Diaria -->
+                        <Grid x:Name="CalAgendaContainer" Visibility="Visible">
+                            <ScrollViewer Height="136" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <StackPanel x:Name="AgendaEventsList" Spacing="3"/>
+                            </ScrollViewer>
+                        </Grid>
+
+                        <!-- Panel 2: Tira Semanal + Agenda del día de la semana -->
+                        <Grid x:Name="CalWeekContainer" Visibility="Collapsed">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <!-- Tira de 7 días de la semana -->
+                            <Grid x:Name="WeekStripGrid" Grid.Row="0" Margin="0,0,0,4"/>
+                            <!-- Lista de eventos del día seleccionado de la semana -->
+                            <ScrollViewer Grid.Row="1" Height="102" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <StackPanel x:Name="WeekEventsList" Spacing="3"/>
+                            </ScrollViewer>
+                        </Grid>
+
+                        <!-- Panel 3: Vista Mensual (Matriz de días) -->
+                        <Grid x:Name="CalMonthContainer" Visibility="Collapsed">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <!-- Encabezados de días (D L M M J V S) -->
+                            <Grid x:Name="MonthDayHeadersGrid" Grid.Row="0" Margin="0,0,0,2"/>
+                            <!-- Cuadrícula interactiva de 7 columnas x 5-6 filas -->
+                            <Grid x:Name="MonthDaysGrid" Grid.Row="1" Height="120"/>
+                        </Grid>
+
+                        <!-- Panel 4: Formulario de Creación / Edición de Evento (Overlay) -->
+                        <Grid x:Name="CalEventFormOverlay" Visibility="Collapsed" Background="#FF161820" CornerRadius="6" Padding="7,5">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Título y categoría -->
+                            <Grid Grid.Row="0" ColumnSpacing="5" Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="FormEventTitle" PlaceholderText="Título del evento o reunión..." Height="24" FontSize="10" Background="#FF1C1F28" Foreground="White" BorderBrush="#FF323645" CornerRadius="4" Padding="5,1"/>
+                                <Button x:Name="FormCategoryBtn" Grid.Column="1" Click="FormCategoryBtn_Click" Height="24" Padding="5,0" CornerRadius="4" Background="#FF222530" BorderThickness="1" BorderBrush="#FF3A3F52">
+                                    <TextBlock x:Name="FormCategoryLabel" Text="MEETING" FontSize="8" FontWeight="Bold" Foreground="#FF42A5F5"/>
+                                </Button>
+                            </Grid>
+
+                            <!-- Fecha, Hora Inicio, Hora Fin -->
+                            <Grid Grid.Row="1" ColumnSpacing="5" Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="FormEventDate" PlaceholderText="YYYY-MM-DD" Height="23" FontSize="9.5" Background="#FF1C1F28" Foreground="White" BorderBrush="#FF323645" CornerRadius="4" Padding="5,1"/>
+                                <TextBox x:Name="FormStartTime" Grid.Column="1" Width="50" PlaceholderText="10:00" Height="23" FontSize="9.5" Background="#FF1C1F28" Foreground="White" BorderBrush="#FF323645" CornerRadius="4" Padding="4,1" TextChanged="FormTime_TextChanged"/>
+                                <TextBox x:Name="FormEndTime" Grid.Column="2" Width="50" PlaceholderText="10:30" Height="23" FontSize="9.5" Background="#FF1C1F28" Foreground="White" BorderBrush="#FF323645" CornerRadius="4" Padding="4,1" TextChanged="FormTime_TextChanged"/>
+                            </Grid>
+
+                            <!-- Enlace videollamada + Vincular con Backlog -->
+                            <Grid Grid.Row="2" ColumnSpacing="5" Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="FormMeetingUrl" PlaceholderText="Link Meet / Teams / Zoom..." Height="23" FontSize="9.5" Background="#FF1C1F28" Foreground="White" BorderBrush="#FF323645" CornerRadius="4" Padding="5,1"/>
+                                <ComboBox x:Name="FormTaskLinkCombo" Grid.Column="1" PlaceholderText="Vincular con backlog..." Height="23" FontSize="9" Background="#FF1C1F28" BorderBrush="#FF323645" CornerRadius="4" HorizontalAlignment="Stretch"/>
+                            </Grid>
+
+                            <!-- Advertencia de Conflicto en vivo + Botones Guardar / Cancelar -->
+                            <Grid Grid.Row="3" Margin="0,1,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="FormConflictWarning" Text="" FontSize="8.5" Foreground="#FFFFA726" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                                    <Button x:Name="FormCancelBtn" Click="FormCancelBtn_Click" Height="21" Padding="7,0" CornerRadius="4" Background="#FF282B36" Foreground="#FFA0A5B2" FontSize="9" BorderThickness="0">
+                                        <TextBlock Text="Cancelar"/>
+                                    </Button>
+                                    <Button x:Name="FormSaveBtn" Click="FormSaveBtn_Click" Height="21" Padding="7,0" CornerRadius="4" Background="#FF00E676" Foreground="#FF0A0B0E" FontSize="9" FontWeight="Bold" BorderThickness="0">
+                                        <TextBlock Text="Guardar"/>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
+
+                        <!-- Panel 5: Diálogo rápido de Sincronización (Google / Outlook / iCal) -->
+                        <Grid x:Name="CalSyncOverlay" Visibility="Collapsed" Background="#FF161820" CornerRadius="6" Padding="9,7">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Sincronización con Outlook y Google Calendar" FontSize="10" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,3"/>
+                            <TextBlock Text="Exporta eventos en formato .ics estándar para abrir en Outlook o importar en Google Calendar, o copia el texto de sincronización." FontSize="8.5" Foreground="#FFA0A5B2" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                            <Grid Grid.Row="2" ColumnSpacing="5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Button x:Name="ExportIcsFileBtn" Click="ExportIcsFileBtn_Click" Height="23" HorizontalAlignment="Stretch" CornerRadius="4" Background="#FF222530" BorderThickness="1" BorderBrush="#FF3A3F52">
+                                    <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                        <FontIcon Glyph="&#xE896;" FontSize="8.5" Foreground="#FF42A5F5"/>
+                                        <TextBlock x:Name="ExportIcsLabel" Text="Abrir en Outlook" FontSize="8.5" Foreground="White"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="CopyIcsBtn" Grid.Column="1" Click="CopyIcsBtn_Click" Height="23" HorizontalAlignment="Stretch" CornerRadius="4" Background="#FF222530" BorderThickness="1" BorderBrush="#FF3A3F52">
+                                    <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                        <FontIcon Glyph="&#xE8C8;" FontSize="8.5" Foreground="#FF00E676"/>
+                                        <TextBlock x:Name="CopyIcsLabel" Text="Copiar .ics (Google)" FontSize="8.5" Foreground="White"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="CloseSyncBtn" Grid.Column="2" Click="CloseSyncBtn_Click" Height="23" Width="23" Padding="0" CornerRadius="4" Background="#FF282B36" BorderThickness="0">
+                                    <FontIcon Glyph="&#xE711;" FontSize="8.5" Foreground="#FFA0A5B2"/>
+                                </Button>
+                            </Grid>
+                        </Grid>
                     </Grid>
                 </Grid>
             </Grid>
