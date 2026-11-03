@@ -121,7 +121,7 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- Fila 2: Barra de progreso sutil con tiempos -->
+                <!-- Fila 2: Barra de progreso sutil con tiempos e interacción para adelantar/retroceder -->
                 <Grid x:Name="ProgressTrack" Grid.Row="2" ColumnSpacing="8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -130,10 +130,11 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock x:Name="ElapsedText" Text="00:00" Foreground="#FF858A96"
                                FontSize="10" VerticalAlignment="Center"/>
-                    <Grid x:Name="ProgressBarTrack" Grid.Column="1" Height="3" VerticalAlignment="Center">
-                        <Border Background="#FF3A3C44" CornerRadius="1.5"/>
-                        <Border x:Name="ProgressFill" Background="#FFFFFFFF"
-                                CornerRadius="1.5" HorizontalAlignment="Left" Width="0"/>
+                    <Grid x:Name="ProgressBarTrack" Grid.Column="1" Height="14" VerticalAlignment="Center"
+                          Background="Transparent" SizeChanged="ProgressBarTrack_SizeChanged" Tapped="ProgressBarTrack_Tapped">
+                        <Border Height="3" Background="#FF3A3C44" CornerRadius="1.5" VerticalAlignment="Center"/>
+                        <Border x:Name="ProgressFill" Height="3" Background="#FFFFFFFF"
+                                CornerRadius="1.5" HorizontalAlignment="Left" Width="0" VerticalAlignment="Center"/>
                     </Grid>
                     <TextBlock x:Name="RemainingText" Grid.Column="2" Text="--:--"
                                Foreground="#FF858A96" FontSize="10" VerticalAlignment="Center"/>

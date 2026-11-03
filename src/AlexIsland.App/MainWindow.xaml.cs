@@ -39,6 +39,12 @@ public sealed partial class MainWindow : Window
     private bool _isPlaying;
     private Storyboard? _activeAnimation;
 
+    // Estado sincronizado del timeline del reproductor
+    private TimeSpan _basePosition = TimeSpan.Zero;
+    private TimeSpan _duration = TimeSpan.Zero;
+    private TimeSpan _lastSmtcPosition = TimeSpan.Zero;
+    private DateTimeOffset _lastPositionSyncTime = DateTimeOffset.UtcNow;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -71,8 +77,9 @@ public sealed partial class MainWindow : Window
         _clockTimer.IsRepeating = true;
         _clockTimer.Tick += (_, _) => UpdateClock();
 
+        // Intervalo de 500ms para actualización suave y en tiempo real del progreso
         _timelineTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
-        _timelineTimer.Interval = TimeSpan.FromSeconds(1);
+        _timelineTimer.Interval = TimeSpan.FromMilliseconds(500);
         _timelineTimer.IsRepeating = true;
         _timelineTimer.Tick += (_, _) => UpdateTimeline();
 
@@ -169,6 +176,7 @@ public sealed partial class MainWindow : Window
             _clockTimer.Start();
             _timelineTimer.Start();
             UpdateClock();
+            SyncTimelineSnapshot();
             UpdateTimeline();
         }
         else
@@ -488,7 +496,13 @@ public sealed partial class MainWindow : Window
         TimelinePropertiesChangedEventArgs args)
     {
         if (!_isDisposed)
-            _ = DispatcherQueue.TryEnqueue(UpdateTimeline);
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                SyncTimelineSnapshot();
+                UpdateTimeline();
+            });
+        }
     }
 
     private async Task RefreshMediaAsync()
@@ -525,6 +539,7 @@ public sealed partial class MainWindow : Window
             }
 
             UpdatePlaybackState();
+            SyncTimelineSnapshot();
             UpdateTimeline();
         }
         catch
@@ -545,6 +560,10 @@ public sealed partial class MainWindow : Window
         RemainingText.Text = "--:--";
         ProgressFill.Width = 0;
         _isPlaying = false;
+        _basePosition = TimeSpan.Zero;
+        _duration = TimeSpan.Zero;
+        _lastSmtcPosition = TimeSpan.Zero;
+        _lastPositionSyncTime = DateTimeOffset.UtcNow;
         _waveformTimer.Stop();
         ResetWaveform();
     }
@@ -560,18 +579,75 @@ public sealed partial class MainWindow : Window
         }
 
         var playback = _mediaSession.GetPlaybackInfo();
+        var wasPlaying = _isPlaying;
         _isPlaying = playback.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing;
         PlayPauseButton.Content = _isPlaying ? "\uE769" : "\uE768";
 
-        if (_isPlaying)
+        if (wasPlaying != _isPlaying)
         {
-            _waveformTimer.Start();
+            if (_isPlaying)
+            {
+                _lastPositionSyncTime = DateTimeOffset.UtcNow;
+                _waveformTimer.Start();
+            }
+            else
+            {
+                _basePosition = GetCurrentPosition();
+                _lastPositionSyncTime = DateTimeOffset.UtcNow;
+                _waveformTimer.Stop();
+                ResetWaveform();
+            }
         }
-        else
+
+        SyncTimelineSnapshot();
+        UpdateTimeline();
+    }
+
+    private void SyncTimelineSnapshot()
+    {
+        if (_mediaSession is null) return;
+        try
         {
-            _waveformTimer.Stop();
-            ResetWaveform();
+            var timeline = _mediaSession.GetTimelineProperties();
+            var duration = timeline.EndTime - timeline.StartTime;
+            if (duration <= TimeSpan.Zero) duration = timeline.EndTime;
+            if (duration > TimeSpan.Zero) _duration = duration;
+
+            var newPos = timeline.Position;
+            if (newPos != _lastSmtcPosition || _lastPositionSyncTime == DateTimeOffset.MinValue)
+            {
+                _lastSmtcPosition = newPos;
+                _basePosition = newPos;
+                if (timeline.LastUpdatedTime > DateTimeOffset.MinValue && timeline.LastUpdatedTime <= DateTimeOffset.Now.AddSeconds(5))
+                {
+                    _lastPositionSyncTime = timeline.LastUpdatedTime;
+                }
+                else
+                {
+                    _lastPositionSyncTime = DateTimeOffset.UtcNow;
+                }
+            }
         }
+        catch
+        {
+        }
+    }
+
+    private TimeSpan GetCurrentPosition()
+    {
+        if (!_isPlaying || _duration <= TimeSpan.Zero)
+        {
+            return _basePosition;
+        }
+
+        var elapsed = DateTimeOffset.UtcNow - _lastPositionSyncTime.ToUniversalTime();
+        if (elapsed < TimeSpan.Zero) elapsed = TimeSpan.Zero;
+        var current = _basePosition + elapsed;
+        if (_duration > TimeSpan.Zero && current > _duration)
+        {
+            current = _duration;
+        }
+        return current;
     }
 
     private void UpdateTimeline()
@@ -579,23 +655,35 @@ public sealed partial class MainWindow : Window
         if (_mediaSession is null) return;
         try
         {
-            var timeline = _mediaSession.GetTimelineProperties();
-            var position = timeline.Position;
-            var duration = timeline.EndTime - timeline.StartTime;
-            if (duration <= TimeSpan.Zero) duration = timeline.EndTime;
-            ElapsedText.Text = FormatTime(position);
-            var remaining = duration - position;
-            RemainingText.Text = remaining > TimeSpan.Zero ? "-" + FormatTime(remaining) : "00:00";
-            var ratio = duration.TotalSeconds > 0
-                ? Math.Clamp(position.TotalSeconds / duration.TotalSeconds, 0, 1)
-                : 0;
-            ProgressFill.Width = Math.Max(0, ProgressBarTrack.ActualWidth) * ratio;
+            SyncTimelineSnapshot();
+
+            var currentPosition = GetCurrentPosition();
+            ElapsedText.Text = FormatTime(currentPosition);
+
+            if (_duration > TimeSpan.Zero)
+            {
+                var remaining = _duration - currentPosition;
+                if (remaining < TimeSpan.Zero) remaining = TimeSpan.Zero;
+                RemainingText.Text = "-" + FormatTime(remaining);
+
+                var ratio = Math.Clamp(currentPosition.TotalSeconds / _duration.TotalSeconds, 0, 1);
+                var trackWidth = ProgressBarTrack.ActualWidth;
+                ProgressFill.Width = Math.Max(0, trackWidth) * ratio;
+            }
+            else
+            {
+                RemainingText.Text = "--:--";
+                ProgressFill.Width = 0;
+            }
         }
-        catch { }
+        catch
+        {
+        }
     }
 
     private static string FormatTime(TimeSpan value)
     {
+        if (value < TimeSpan.Zero) value = TimeSpan.Zero;
         return value.TotalHours >= 1
             ? value.ToString(@"h\:mm\:ss")
             : value.ToString(@"mm\:ss");
@@ -608,6 +696,35 @@ public sealed partial class MainWindow : Window
         var stamp = now.ToString("ddd d MMM · HH:mm", culture);
         HeaderClock.Text = stamp;
         CompactClock.Text = now.ToString("HH:mm");
+    }
+
+    private async void ProgressBarTrack_Tapped(object sender, TappedRoutedEventArgs e)
+    {
+        if (_mediaSession is null || _duration <= TimeSpan.Zero) return;
+        var trackWidth = ProgressBarTrack.ActualWidth;
+        if (trackWidth <= 0) return;
+
+        var point = e.GetPosition(ProgressBarTrack);
+        var ratio = Math.Clamp(point.X / trackWidth, 0, 1);
+        var targetTicks = (long)(_duration.Ticks * ratio);
+        var targetTime = TimeSpan.FromTicks(targetTicks);
+
+        _basePosition = targetTime;
+        _lastPositionSyncTime = DateTimeOffset.UtcNow;
+        UpdateTimeline();
+
+        try
+        {
+            await _mediaSession.TryChangePlaybackPositionAsync(targetTicks);
+        }
+        catch
+        {
+        }
+    }
+
+    private void ProgressBarTrack_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        UpdateTimeline();
     }
 
     private async void PreviousButton_Click(object sender, RoutedEventArgs e)
