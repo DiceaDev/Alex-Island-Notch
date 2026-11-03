@@ -2605,9 +2605,13 @@ public sealed partial class MainWindow : Window
     private static bool TryGetSafeMeetingUri(string? value, out Uri uri)
     {
         uri = null!;
-        return Uri.TryCreate(value, UriKind.Absolute, out var parsed)
-            && (parsed.Scheme == Uri.UriSchemeHttps || parsed.Scheme == Uri.UriSchemeHttp)
-            && (uri = parsed) is not null;
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var parsed))
+            return false;
+        if (parsed.Scheme != Uri.UriSchemeHttps && parsed.Scheme != Uri.UriSchemeHttp)
+            return false;
+
+        uri = parsed;
+        return true;
     }
 
     private async void FormSaveBtn_Click(object sender, RoutedEventArgs e)
