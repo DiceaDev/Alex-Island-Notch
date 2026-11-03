@@ -20,43 +20,18 @@ public sealed class DevTaskStore
     public async Task<List<DevTask>> LoadAsync(CancellationToken cancellationToken = default)
     {
         await _lock.WaitAsync(cancellationToken);
-        try
-        {
-            if (!File.Exists(_filePath))
-            {
-                return [];
-            }
-
-            await using var stream = File.OpenRead(_filePath);
-            var items = await JsonSerializer.DeserializeAsync<List<DevTask>>(stream, JsonOptions, cancellationToken);
-            return items ?? [];
-        }
-        catch
-        {
-            return [];
-        }
-        finally
-        {
-            _lock.Release();
-        }
+        try { return await JsonFilePersistence.LoadAsync(_filePath, static () => new List<DevTask>(), JsonOptions, cancellationToken); }
+        finally { _lock.Release(); }
     }
 
     public async Task SaveAsync(IEnumerable<DevTask> tasks, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(tasks);
+        var snapshot = tasks.ToList();
+        var json = JsonSerializer.SerializeToUtf8Bytes(snapshot, JsonOptions);
         await _lock.WaitAsync(cancellationToken);
-        try
-        {
-            var tempFile = _filePath + ".tmp";
-            await using (var stream = File.Create(tempFile))
-            {
-                await JsonSerializer.SerializeAsync(stream, tasks, JsonOptions, cancellationToken);
-            }
-            File.Move(tempFile, _filePath, overwrite: true);
-        }
-        finally
-        {
-            _lock.Release();
-        }
+        try { await JsonFilePersistence.SaveAsync(_filePath, json, cancellationToken); }
+        finally { _lock.Release(); }
     }
 
     public static string ToMarkdown(IEnumerable<DevTask> tasks)
@@ -64,23 +39,14 @@ public sealed class DevTaskStore
         var sb = new StringBuilder();
         sb.AppendLine($"### 📋 Alex Island - Dev Backlog ({DateTime.Now:yyyy-MM-dd})");
         sb.AppendLine();
-
         var taskList = tasks.ToList();
-        if (taskList.Count == 0)
-        {
-            sb.AppendLine("_Sin tareas pendientes._");
-            return sb.ToString();
-        }
-
+        if (taskList.Count == 0) { sb.AppendLine("_Sin tareas pendientes._"); return sb.ToString(); }
         foreach (var task in taskList)
         {
             var check = task.IsCompleted ? "[x]" : "[ ]";
             var tag = string.IsNullOrWhiteSpace(task.Category) ? "" : $"**[{task.Category}]** ";
             sb.AppendLine($"- {check} {tag}{task.Title}");
         }
-
         return sb.ToString();
     }
-
 }
-
