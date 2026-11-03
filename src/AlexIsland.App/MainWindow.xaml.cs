@@ -1479,6 +1479,25 @@ public sealed partial class MainWindow : Window
         }
     }
 
+
+    private async Task SaveTasksSafelyAsync()
+    {
+        try { await _taskStore.SaveAsync(_tasks.ToList()); }
+        catch (Exception ex) { ShowSyncStatus($"No se pudo guardar el backlog: {ex.Message}", isError: true); }
+    }
+
+    private async Task SaveCalendarSafelyAsync()
+    {
+        try { await _calendarStore.SaveAsync(_events.ToList()); }
+        catch (Exception ex) { ShowSyncStatus($"No se pudo guardar el calendario: {ex.Message}", isError: true); }
+    }
+
+    private async Task SavePomodoroSafelyAsync()
+    {
+        try { await _pomodoroStore.SaveAsync(_pomodoroSettings); }
+        catch (Exception ex) { ShowSyncStatus($"No se pudo guardar Pomodoro: {ex.Message}", isError: true); }
+    }
+
     private void UpdateBacklogUI()
     {
         var pendingCount = _tasks.Count(t => !t.IsCompleted);
@@ -1562,10 +1581,10 @@ public sealed partial class MainWindow : Window
                 checkBtn.Content = null;
             }
 
-            checkBtn.Click += (_, _) =>
+            checkBtn.Click += async (_, _) =>
             {
                 task.IsCompleted = !task.IsCompleted;
-                _ = _taskStore.SaveAsync(_tasks);
+                await SaveTasksSafelyAsync();
                 UpdateBacklogUI();
             };
             Grid.SetColumn(checkBtn, 0);
@@ -1628,10 +1647,10 @@ public sealed partial class MainWindow : Window
                     Foreground = new SolidColorBrush(ColorHelper.FromArgb(140, 133, 138, 150))
                 }
             };
-            deleteBtn.Click += (_, _) =>
+            deleteBtn.Click += async (_, _) =>
             {
                 _tasks.Remove(task);
-                _ = _taskStore.SaveAsync(_tasks);
+                await SaveTasksSafelyAsync();
                 UpdateBacklogUI();
             };
             Grid.SetColumn(deleteBtn, 3);
@@ -1768,7 +1787,7 @@ public sealed partial class MainWindow : Window
         AddTaskFromInput();
     }
 
-    private void AddTaskFromInput()
+    private async void AddTaskFromInput()
     {
         var rawText = NewTaskInput.Text;
         if (string.IsNullOrWhiteSpace(rawText)) return;
@@ -1787,7 +1806,7 @@ public sealed partial class MainWindow : Window
         _tasks.Insert(0, task);
         NewTaskInput.Text = string.Empty;
 
-        _ = _taskStore.SaveAsync(_tasks);
+        await SaveTasksSafelyAsync();
         UpdateBacklogUI();
     }
 
@@ -1816,7 +1835,7 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private void ClearCompletedButton_Click(object sender, RoutedEventArgs e)
+    private async void ClearCompletedButton_Click(object sender, RoutedEventArgs e)
     {
         _tasks.RemoveAll(t => t.IsCompleted);
         _ = _taskStore.SaveAsync(_tasks);
@@ -2218,10 +2237,10 @@ public sealed partial class MainWindow : Window
                 BorderThickness = new Thickness(0),
                 Content = new FontIcon { Glyph = "\uE74D", FontSize = 8, Foreground = new SolidColorBrush(ColorHelper.FromArgb(180, 239, 83, 80)) }
             };
-            deleteBtn.Click += (_, _) =>
+            deleteBtn.Click += async (_, _) =>
             {
                 _events.Remove(ev);
-                _ = _calendarStore.SaveAsync(_events);
+                await SaveCalendarSafelyAsync();
                 UpdateCalendarBadges();
                 CheckUpcomingMeetings();
                 RenderCalendarView();
@@ -2564,7 +2583,7 @@ public sealed partial class MainWindow : Window
         return true;
     }
 
-    private void FormSaveBtn_Click(object sender, RoutedEventArgs e)
+    private async void FormSaveBtn_Click(object sender, RoutedEventArgs e)
     {
         var title = FormEventTitle.Text.Trim();
         if (string.IsNullOrWhiteSpace(title)) return;
@@ -2620,7 +2639,7 @@ public sealed partial class MainWindow : Window
             _events.Add(newEv);
         }
 
-        _ = _calendarStore.SaveAsync(_events);
+        await SaveCalendarSafelyAsync();
         CalEventFormOverlay.Visibility = Visibility.Collapsed;
 
         UpdateCalendarBadges();
@@ -3009,7 +3028,7 @@ public sealed partial class MainWindow : Window
         if (_pomodoroMode == PomodoroMode.Work)
         {
             _pomodoroSettings.CompletedToday++;
-            _ = _pomodoroStore.SaveAsync(_pomodoroSettings);
+            await SavePomodoroSafelyAsync();
 
             // Si se completaron 4 bloques, descanso largo
             if (_pomodoroSettings.CompletedToday % _pomodoroSettings.LongBreakInterval == 0)
