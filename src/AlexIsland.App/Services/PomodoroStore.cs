@@ -21,50 +21,32 @@ public sealed class PomodoroStore
         await _lock.WaitAsync(cancellationToken);
         try
         {
-            if (!File.Exists(_filePath))
-            {
-                var settings = new PomodoroSettings();
-                await SaveInternalAsync(settings, cancellationToken);
-                return settings;
-            }
-
-            await using var stream = File.OpenRead(_filePath);
-            var loaded = await JsonSerializer.DeserializeAsync<PomodoroSettings>(stream, JsonOptions, cancellationToken);
-            var result = loaded ?? new PomodoroSettings();
-            result.CheckDateReset();
-            return result;
+            var settings = await JsonFilePersistence.LoadAsync(_filePath, static () => new PomodoroSettings(), JsonOptions, cancellationToken);
+            Normalize(settings);
+            settings.CheckDateReset();
+            return settings;
         }
-        catch
-        {
-            return new PomodoroSettings();
-        }
-        finally
-        {
-            _lock.Release();
-        }
+        finally { _lock.Release(); }
     }
 
     public async Task SaveAsync(PomodoroSettings settings, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(settings);
+        var snapshot = JsonSerializer.Deserialize<PomodoroSettings>(JsonSerializer.Serialize(settings, JsonOptions), JsonOptions)
+            ?? throw new JsonException("No fue posible crear una copia de la configuración Pomodoro.");
+        Normalize(snapshot);
+        var json = JsonSerializer.SerializeToUtf8Bytes(snapshot, JsonOptions);
         await _lock.WaitAsync(cancellationToken);
-        try
-        {
-            await SaveInternalAsync(settings, cancellationToken);
-        }
-        finally
-        {
-            _lock.Release();
-        }
+        try { await JsonFilePersistence.SaveAsync(_filePath, json, cancellationToken); }
+        finally { _lock.Release(); }
     }
 
-    private async Task SaveInternalAsync(PomodoroSettings settings, CancellationToken cancellationToken)
+    private static void Normalize(PomodoroSettings settings)
     {
-        var tempFile = _filePath + ".tmp";
-        await using (var stream = File.Create(tempFile))
-        {
-            await JsonSerializer.SerializeAsync(stream, settings, JsonOptions, cancellationToken);
-        }
-        File.Move(tempFile, _filePath, overwrite: true);
+        settings.WorkMinutes = Math.Clamp(settings.WorkMinutes, 1, 180);
+        settings.ShortBreakMinutes = Math.Clamp(settings.ShortBreakMinutes, 1, 60);
+        settings.LongBreakMinutes = Math.Clamp(settings.LongBreakMinutes, 1, 120);
+        settings.LongBreakInterval = Math.Clamp(settings.LongBreakInterval, 1, 12);
+        settings.CompletedToday = Math.Max(0, settings.CompletedToday);
     }
 }
-
