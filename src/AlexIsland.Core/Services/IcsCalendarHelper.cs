@@ -105,7 +105,7 @@ public static class IcsCalendarHelper
                 case "UID":
                     if (!string.IsNullOrWhiteSpace(valuePart))
                         current.Id = valuePart.EndsWith("@alexisland.local", StringComparison.Ordinal)
-                            ? valuePart[..^"@alexisland.local".Length]
+                            ? valuePart[..(valuePart.Length - "@alexisland.local".Length)]
                             : valuePart;
                     break;
                 case "SUMMARY":
