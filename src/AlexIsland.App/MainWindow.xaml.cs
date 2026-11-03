@@ -137,6 +137,8 @@ public sealed partial class MainWindow : Window
     private Storyboard? _activeAnimation;
     private long _mediaSessionGeneration;
     private long _mediaRefreshVersion;
+    private XamlRoot? _observedXamlRoot;
+    private bool _isRefreshingWindowGeometry;
 
     // Estado sincronizado del timeline del reproductor
     private TimeSpan _basePosition = TimeSpan.Zero;
@@ -273,13 +275,63 @@ public sealed partial class MainWindow : Window
 
     private void MainWindow_Activated(object sender, WindowActivatedEventArgs args)
     {
+        NativeMethods.ConfigureIslandWindow(_hwnd);
+
+        var currentXamlRoot = IslandContainer.XamlRoot;
+        if (currentXamlRoot is not null && !ReferenceEquals(currentXamlRoot, _observedXamlRoot))
+        {
+            if (_observedXamlRoot is not null)
+                _observedXamlRoot.Changed -= IslandXamlRoot_Changed;
+
+            _observedXamlRoot = currentXamlRoot;
+            _observedXamlRoot.Changed += IslandXamlRoot_Changed;
+        }
+
+        RefreshWindowGeometry();
+    }
+
+    private void IslandXamlRoot_Changed(XamlRoot sender, XamlRootChangedEventArgs args)
+    {
+        if (_isDisposed || _isRefreshingWindowGeometry) return;
+        RefreshWindowGeometry();
+    }
+
+    private double GetWindowScaleFactor()
+    {
+        var nativeScale = NativeMethods.GetScaleFactor(_hwnd);
+        if (nativeScale > 0 && double.IsFinite(nativeScale))
+            return nativeScale;
+
+        var xamlScale = IslandContainer.XamlRoot?.RasterizationScale ?? 1.0;
+        return xamlScale > 0 && double.IsFinite(xamlScale) ? xamlScale : 1.0;
+    }
+
+    private int ToPhysicalPixels(double dipValue)
+    {
+        return Math.Max(1, (int)Math.Round(dipValue * GetWindowScaleFactor()));
+    }
+
+    private void RefreshWindowGeometry()
+    {
+        if (_isDisposed || _isRefreshingWindowGeometry ||
+            IslandContainer.Width <= 0 || IslandContainer.Height <= 0)
+            return;
+
+        _isRefreshingWindowGeometry = true;
         try
         {
-            NativeMethods.ConfigureIslandWindow(_hwnd);
-            UpdateWindowRegion((int)IslandContainer.Width, (int)IslandContainer.Height, EarRadius, _isExpanded ? 18.0 : 16.0);
+            var width = IslandContainer.Width;
+            var height = IslandContainer.Height;
+            var bottomRadius = _isExpanded ? 18.0 :
+                (_currentDisplayMode == NotchDisplayMode.Resting ? 13.0 : 16.0);
+
+            UpdateNotchGeometry(width, height);
+            ResizeIsland((int)Math.Round(width), (int)Math.Round(height));
+            PositionAtTopCenter();
         }
-        catch
+        finally
         {
+            _isRefreshingWindowGeometry = false;
         }
     }
 
@@ -297,6 +349,11 @@ public sealed partial class MainWindow : Window
         _idleTimer.Stop();
         _peekTimer?.Stop();
         _syncStatusTimer?.Stop();
+        if (_observedXamlRoot is not null)
+        {
+            _observedXamlRoot.Changed -= IslandXamlRoot_Changed;
+            _observedXamlRoot = null;
+        }
         if (_mediaManager is not null)
         {
             _mediaManager.CurrentSessionChanged -= MediaManager_CurrentSessionChanged;
@@ -543,55 +600,60 @@ public sealed partial class MainWindow : Window
 
     private void UpdateWindowRegion(int width, int height, double earRadius, double bottomRadius)
     {
-        if (_hwnd == 0) return;
-        var bodyWidth = width - 2 * earRadius;
-        if (bodyWidth <= 0) bodyWidth = width;
+        if (_hwnd == 0 || width <= 0 || height <= 0) return;
+
+        // SetWindowRgn trabaja en píxeles físicos, mientras que la geometría XAML usa DIP.
+        var scale = GetWindowScaleFactor();
+        var widthPx = ToPhysicalPixels(width);
+        var heightPx = ToPhysicalPixels(height);
+        var earRadiusPx = earRadius * scale;
+        var bottomRadiusPx = bottomRadius * scale;
+        var bodyWidthPx = widthPx - 2 * earRadiusPx;
+        if (bodyWidthPx <= 0) bodyWidthPx = widthPx;
+
+        var ear = (int)Math.Round(earRadiusPx);
+        var bottom = (int)Math.Round(bottomRadiusPx);
+        var bodyWidth = (int)Math.Round(bodyWidthPx);
+        var h = heightPx;
 
         var points = new List<NativeMethods.NativePoint>
         {
             new() { X = 0, Y = 0 }
         };
 
-        // Oreja izquierda (cóncava)
         SampleBezier(
             0, 0,
-            (int)(earRadius * 0.552), 0,
-            (int)earRadius, (int)(earRadius * 0.448),
-            (int)earRadius, (int)earRadius,
-            points, 5);
+            (int)Math.Round(earRadiusPx * 0.552), 0,
+            ear, (int)Math.Round(earRadiusPx * 0.448),
+            ear, ear,
+            points, 8);
 
-        // Borde izquierdo
-        points.Add(new() { X = (int)earRadius, Y = (int)(height - bottomRadius) });
+        points.Add(new() { X = ear, Y = h - bottom });
 
-        // Esquina inferior izquierda (convexa)
         SampleBezier(
-            (int)earRadius, (int)(height - bottomRadius),
-            (int)earRadius, (int)(height - bottomRadius * 0.448),
-            (int)(earRadius + bottomRadius * 0.448), height,
-            (int)(earRadius + bottomRadius), height,
-            points, 5);
+            ear, h - bottom,
+            ear, (int)Math.Round(h - bottomRadiusPx * 0.448),
+            (int)Math.Round(earRadiusPx + bottomRadiusPx * 0.448), h,
+            ear + bottom, h,
+            points, 8);
 
-        // Borde inferior
-        points.Add(new() { X = (int)(earRadius + bodyWidth - bottomRadius), Y = height });
+        points.Add(new() { X = ear + bodyWidth - bottom, Y = h });
 
-        // Esquina inferior derecha (convexa)
         SampleBezier(
-            (int)(earRadius + bodyWidth - bottomRadius), height,
-            (int)(earRadius + bodyWidth - bottomRadius * 0.448), height,
-            (int)(earRadius + bodyWidth), (int)(height - bottomRadius * 0.448),
-            (int)(earRadius + bodyWidth), (int)(height - bottomRadius),
-            points, 5);
+            ear + bodyWidth - bottom, h,
+            (int)Math.Round(earRadiusPx + bodyWidthPx - bottomRadiusPx * 0.448), h,
+            ear + bodyWidth, (int)Math.Round(h - bottomRadiusPx * 0.448),
+            ear + bodyWidth, h - bottom,
+            points, 8);
 
-        // Borde derecho
-        points.Add(new() { X = (int)(earRadius + bodyWidth), Y = (int)earRadius });
+        points.Add(new() { X = ear + bodyWidth, Y = ear });
 
-        // Oreja derecha (cóncava)
         SampleBezier(
-            (int)(earRadius + bodyWidth), (int)earRadius,
-            (int)(earRadius + bodyWidth), (int)(earRadius * 0.448),
-            (int)(earRadius + bodyWidth + earRadius * 0.448), 0,
-            (int)(earRadius + bodyWidth + earRadius), 0,
-            points, 5);
+            ear + bodyWidth, ear,
+            ear + bodyWidth, (int)Math.Round(earRadiusPx * 0.448),
+            (int)Math.Round(earRadiusPx + bodyWidthPx + earRadiusPx * 0.448), 0,
+            widthPx, 0,
+            points, 8);
 
         NativeMethods.SetWindowPolygonRegion(_hwnd, points.ToArray());
     }
@@ -1064,41 +1126,36 @@ public sealed partial class MainWindow : Window
 
     private void ResizeIsland(int width, int height)
     {
-        try
-        {
-            IslandScale.CenterX = width / 2.0;
-            IslandScale.CenterY = 0; // Escala anclada al borde superior de la pantalla
-            _appWindow.Resize(new SizeInt32(width, height));
-        }
-        catch
-        {
-        }
+        if (_isDisposed || width <= 0 || height <= 0) return;
+
+        var scale = GetWindowScaleFactor();
+        var pixelWidth = Math.Max(1, (int)Math.Round(width * scale));
+        var pixelHeight = Math.Max(1, (int)Math.Round(height * scale));
+
+        IslandScale.CenterX = width / 2.0;
+        IslandScale.CenterY = 0;
+
+        var currentSize = _appWindow.Size;
+        if (currentSize.Width != pixelWidth || currentSize.Height != pixelHeight)
+            _appWindow.Resize(new SizeInt32(pixelWidth, pixelHeight));
     }
 
     private void PositionAtTopCenter()
     {
-        try
-        {
-            DisplayArea? display = null;
-            try
-            {
-                display = DisplayArea.GetFromWindowId(_appWindow.Id, DisplayAreaFallback.Primary);
-            }
-            catch
-            {
-            }
+        if (_isDisposed) return;
 
-            display ??= DisplayArea.Primary;
-            if (display is null) return;
+        var display = DisplayArea.GetFromWindowId(_appWindow.Id, DisplayAreaFallback.Primary)
+            ?? DisplayArea.Primary;
+        if (display is null) return;
 
-            var bounds = display.OuterBounds;
-            var width = (int)IslandContainer.Width;
-            var x = bounds.X + ((bounds.Width - width) / 2);
-            _appWindow.Move(new PointInt32(x, bounds.Y));
-        }
-        catch
-        {
-        }
+        // DisplayArea.OuterBounds está expresado en píxeles físicos.
+        var bounds = display.OuterBounds;
+        var widthPx = ToPhysicalPixels(IslandContainer.Width);
+        var x = bounds.X + ((bounds.Width - widthPx) / 2);
+        var target = new PointInt32(x, bounds.Y);
+
+        if (_appWindow.Position.X != target.X || _appWindow.Position.Y != target.Y)
+            _appWindow.Move(target);
     }
 
     private void AnimateWaveform()
