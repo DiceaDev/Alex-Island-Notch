@@ -13,8 +13,12 @@ public sealed class IslandSettings
     public bool MinimalNotch { get; set; }
     public double NotchScale { get; set; } = 1.0;
 
-    /// <summary>Bordes suavizados con transparencia por píxel (si Windows lo permite).</summary>
-    public bool SmoothEdges { get; set; } = true;
+    /// <summary>
+    /// Bordes suavizados con transparencia por píxel (si Windows lo permite).
+    /// Desactivado por defecto hasta validarlo en más equipos: en algunos (por
+    /// ejemplo, máquinas virtuales sin GPU) se ve un rectángulo de fondo.
+    /// </summary>
+    public bool SmoothEdges { get; set; }
 
     // Avisos (peeks)
     public bool ShowNetworkPeeks { get; set; } = true;

@@ -23,7 +23,7 @@
                     <ToggleSwitch x:Name="ShowMascotToggle" Header="Mostrar la mascota cuando el equipo está inactivo" Foreground="White" Toggled="OnToggled"/>
                     <ToggleSwitch x:Name="SmoothEdgesToggle" Header="Bordes suavizados" Foreground="White" Toggled="OnToggled"/>
                     <TextBlock FontSize="11" Foreground="#FF9AA3B2" TextWrapping="Wrap" Margin="0,-4,0,4"
-                               Text="Necesita los efectos de transparencia de Windows (Configuración → Personalización → Colores). Si están desactivados, el notch usa bordes recortados."/>
+                               Text="Experimental. Usa transparencia por píxel, como Nusa; necesita los efectos de transparencia de Windows (Configuración → Personalización → Colores). Si ves un rectángulo alrededor del notch, desactívalo."/>
                     <ToggleSwitch x:Name="MinimalNotchToggle" Header="Notch mínimo (una línea fina en reposo)" Foreground="White" Toggled="OnToggled"/>
                     <StackPanel Spacing="2">
                         <TextBlock Text="Tamaño del notch" FontSize="14" Foreground="White"/>
