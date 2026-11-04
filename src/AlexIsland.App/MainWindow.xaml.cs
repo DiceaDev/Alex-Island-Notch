@@ -282,6 +282,7 @@ public sealed partial class MainWindow : Window
         InitializeSystemModule();
         InitializeShellIntegration();
         InitializeOverlays();
+        InitializeLyrics();
 
         // Si cambia el DPI (por ejemplo, al mover la isla a otro monitor), se recalcula el tamaño real.
         IslandContainer.Loaded += (_, _) =>
@@ -335,6 +336,7 @@ public sealed partial class MainWindow : Window
         StopSystemModule();
         StopShellIntegration();
         StopOverlays();
+        StopLyrics();
     }
 
     private async Task LoadSettingsAsync()
@@ -355,6 +357,14 @@ public sealed partial class MainWindow : Window
     private void ApplySettings()
     {
         ApplyShellSettings();
+
+        // Si se activaron las letras con una canción sonando, se piden ahora.
+        if (_settings.ShowLyrics && _lyrics is null && _lyricsTrackKey is not null)
+        {
+            _lyricsTrackKey = null;
+            OnTrackInfoChanged(_currentTrackTitle, _currentTrackArtist);
+        }
+
         ApplyIslandState();
     }
 
@@ -471,6 +481,7 @@ public sealed partial class MainWindow : Window
                     IslandTab.Backlog => ExpandedBacklogHeight,
                     IslandTab.Pomodoro => ExpandedPomodoroHeight,
                     IslandTab.System => ExpandedSystemHeight,
+                    IslandTab.Media when HasLyrics => ExpandedMediaLyricsHeight,
                     _ => ExpandedHeight
                 }),
             _ => (NotchWidth, NotchHeight)
@@ -526,6 +537,7 @@ public sealed partial class MainWindow : Window
         }
 
         UpdateSystemSampling();
+        ApplyLyricsState();
 
         if (wasExpanded != _isExpanded || previousMode != _currentDisplayMode)
         {

@@ -368,6 +368,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
                     <!-- Pista, Carátula y Controles -->
@@ -437,6 +438,16 @@
                         <TextBlock x:Name="RemainingText" Grid.Column="2" Text="--:--"
                                    Foreground="#FF858A96" FontSize="10" VerticalAlignment="Center"/>
                     </Grid>
+
+                    <!-- Letras sincronizadas (LRCLIB): línea actual y siguiente. Clic para saltar a esa línea. -->
+                    <StackPanel x:Name="LyricsPanel" Grid.Row="2" Visibility="Collapsed" Spacing="1" Margin="0,6,0,0">
+                        <TextBlock x:Name="LyricsCurrentLine" Text=" " FontSize="11" FontWeight="SemiBold" Foreground="White"
+                                   TextTrimming="CharacterEllipsis" MaxLines="1" HorizontalAlignment="Center"
+                                   Tapped="LyricsLine_Tapped" ToolTipService.ToolTip="Clic para ir a esta línea"/>
+                        <TextBlock x:Name="LyricsNextLine" Text=" " FontSize="9.5" Foreground="#FF6F7480"
+                                   TextTrimming="CharacterEllipsis" MaxLines="1" HorizontalAlignment="Center"
+                                   Tapped="LyricsLine_Tapped" ToolTipService.ToolTip="Clic para ir a esta línea"/>
+                    </StackPanel>
                 </Grid>
 
                 <!-- ================= VISTA 2: DEV BACKLOG / TO-DO ================= -->

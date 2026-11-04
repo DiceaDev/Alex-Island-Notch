@@ -125,6 +125,7 @@ public sealed partial class MainWindow : Window
 
             CompactTrackTitle.Text = TrackTitle.Text;
             CompactTrackArtist.Text = TrackArtist.Text;
+            OnTrackInfoChanged(properties.Title, properties.Artist);
             UpdateCompactCenter();
             AlbumPlaceholder.Visibility = Visibility.Visible;
             AlbumArt.Source = null;
@@ -157,6 +158,7 @@ public sealed partial class MainWindow : Window
         TrackArtist.Text = "Inicia música en Spotify o en tu navegador";
         CompactTrackTitle.Text = "No hay reproducción activa";
         CompactTrackArtist.Text = "Windows Media Session";
+        OnTrackInfoChanged(null, null);
         AlbumArt.Source = null;
         AlbumPlaceholder.Visibility = Visibility.Visible;
         PlayPauseButton.Content = "\uE768";
