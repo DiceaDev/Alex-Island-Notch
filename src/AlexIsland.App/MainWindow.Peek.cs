@@ -389,46 +389,6 @@ public sealed partial class MainWindow : UserControl
         catch { }
     }
 
-    private void DemoPeekBtn_Click(object sender, RoutedEventArgs e)
-    {
-        _isPinned = false;
-        _isPointerInside = false;
-        _isExpanded = false;
-        _demoPeekIndex = (_demoPeekIndex + 1) % 4;
-
-        switch (_demoPeekIndex)
-        {
-            case 0:
-                ShowHardwarePeek(
-                    HardwarePeekType.Headphones,
-                    "AirBuds Pro",
-                    "Connected · 70%",
-                    percent01: 0.70);
-                break;
-            case 1:
-                ShowHardwarePeek(
-                    HardwarePeekType.Charging,
-                    "Cargador conectado",
-                    "Cargando · 85%",
-                    percent01: 0.85);
-                break;
-            case 2:
-                ShowHardwarePeek(
-                    HardwarePeekType.Battery,
-                    "Batería en uso",
-                    "68% restante",
-                    percent01: 0.68);
-                break;
-            case 3:
-                ShowHardwarePeek(
-                    HardwarePeekType.CapsLock,
-                    "Bloq Mayús",
-                    "ACTIVADO",
-                    percent01: 1.0);
-                break;
-        }
-    }
-
     private void CompactCenter_Tapped(object sender, TappedRoutedEventArgs e)
     {
         e.Handled = true;

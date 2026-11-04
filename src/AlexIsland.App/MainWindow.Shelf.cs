@@ -16,7 +16,7 @@ public sealed partial class MainWindow : UserControl
     // SECCIÓN SHELF: ARCHIVOS Y TEXTOS A MANO
     // ==============================================================
 
-    private const int ExpandedShelfHeight = 196;
+    private const int ExpandedShelfHeight = 204;
 
     private readonly ShelfStore _shelfStore = new();
     private readonly List<ShelfItem> _shelfItems = [];
@@ -329,8 +329,8 @@ public sealed partial class MainWindow : UserControl
         ShelfSummary.Text = count == 0
             ? "Arrastra archivos o texto a la isla"
             : $"{count} {(count == 1 ? "elemento" : "elementos")} · doble clic para abrir su carpeta";
-        HeaderShelfBadge.Visibility = count > 0 ? Visibility.Visible : Visibility.Collapsed;
         HeaderShelfCount.Text = count.ToString();
+        RefreshTabBadges();
         ShelfClearLabel.Text = "Limpiar";
     }
 
@@ -368,7 +368,7 @@ public sealed partial class MainWindow : UserControl
                     new TextBlock
                     {
                         Text = item.DisplayName,
-                        FontSize = 8.5,
+                        FontSize = 9.5,
                         Foreground = new SolidColorBrush(Colors.White),
                         TextTrimming = TextTrimming.CharacterEllipsis,
                         MaxLines = 2,

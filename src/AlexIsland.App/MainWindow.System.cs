@@ -307,7 +307,9 @@ public sealed partial class MainWindow : UserControl
     /// Copia un resumen del equipo listo para pegar en un ticket de soporte.
     /// Solo va al portapapeles: no se envía a ningún servicio.
     /// </summary>
-    private void SysCopyInfoBtn_Click(object sender, RoutedEventArgs e)
+    private void SysCopyInfoBtn_Click(object sender, RoutedEventArgs e) => CopyMachineSummary(SysCopyInfoLabel, "Copiar", "¡Copiado!");
+
+    private void CopyMachineSummary(TextBlock label, string idleText, string doneText)
     {
         try
         {
@@ -336,11 +338,11 @@ public sealed partial class MainWindow : UserControl
             var package = new Windows.ApplicationModel.DataTransfer.DataPackage();
             package.SetText(sb.ToString());
             Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
-            FlashLabel(SysCopyInfoLabel, "¡Copiado!", "Copiar");
+            FlashLabel(label, doneText, idleText);
         }
         catch
         {
-            FlashLabel(SysCopyInfoLabel, "Error", "Copiar");
+            FlashLabel(label, "No se pudo copiar", idleText);
         }
     }
 
