@@ -222,6 +222,33 @@ internal static class NativeMethods
         }
     }
 
+    // ------------------------------------------------------------ Idioma del teclado
+
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(nint hwnd, out uint processId);
+
+    [DllImport("user32.dll")]
+    private static extern nint GetKeyboardLayout(uint threadId);
+
+    /// <summary>
+    /// Ventana activa y distribución de teclado (HKL) de su hilo. En Windows cada
+    /// aplicación puede tener su propio idioma, por eso se informan juntos.
+    /// </summary>
+    internal static (nint Window, nint Layout) GetForegroundKeyboardLayout()
+    {
+        try
+        {
+            var window = GetForegroundWindow();
+            if (window == 0) return (0, 0);
+            var thread = GetWindowThreadProcessId(window, out _);
+            return (window, thread == 0 ? 0 : GetKeyboardLayout(thread));
+        }
+        catch
+        {
+            return (0, 0);
+        }
+    }
+
     internal static bool IsCursorWithinWindow(nint hwnd)
     {
         if (!GetCursorPos(out var cursor) || !GetWindowRect(hwnd, out var rect))

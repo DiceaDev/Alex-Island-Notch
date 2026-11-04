@@ -125,3 +125,31 @@ public class IslandSettingsTests
         Assert.True(original.ShowLyrics);
     }
 }
+
+public class KeyboardLayoutInfoTests
+{
+    [Theory]
+    [InlineData(0x0C0A, "ES")] // español (España, alfabetización internacional)
+    [InlineData(0x340A, "ES")] // español (Chile)
+    [InlineData(0x0409, "EN")] // inglés (Estados Unidos)
+    [InlineData(0x0416, "PT")] // portugués (Brasil)
+    public void Describes_known_languages(int languageId, string expectedCode)
+    {
+        var (code, name) = KeyboardLayoutInfo.Describe(languageId);
+        Assert.Equal(expectedCode, code);
+        Assert.False(string.IsNullOrWhiteSpace(name));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-5)]
+    public void Handles_invalid_ids(int languageId)
+        => Assert.Equal("??", KeyboardLayoutInfo.Describe(languageId).Code);
+
+    [Fact]
+    public void Extracts_language_from_hkl()
+    {
+        Assert.Equal(0x340A, KeyboardLayoutInfo.LanguageIdFromLayout(0x0000_0000_340A_340AL));
+        Assert.Equal(0x0409, KeyboardLayoutInfo.LanguageIdFromLayout(unchecked((long)0xFFFF_FFFF_F002_0409UL)));
+    }
+}

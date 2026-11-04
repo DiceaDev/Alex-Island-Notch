@@ -154,6 +154,11 @@ public sealed partial class MainWindow : Window
         _isPointerInside = false;
         _isExpanded = false;
 
+        // Si ya se está mostrando un aviso del mismo tipo (por ejemplo, al subir
+        // el volumen varias veces seguidas), solo se actualiza sin repetir la animación.
+        var isUpdate = _isPeekActive && _activePeekType == type;
+        _activePeekType = type;
+
         _isPeekActive = true;
         _isRecentInteraction = true;
 
@@ -167,6 +172,9 @@ public sealed partial class MainWindow : Window
             HardwarePeekType.Battery => ("\uE850", "\uE7BA", ColorHelper.FromArgb(255, 255, 167, 38)),
             HardwarePeekType.CapsLock => ("\uE765", "\uE72E", ColorHelper.FromArgb(255, 171, 71, 188)),
             HardwarePeekType.Network => ("\uE774", "\uE701", ColorHelper.FromArgb(255, 0, 230, 118)),
+            HardwarePeekType.Volume => ("\uE767", "\uE995", ColorHelper.FromArgb(255, 66, 165, 245)),
+            HardwarePeekType.Brightness => ("\uE706", "\uE706", ColorHelper.FromArgb(255, 255, 202, 40)),
+            HardwarePeekType.KeyboardLayout => ("\uE765", "\uE774", ColorHelper.FromArgb(255, 38, 166, 154)),
             _ => ("\uE702", "\uE7F6", ColorHelper.FromArgb(255, 66, 165, 245))
         };
 
@@ -178,7 +186,10 @@ public sealed partial class MainWindow : Window
         PeekRippleOuter.Stroke = new SolidColorBrush(color) { Opacity = 0.2 };
 
         UpdatePeekProgress(percent01, color);
-        TriggerPeekRippleAnimation();
+        if (!isUpdate)
+        {
+            TriggerPeekRippleAnimation();
+        }
 
         ApplyIslandState();
 

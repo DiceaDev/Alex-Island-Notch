@@ -54,6 +54,9 @@ public sealed partial class MainWindow : Window
         Battery,
         CapsLock,
         Network,
+        Volume,
+        Brightness,
+        KeyboardLayout,
         Custom
     }
 
@@ -104,6 +107,7 @@ public sealed partial class MainWindow : Window
     // Estado de visualización y hardware de la isla
     private NotchDisplayMode _currentDisplayMode = NotchDisplayMode.Closed;
     private bool _isPeekActive;
+    private HardwarePeekType _activePeekType;
     private bool _isRecentInteraction = true;
     private bool _lastCapsLockState;
 
@@ -218,7 +222,11 @@ public sealed partial class MainWindow : Window
         _capsLockTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
         _capsLockTimer.Interval = TimeSpan.FromMilliseconds(220);
         _capsLockTimer.IsRepeating = true;
-        _capsLockTimer.Tick += (_, _) => CheckCapsLockState();
+        _capsLockTimer.Tick += (_, _) =>
+        {
+            CheckCapsLockState();
+            CheckKeyboardLayout();
+        };
         _capsLockTimer.Start();
 
         // Inactividad para entrar suavemente al modo Resting
@@ -273,6 +281,7 @@ public sealed partial class MainWindow : Window
 
         InitializeSystemModule();
         InitializeShellIntegration();
+        InitializeOverlays();
 
         // Si cambia el DPI (por ejemplo, al mover la isla a otro monitor), se recalcula el tamaño real.
         IslandContainer.Loaded += (_, _) =>
@@ -325,6 +334,7 @@ public sealed partial class MainWindow : Window
         DetachMediaSession();
         StopSystemModule();
         StopShellIntegration();
+        StopOverlays();
     }
 
     private async Task LoadSettingsAsync()
