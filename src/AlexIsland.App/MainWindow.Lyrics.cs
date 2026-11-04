@@ -74,7 +74,10 @@ public sealed partial class MainWindow : UserControl
         _lyricsTrackKey = key;
         ClearLyrics();
 
-        if (!_settings.ShowLyrics || _currentTrackTitle.Length == 0 || _currentTrackArtist.Length == 0) return;
+        // Sin artista solo se intenta si el título trae "Artista - Canción" (videos de YouTube).
+        var hasArtist = _currentTrackArtist.Length > 0
+            || AlexIsland.Core.Lyrics.VideoTrackInfo.TryParse(_currentTrackTitle, null) is not null;
+        if (!_settings.ShowLyrics || _currentTrackTitle.Length == 0 || !hasArtist) return;
 
         _lyricsRequestTimer?.Stop();
         _lyricsRequestTimer?.Start();

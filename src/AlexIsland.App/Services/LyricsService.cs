@@ -98,6 +98,19 @@ internal sealed class LyricsService : IDisposable
 
                 var records = await response.Content.ReadFromJsonAsync<List<LrclibRecord>>(cancellationToken);
                 var match = LrclibRequests.PickBest(records, title, duration);
+                if (match is not null) return (true, ToLyrics(match));
+            }
+
+            // 3) Videos de YouTube: "Artista - Canción (Official Video)" publicado por
+            //    "ArtistaVEVO". Se busca con el título y el artista deducidos.
+            if (VideoTrackInfo.TryParse(title, artist) is { } video
+                && LrclibRequests.BuildSearchUri(video.Title, video.Artist) is { } videoUri)
+            {
+                using var response = await _http.GetAsync(videoUri, cancellationToken);
+                if (!response.IsSuccessStatusCode) return (false, null);
+
+                var records = await response.Content.ReadFromJsonAsync<List<LrclibRecord>>(cancellationToken);
+                var match = LrclibRequests.PickBestForVideo(records, video.Title, duration);
                 return (true, match is null ? null : ToLyrics(match));
             }
 

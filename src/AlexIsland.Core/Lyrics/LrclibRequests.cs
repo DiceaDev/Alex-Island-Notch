@@ -58,6 +58,32 @@ public static partial class LrclibRequests
             && (duration <= TimeSpan.Zero || IsDurationMatch(r.Duration, duration)));
     }
 
+    /// <summary>Lo que un video musical puede durar de más respecto de la canción (intro, final, créditos).</summary>
+    public static readonly TimeSpan VideoExtraAllowance = TimeSpan.FromSeconds(25);
+
+    /// <summary>
+    /// Como <see cref="PickBest"/>, pero para datos deducidos de un video: acepta
+    /// canciones hasta 25 s más cortas que el video (nunca más largas) y se queda
+    /// con la de duración más parecida.
+    /// </summary>
+    public static LrclibRecord? PickBestForVideo(IEnumerable<LrclibRecord>? records, string title, TimeSpan videoDuration)
+    {
+        if (records is null) return null;
+        var wanted = NormalizeTitle(title);
+        var video = videoDuration.TotalSeconds;
+
+        return records
+            .Where(r => !r.Instrumental
+                        && !string.IsNullOrWhiteSpace(r.SyncedLyrics)
+                        && NormalizeTitle(r.TrackName) == wanted
+                        && (videoDuration <= TimeSpan.Zero
+                            || (r.Duration > 0
+                                && r.Duration <= video + DurationTolerance.TotalSeconds
+                                && r.Duration >= video - VideoExtraAllowance.TotalSeconds)))
+            .OrderBy(r => videoDuration <= TimeSpan.Zero ? 0 : Math.Abs(r.Duration - video))
+            .FirstOrDefault();
+    }
+
     public static bool IsDurationMatch(double recordSeconds, TimeSpan duration)
         => recordSeconds > 0 && Math.Abs(recordSeconds - duration.TotalSeconds) <= DurationTolerance.TotalSeconds;
 
