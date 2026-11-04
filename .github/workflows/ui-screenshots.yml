@@ -86,3 +86,65 @@ jobs:
           name: screenshots-escala-${{ matrix.notch_scale }}
           path: screenshots
           retention-days: 7
+
+  # Referencia: un notch dibujado con Windows.UI.Composition en una ventana con
+  # transparencia por píxel (el enfoque de Nusa). Sirve para saber si este
+  # entorno puede mostrar bordes suavizados y comparar con Alex Island.
+  transparency-probe:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Compilar prueba
+        run: dotnet build tools/TransparencyProbe/TransparencyProbe.csproj -c Release -o probe
+
+      - name: Ejecutar y capturar
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          Add-Type 'using System.Runtime.InteropServices; public static class Dpi { [DllImport("user32.dll")] public static extern bool SetProcessDPIAware(); }'
+          [Dpi]::SetProcessDPIAware() | Out-Null
+          New-Item -ItemType Directory -Force -Path probe-shots | Out-Null
+          $proc = Start-Process -FilePath probe/TransparencyProbe.exe -ArgumentList 20 -PassThru -RedirectStandardOutput probe-shots/salida.txt -RedirectStandardError probe-shots/errores.txt
+          Start-Sleep -Seconds 6
+          $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+          $g = [System.Drawing.Graphics]::FromImage($bmp); $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size); $g.Dispose()
+          $w = 360; $h = 90; $x = [int]($b.Width / 2 - $w / 2)
+          $crop = $bmp.Clone((New-Object System.Drawing.Rectangle $x, 0, $w, $h), $bmp.PixelFormat)
+          $zoom = New-Object System.Drawing.Bitmap ($w * 4), ($h * 4)
+          $zg = [System.Drawing.Graphics]::FromImage($zoom)
+          $zg.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::NearestNeighbor
+          $zg.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::Half
+          $zg.DrawImage($crop, 0, 0, $w * 4, $h * 4); $zg.Dispose()
+          $zoom.Save("probe-shots/referencia-detalle.png", [System.Drawing.Imaging.ImageFormat]::Png)
+          $bmp.Save("probe-shots/pantalla.png", [System.Drawing.Imaging.ImageFormat]::Png)
+          "Proceso terminado: $($proc.HasExited)" | Out-File probe-shots/estado.txt
+          if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
+
+      - name: Publicar capturas en una rama aparte
+        if: always() && (github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository)
+        shell: pwsh
+        env:
+          TOKEN: ${{ github.token }}
+          BRANCH: ci/screenshots-probe
+          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          if (-not (Test-Path probe-shots)) { exit 0 }
+          $dir = Join-Path $env:RUNNER_TEMP 'shots'
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          Copy-Item probe-shots/* $dir
+          Set-Location $dir
+          git init -q
+          git checkout -q -b $env:BRANCH
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -q -m "Prueba de transparencia de $env:SHA"
+          git push -q -f "https://x-access-token:$($env:TOKEN)@github.com/${{ github.repository }}.git" "HEAD:refs/heads/$($env:BRANCH)"
