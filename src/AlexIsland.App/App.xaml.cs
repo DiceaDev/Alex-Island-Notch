@@ -6,7 +6,7 @@ namespace AlexIsland.App;
 
 public partial class App : Application
 {
-    private Window? _mainWindow;
+    private MainWindow? _mainWindow;
     private static readonly string LogDirectory =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "AlexIsland", "logs");
@@ -19,6 +19,10 @@ public partial class App : Application
     {
         InitializeComponent();
         UnhandledException += App_UnhandledException;
+
+        // La isla vive en una ventana propia (no es una Window de WinUI). Sin esto,
+        // la app se cerraría al cerrar la última Window, por ejemplo la de Ajustes.
+        DispatcherShutdownMode = DispatcherShutdownMode.OnExplicitShutdown;
     }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
@@ -27,9 +31,9 @@ public partial class App : Application
         {
             WriteLog("OnLaunched: iniciando MainWindow.");
             _mainWindow = new MainWindow();
-            WriteLog("OnLaunched: MainWindow creada; activando ventana.");
-            _mainWindow.Activate();
-            WriteLog("OnLaunched: ventana activada.");
+            WriteLog("OnLaunched: MainWindow creada; mostrando la isla.");
+            _mainWindow.Show();
+            WriteLog("OnLaunched: isla visible.");
         }
         catch (Exception ex)
         {
@@ -46,6 +50,9 @@ public partial class App : Application
     {
         WriteLog("Excepción no controlada de WinUI:", e.Exception);
     }
+
+    /// <summary>Registro de diagnóstico en %LocalAppData%\AlexIsland\logs\startup.log.</summary>
+    internal static void Log(string message, Exception? exception = null) => WriteLog(message, exception);
 
     private static void WriteLog(string message, Exception? exception = null)
     {

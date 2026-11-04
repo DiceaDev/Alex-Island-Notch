@@ -1,0 +1,159 @@
+name: ui-screenshots
+
+# Revisión visual: compila la app, la abre en Windows, la recorre con el mouse
+# y guarda capturas como artefacto. Se ejecuta en los PR y a pedido.
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  screenshots:
+    runs-on: windows-latest
+    # Escritura solo para publicar las capturas en su propia rama (ci/screenshots-*).
+    # En PRs desde forks GitHub entrega un token de solo lectura y ese paso se omite.
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        notch_scale: ['1.0', '1.4']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      # Autocontenida: el runner no tiene instalado el runtime de Windows App SDK.
+      # Se usa la salida de "build" y no de "publish": en apps WinUI sin empaquetar,
+      # publish no copia AlexIsland.pri (el XAML compilado) y la ventana no carga.
+      - name: Compilar app
+        shell: pwsh
+        run: |
+          dotnet build src/AlexIsland.App/AlexIsland.App.csproj -c Release -r win-x64 -p:Platform=x64 `
+            -p:SelfContained=true -p:WindowsAppSDKSelfContained=true
+          $exe = Get-ChildItem src/AlexIsland.App/bin -Recurse -Filter AlexIsland.exe | Select-Object -First 1
+          if (-not $exe) { throw 'No se encontró AlexIsland.exe' }
+          "APP_EXE=$($exe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      # El runner (Windows Server en una VM sin GPU) no compone la transparencia
+      # por píxel, así que las capturas validan el modo de bordes recortados.
+      - name: Capturas
+        shell: pwsh
+        run: >
+          ./.github/scripts/ui-screenshots.ps1
+          -AppPath "$env:APP_EXE"
+          -OutDir "$PWD/screenshots"
+          -NotchScale ${{ matrix.notch_scale }}
+
+      - name: Copiar registro de arranque
+        if: always()
+        shell: pwsh
+        run: |
+          $log = Join-Path $env:LOCALAPPDATA 'AlexIsland\logs\startup.log'
+          New-Item -ItemType Directory -Force -Path screenshots | Out-Null
+          if (Test-Path $log) { Copy-Item $log screenshots/startup.log }
+
+      # Rama huérfana aparte: no toca main ni la rama del PR. Facilita revisar
+      # las capturas desde herramientas que no pueden descargar artefactos.
+      - name: Publicar capturas en una rama aparte
+        if: always() && (github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository)
+        shell: pwsh
+        env:
+          TOKEN: ${{ github.token }}
+          BRANCH: ci/screenshots-${{ matrix.notch_scale }}
+          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          if (-not (Test-Path screenshots)) { exit 0 }
+          $dir = Join-Path $env:RUNNER_TEMP 'shots'
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          Copy-Item screenshots/* $dir
+          Set-Location $dir
+          git init -q
+          git checkout -q -b $env:BRANCH
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -q -m "Capturas de $env:SHA"
+          git push -q -f "https://x-access-token:$($env:TOKEN)@github.com/${{ github.repository }}.git" "HEAD:refs/heads/$($env:BRANCH)"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots-escala-${{ matrix.notch_scale }}
+          path: screenshots
+          retention-days: 7
+
+  # Referencia: un notch dibujado con Windows.UI.Composition en una ventana con
+  # transparencia por píxel (el enfoque de Nusa). Sirve para saber si este
+  # entorno puede mostrar bordes suavizados y comparar con Alex Island.
+  transparency-probe:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Compilar pruebas
+        run: |
+          dotnet build tools/TransparencyProbe/TransparencyProbe.csproj -c Release -o probe/composicion
+          dotnet build tools/XamlIslandProbe/XamlIslandProbe.csproj -c Release -o probe/xaml
+
+      - name: Ejecutar y capturar
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          Add-Type 'using System.Runtime.InteropServices; public static class Dpi { [DllImport("user32.dll")] public static extern bool SetProcessDPIAware(); }'
+          [Dpi]::SetProcessDPIAware() | Out-Null
+          New-Item -ItemType Directory -Force -Path probe-shots | Out-Null
+
+          function Capture-Probe([string] $name, [string] $exe) {
+            $proc = Start-Process -FilePath $exe -ArgumentList 20 -PassThru `
+              -RedirectStandardOutput "probe-shots/$name-salida.txt" -RedirectStandardError "probe-shots/$name-errores.txt"
+            Start-Sleep -Seconds 8
+            $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+            $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+            $g = [System.Drawing.Graphics]::FromImage($bmp); $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size); $g.Dispose()
+            $w = 360; $h = 90; $x = [int]($b.Width / 2 - $w / 2)
+            $crop = $bmp.Clone((New-Object System.Drawing.Rectangle $x, 0, $w, $h), $bmp.PixelFormat)
+            $zoom = New-Object System.Drawing.Bitmap ($w * 4), ($h * 4)
+            $zg = [System.Drawing.Graphics]::FromImage($zoom)
+            $zg.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::NearestNeighbor
+            $zg.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::Half
+            $zg.DrawImage($crop, 0, 0, $w * 4, $h * 4); $zg.Dispose()
+            $zoom.Save("probe-shots/$name-detalle.png", [System.Drawing.Imaging.ImageFormat]::Png)
+            "$name terminado antes de la captura: $($proc.HasExited) (código $(if ($proc.HasExited) { $proc.ExitCode }))" | Out-File -Append probe-shots/estado.txt
+            if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
+            Start-Sleep -Seconds 2
+          }
+
+          Capture-Probe 'composicion' 'probe/composicion/TransparencyProbe.exe'
+          Capture-Probe 'xaml' 'probe/xaml/XamlIslandProbe.exe'
+
+      - name: Publicar capturas en una rama aparte
+        if: always() && (github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository)
+        shell: pwsh
+        env:
+          TOKEN: ${{ github.token }}
+          BRANCH: ci/screenshots-probe
+          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          if (-not (Test-Path probe-shots)) { exit 0 }
+          $dir = Join-Path $env:RUNNER_TEMP 'shots'
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          Copy-Item probe-shots/* $dir
+          Set-Location $dir
+          git init -q
+          git checkout -q -b $env:BRANCH
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -q -m "Prueba de transparencia de $env:SHA"
+          git push -q -f "https://x-access-token:$($env:TOKEN)@github.com/${{ github.repository }}.git" "HEAD:refs/heads/$($env:BRANCH)"

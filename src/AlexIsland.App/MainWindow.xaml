@@ -1,15 +1,26 @@
-<Window
+<UserControl
     x:Class="AlexIsland.App.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="Alex Island">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <Grid Background="Transparent">
+    <!-- Fondo transparente: la ventana de la isla (IslandHostWindow) se compone
+         con transparencia por píxel, así que alrededor del notch se ve el escritorio
+         y sus curvas quedan suavizadas. -->
+    <Grid x:Name="RootGrid" Background="Transparent">
+        <!-- Escala elegida por el usuario en Ajustes; la ventana se ajusta al mismo factor. -->
+        <Grid.RenderTransform>
+            <ScaleTransform x:Name="NotchUserScale" ScaleX="1" ScaleY="1" CenterX="0" CenterY="0"/>
+        </Grid.RenderTransform>
         <Grid x:Name="IslandContainer"
               Width="196"
               Height="36"
-              HorizontalAlignment="Center"
+              HorizontalAlignment="Left"
               VerticalAlignment="Top"
+              AllowDrop="True"
+              DragEnter="IslandContainer_DragEnter"
+              DragOver="IslandContainer_DragOver"
+              DragLeave="IslandContainer_DragLeave"
+              Drop="IslandContainer_Drop"
               PointerEntered="IslandContainer_PointerEntered"
               PointerExited="IslandContainer_PointerExited"
               Tapped="IslandContainer_Tapped">
@@ -243,7 +254,8 @@
                     </StackPanel>
 
                     <!-- Selector segmentado tipo pestaña estilo Dynamic Island -->
-                    <Border Grid.Column="1" Background="#1FFFFFFF" CornerRadius="10" Padding="2" VerticalAlignment="Center">
+                    <Border Grid.Column="1" Background="#1FFFFFFF" CornerRadius="10" Padding="2" VerticalAlignment="Center"
+                            PointerWheelChanged="TabBar_PointerWheelChanged">
                         <StackPanel Orientation="Horizontal" Spacing="1">
                             <!-- Pestaña Multimedia -->
                             <Button x:Name="TabMediaButton"
@@ -269,7 +281,7 @@
                                     BorderThickness="0">
                                 <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
                                     <FontIcon Glyph="&#xE756;" FontSize="8.5" Foreground="#FFA0A5B2"/>
-                                    <TextBlock x:Name="TabBacklogLabel" Text="Backlog" FontSize="8.5" Foreground="#FFA0A5B2" FontWeight="Medium"/>
+                                    <TextBlock x:Name="TabBacklogLabel" Visibility="Collapsed" Text="Backlog" FontSize="8.5" Foreground="#FFA0A5B2" FontWeight="Medium"/>
                                     <Border x:Name="HeaderBacklogBadge" Background="#FF3E4251" CornerRadius="5" Padding="3,0" Margin="1,0,0,0">
                                         <TextBlock x:Name="HeaderBacklogCount" Text="0" FontSize="7.5" Foreground="White" FontWeight="Bold"/>
                                     </Border>
@@ -286,7 +298,7 @@
                                     BorderThickness="0">
                                 <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
                                     <FontIcon Glyph="&#xE787;" FontSize="8.5" Foreground="#FFA0A5B2"/>
-                                    <TextBlock x:Name="TabCalendarLabel" Text="Agenda" FontSize="8.5" Foreground="#FFA0A5B2" FontWeight="Medium"/>
+                                    <TextBlock x:Name="TabCalendarLabel" Visibility="Collapsed" Text="Agenda" FontSize="8.5" Foreground="#FFA0A5B2" FontWeight="Medium"/>
                                     <Border x:Name="HeaderCalendarBadge" Background="#FF3E4251" CornerRadius="5" Padding="3,0" Margin="1,0,0,0">
                                         <TextBlock x:Name="HeaderCalendarCount" Text="0" FontSize="7.5" Foreground="White" FontWeight="Bold"/>
                                     </Border>
@@ -303,9 +315,42 @@
                                     BorderThickness="0">
                                 <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
                                     <TextBlock Text="🍅" FontSize="8" VerticalAlignment="Center"/>
-                                    <TextBlock x:Name="TabPomodoroLabel" Text="Focus" FontSize="8.5" Foreground="#FFA0A5B2" FontWeight="Medium"/>
+                                    <TextBlock x:Name="TabPomodoroLabel" Visibility="Collapsed" Text="Focus" FontSize="8.5" Foreground="#FFA0A5B2" FontWeight="Medium"/>
                                     <Border x:Name="HeaderPomodoroBadge" Background="#FF3E4251" CornerRadius="5" Padding="3,0" Margin="1,0,0,0">
                                         <TextBlock x:Name="HeaderPomodoroCount" Text="0" FontSize="7.5" Foreground="White" FontWeight="Bold"/>
+                                    </Border>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Pestaña Sistema (IT): equipo y red -->
+                            <Button x:Name="TabSystemButton"
+                                    Click="TabSystemButton_Click"
+                                    CornerRadius="8"
+                                    Padding="5,2"
+                                    Height="21"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    ToolTipService.ToolTip="Sistema y red">
+                                <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                    <FontIcon x:Name="TabSystemIcon" Glyph="&#xE9D9;" FontSize="8.5" Foreground="#FFA0A5B2"/>
+                                    <TextBlock x:Name="TabSystemLabel" Visibility="Collapsed" Text="Sistema" FontSize="8.5" Foreground="#FFA0A5B2" FontWeight="Medium"/>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Pestaña Shelf: archivos y textos a mano -->
+                            <Button x:Name="TabShelfButton"
+                                    Click="TabShelfButton_Click"
+                                    CornerRadius="8"
+                                    Padding="5,2"
+                                    Height="21"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    ToolTipService.ToolTip="Shelf: arrastra archivos o texto">
+                                <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                    <FontIcon Glyph="&#xE7B8;" FontSize="8.5" Foreground="#FFA0A5B2"/>
+                                    <TextBlock x:Name="TabShelfLabel" Visibility="Collapsed" Text="Shelf" FontSize="8.5" Foreground="#FFA0A5B2" FontWeight="Medium"/>
+                                    <Border x:Name="HeaderShelfBadge" Visibility="Collapsed" Background="#FF3E4251" CornerRadius="5" Padding="3,0" Margin="1,0,0,0">
+                                        <TextBlock x:Name="HeaderShelfCount" Text="0" FontSize="7.5" Foreground="White" FontWeight="Bold"/>
                                     </Border>
                                 </StackPanel>
                             </Button>
@@ -346,6 +391,7 @@
                         <TranslateTransform/>
                     </Grid.RenderTransform>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
@@ -417,6 +463,16 @@
                         <TextBlock x:Name="RemainingText" Grid.Column="2" Text="--:--"
                                    Foreground="#FF858A96" FontSize="10" VerticalAlignment="Center"/>
                     </Grid>
+
+                    <!-- Letras sincronizadas (LRCLIB): línea actual y siguiente. Clic para saltar a esa línea. -->
+                    <StackPanel x:Name="LyricsPanel" Grid.Row="2" Visibility="Collapsed" Spacing="1" Margin="0,6,0,0">
+                        <TextBlock x:Name="LyricsCurrentLine" Text=" " FontSize="11" FontWeight="SemiBold" Foreground="White"
+                                   TextTrimming="CharacterEllipsis" MaxLines="1" HorizontalAlignment="Center"
+                                   Tapped="LyricsLine_Tapped" ToolTipService.ToolTip="Clic para ir a esta línea"/>
+                        <TextBlock x:Name="LyricsNextLine" Text=" " FontSize="9.5" Foreground="#FF6F7480"
+                                   TextTrimming="CharacterEllipsis" MaxLines="1" HorizontalAlignment="Center"
+                                   Tapped="LyricsLine_Tapped" ToolTipService.ToolTip="Clic para ir a esta línea"/>
+                    </StackPanel>
                 </Grid>
 
                 <!-- ================= VISTA 2: DEV BACKLOG / TO-DO ================= -->
@@ -879,7 +935,152 @@
                         </Button>
                     </Grid>
                 </Grid>
+
+                <!-- ================= VISTA 5: SISTEMA Y RED (IT) ================= -->
+                <Grid x:Name="SystemView" Grid.Row="2" Visibility="Collapsed" RowSpacing="6">
+                    <Grid.RenderTransform>
+                        <TranslateTransform/>
+                    </Grid.RenderTransform>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Fila 0: CPU, memoria, disco y tiempo encendido -->
+                    <Grid ColumnSpacing="5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Background="#FF1A1D25" CornerRadius="6" Padding="7,5">
+                            <StackPanel Spacing="2">
+                                <TextBlock Text="CPU" FontSize="8" Foreground="#FF858A96" FontWeight="Medium"/>
+                                <TextBlock x:Name="SysCpuValue" Text="--" FontSize="13" FontWeight="SemiBold" Foreground="White"/>
+                                <TextBlock x:Name="SysCpuDetail" Text=" " FontSize="7.5" Foreground="#FF858A96" TextTrimming="CharacterEllipsis" MaxLines="1"/>
+                                <Grid x:Name="SysCpuTrack" Height="3" Background="#FF2A2D37" CornerRadius="1.5" Margin="0,2,0,0">
+                                    <Border x:Name="SysCpuBar" Background="#FF42A5F5" CornerRadius="1.5" HorizontalAlignment="Left" Width="0"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="1" Background="#FF1A1D25" CornerRadius="6" Padding="7,5">
+                            <StackPanel Spacing="2">
+                                <TextBlock Text="Memoria" FontSize="8" Foreground="#FF858A96" FontWeight="Medium"/>
+                                <TextBlock x:Name="SysRamValue" Text="--" FontSize="13" FontWeight="SemiBold" Foreground="White"/>
+                                <TextBlock x:Name="SysRamDetail" Text=" " FontSize="7.5" Foreground="#FF858A96" TextTrimming="CharacterEllipsis" MaxLines="1"/>
+                                <Grid x:Name="SysRamTrack" Height="3" Background="#FF2A2D37" CornerRadius="1.5" Margin="0,2,0,0">
+                                    <Border x:Name="SysRamBar" Background="#FFAB47BC" CornerRadius="1.5" HorizontalAlignment="Left" Width="0"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="2" Background="#FF1A1D25" CornerRadius="6" Padding="7,5">
+                            <StackPanel Spacing="2">
+                                <TextBlock Text="Disco" FontSize="8" Foreground="#FF858A96" FontWeight="Medium"/>
+                                <TextBlock x:Name="SysDiskValue" Text="--" FontSize="13" FontWeight="SemiBold" Foreground="White"/>
+                                <TextBlock x:Name="SysDiskDetail" Text=" " FontSize="7.5" Foreground="#FF858A96" TextTrimming="CharacterEllipsis" MaxLines="1"/>
+                                <Grid x:Name="SysDiskTrack" Height="3" Background="#FF2A2D37" CornerRadius="1.5" Margin="0,2,0,0">
+                                    <Border x:Name="SysDiskBar" Background="#FFFFA726" CornerRadius="1.5" HorizontalAlignment="Left" Width="0"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="3" Background="#FF1A1D25" CornerRadius="6" Padding="7,5">
+                            <StackPanel Spacing="2">
+                                <TextBlock Text="Encendido" FontSize="8" Foreground="#FF858A96" FontWeight="Medium"/>
+                                <TextBlock x:Name="SysUptimeValue" Text="--" FontSize="13" FontWeight="SemiBold" Foreground="White"/>
+                                <TextBlock x:Name="SysUptimeDetail" Text=" " FontSize="7.5" Foreground="#FF858A96" TextTrimming="CharacterEllipsis" MaxLines="1"/>
+                                <Grid x:Name="SysUptimeTrack" Height="3" Background="#FF2A2D37" CornerRadius="1.5" Margin="0,2,0,0">
+                                    <Border x:Name="SysUptimeBar" Background="#FF00E676" CornerRadius="1.5" HorizontalAlignment="Left" Width="0"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Fila 1: Conexión principal, IP, VPN y latencia -->
+                    <Border Grid.Row="1" Background="#FF1A1D25" CornerRadius="6" Padding="8,6">
+                        <Grid ColumnSpacing="7">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <FontIcon x:Name="SysNetIcon" Glyph="&#xE701;" FontSize="13" Foreground="#FF00E676" VerticalAlignment="Center"/>
+
+                            <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
+                                <TextBlock x:Name="SysNetTitle" Text="Comprobando red..." FontSize="10" FontWeight="SemiBold" Foreground="White" TextTrimming="CharacterEllipsis" MaxLines="1"/>
+                                <TextBlock x:Name="SysNetDetail" Text=" " FontSize="8.5" Foreground="#FF858A96" TextTrimming="CharacterEllipsis" MaxLines="1" IsTextSelectionEnabled="True"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                <Border x:Name="SysVpnPill" Visibility="Collapsed" Background="#FF1E2A3D" CornerRadius="5" Padding="5,1" ToolTipService.ToolTip="VPN activa">
+                                    <StackPanel Orientation="Horizontal" Spacing="3">
+                                        <FontIcon Glyph="&#xE705;" FontSize="8" Foreground="#FF42A5F5"/>
+                                        <TextBlock Text="VPN" FontSize="8" FontWeight="Bold" Foreground="#FF42A5F5"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border x:Name="SysLatencyPill" Background="#FF222530" CornerRadius="5" Padding="5,1" ToolTipService.ToolTip="Latencia (ping)">
+                                    <TextBlock x:Name="SysLatencyText" Text="-- ms" FontSize="8" FontWeight="Bold" Foreground="#FFA0A5B2"/>
+                                </Border>
+                                <Button x:Name="SysCopyInfoBtn" Click="SysCopyInfoBtn_Click" Height="20" Padding="5,0" CornerRadius="4" Background="#FF222530" BorderThickness="1" BorderBrush="#FF323645" ToolTipService.ToolTip="Copiar datos del equipo para un ticket">
+                                    <StackPanel Orientation="Horizontal" Spacing="3">
+                                        <FontIcon Glyph="&#xE8C8;" FontSize="8" Foreground="#FFA5AAB8"/>
+                                        <TextBlock x:Name="SysCopyInfoLabel" Text="Copiar" FontSize="8.5" Foreground="#FFA5AAB8"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <!-- ================= VISTA 6: SHELF DE ARCHIVOS Y TEXTOS ================= -->
+                <Grid x:Name="ShelfView" Grid.Row="2" Visibility="Collapsed" RowSpacing="5">
+                    <Grid.RenderTransform>
+                        <TranslateTransform/>
+                    </Grid.RenderTransform>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid ColumnSpacing="5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="ShelfSummary" Text="Arrastra archivos o texto a la isla" FontSize="9" Foreground="#FF858A96"
+                                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxLines="1"/>
+                        <Button x:Name="ShelfPasteBtn" Grid.Column="1" Click="ShelfPasteBtn_Click" Height="20" Padding="6,0" CornerRadius="4"
+                                Background="#FF222530" BorderThickness="1" BorderBrush="#FF323645" ToolTipService.ToolTip="Agregar lo copiado (archivos o texto)">
+                            <StackPanel Orientation="Horizontal" Spacing="3">
+                                <FontIcon Glyph="&#xE77F;" FontSize="8" Foreground="#FFA5AAB8"/>
+                                <TextBlock Text="Pegar" FontSize="8.5" Foreground="#FFA5AAB8"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="ShelfClearBtn" Grid.Column="2" Click="ShelfClearBtn_Click" Height="20" Padding="6,0" CornerRadius="4"
+                                Background="#FF222530" BorderThickness="1" BorderBrush="#FF323645" ToolTipService.ToolTip="Quitar los seleccionados (o todos si no hay selección)">
+                            <StackPanel Orientation="Horizontal" Spacing="3">
+                                <FontIcon Glyph="&#xE74D;" FontSize="8" Foreground="#FFA5AAB8"/>
+                                <TextBlock x:Name="ShelfClearLabel" Text="Limpiar" FontSize="8.5" Foreground="#FFA5AAB8"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <Grid Grid.Row="1">
+                        <GridView x:Name="ShelfGrid"
+                                  SelectionMode="Extended"
+                                  CanDragItems="True"
+                                  DragItemsStarting="ShelfGrid_DragItemsStarting"
+                                  SelectionChanged="ShelfGrid_SelectionChanged"
+                                  Padding="0"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+                        <TextBlock x:Name="ShelfEmptyHint" Text="Suelta aquí archivos, carpetas o texto.&#x0a;Solo se guarda su ubicación, no una copia."
+                                   FontSize="9.5" Foreground="#FF6F7480" TextAlignment="Center" HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" TextWrapping="Wrap"/>
+                    </Grid>
+                </Grid>
             </Grid>
         </Grid>
     </Grid>
-</Window>
+</UserControl>

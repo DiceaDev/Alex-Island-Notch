@@ -72,27 +72,160 @@ internal static class NativeMethods
     private static extern int DwmSetWindowAttribute(
         nint hwnd, int attribute, ref int value, int valueSize);
 
-    [DllImport("gdi32.dll", SetLastError = true)]
-    private static extern nint CreatePolygonRgn(NativePoint[] lppt, int cPoints, int fnPolyFillMode);
 
-    [DllImport("user32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool SetWindowRgn(nint hWnd, nint hRgn, [MarshalAs(UnmanagedType.Bool)] bool bRedraw);
 
-    [DllImport("gdi32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool DeleteObject(nint hObject);
 
-    internal static void SetWindowPolygonRegion(nint hwnd, NativePoint[] points)
+
+    // ------------------------------------------------------------ DPI
+
+    [DllImport("user32.dll")]
+    private static extern uint GetDpiForWindow(nint hwnd);
+
+    /// <summary>Factor de escala del monitor donde está la ventana (1.0 = 96 DPI).</summary>
+    internal static double GetDpiScale(nint hwnd)
     {
-        if (hwnd == 0 || points == null || points.Length < 3) return;
-        var rgn = CreatePolygonRgn(points, points.Length, 2); // 2 = WINDING
-        if (rgn != 0)
+        if (hwnd == 0) return 1.0;
+        try
         {
-            if (!SetWindowRgn(hwnd, rgn, true))
+            var dpi = GetDpiForWindow(hwnd);
+            return dpi > 0 ? dpi / 96.0 : 1.0;
+        }
+        catch
+        {
+            return 1.0;
+        }
+    }
+
+    // ------------------------------------------------------------ Mostrar / ocultar
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool ShowWindow(nint hwnd, int command);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool IsWindowVisible(nint hwnd);
+
+    /// <summary>Muestra u oculta la isla sin quitarle el foco a la aplicación activa.</summary>
+    internal static void SetIslandVisible(nint hwnd, bool visible)
+    {
+        if (hwnd == 0 || IsWindowVisible(hwnd) == visible) return;
+
+        _ = ShowWindow(hwnd, visible ? 4 /* SW_SHOWNOACTIVATE */ : 0 /* SW_HIDE */);
+        if (visible)
+        {
+            _ = SetWindowPos(hwnd, HwndTopmost, 0, 0, 0, 0, SwpNoMove | SwpNoSize | SwpNoActivate);
+        }
+    }
+
+    // ------------------------------------------------------------ Pantalla completa
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MonitorInfo
+    {
+        public uint Size;
+        public NativeRect Monitor;
+        public NativeRect Work;
+        public uint Flags;
+    }
+
+    [DllImport("shell32.dll")]
+    private static extern int SHQueryUserNotificationState(out int state);
+
+    [DllImport("user32.dll")]
+    private static extern nint GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    private static extern nint GetShellWindow();
+
+    [DllImport("user32.dll")]
+    private static extern nint GetDesktopWindow();
+
+    [DllImport("user32.dll")]
+    private static extern nint MonitorFromWindow(nint hwnd, uint flags);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetMonitorInfoW(nint monitor, ref MonitorInfo info);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern int GetClassNameW(nint hwnd, System.Text.StringBuilder className, int maxCount);
+
+    /// <summary>
+    /// Indica si hay una aplicación en pantalla completa (juego, video,
+    /// presentación) en el mismo monitor que la isla.
+    /// </summary>
+    internal static bool IsFullscreenAppActive(nint islandHwnd)
+    {
+        try
+        {
+            // Juegos Direct3D y modo presentación los informa Windows directamente.
+            if (SHQueryUserNotificationState(out var state) == 0 && state is 3 or 4)
             {
-                DeleteObject(rgn);
+                return true;
             }
+
+            var foreground = GetForegroundWindow();
+            if (foreground == 0 || foreground == islandHwnd
+                || foreground == GetShellWindow() || foreground == GetDesktopWindow())
+            {
+                return false;
+            }
+
+            var className = new System.Text.StringBuilder(64);
+            _ = GetClassNameW(foreground, className, className.Capacity);
+            var name = className.ToString();
+            if (name is "Progman" or "WorkerW" or "Shell_TrayWnd" or "Shell_SecondaryTrayWnd")
+            {
+                return false; // escritorio o barra de tareas
+            }
+
+            const uint MonitorDefaultToNearest = 2;
+            var monitor = MonitorFromWindow(foreground, MonitorDefaultToNearest);
+            if (monitor == 0 || monitor != MonitorFromWindow(islandHwnd, MonitorDefaultToNearest))
+            {
+                return false;
+            }
+
+            var info = new MonitorInfo { Size = (uint)Marshal.SizeOf<MonitorInfo>() };
+            if (!GetMonitorInfoW(monitor, ref info) || !GetWindowRect(foreground, out var rect))
+            {
+                return false;
+            }
+
+            return rect.Left <= info.Monitor.Left && rect.Top <= info.Monitor.Top
+                && rect.Right >= info.Monitor.Right && rect.Bottom >= info.Monitor.Bottom;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    // ------------------------------------------------------------ Idioma del teclado
+
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(nint hwnd, out uint processId);
+
+    [DllImport("user32.dll")]
+    private static extern nint GetKeyboardLayout(uint threadId);
+
+    /// <summary>
+    /// Ventana activa y distribución de teclado (HKL) de su hilo. En Windows cada
+    /// aplicación puede tener su propio idioma, por eso se informan juntos.
+    /// </summary>
+    internal static (nint Window, nint Layout) GetForegroundKeyboardLayout()
+    {
+        try
+        {
+            var window = GetForegroundWindow();
+            if (window == 0) return (0, 0);
+            var thread = GetWindowThreadProcessId(window, out _);
+            return (window, thread == 0 ? 0 : GetKeyboardLayout(thread));
+        }
+        catch
+        {
+            return (0, 0);
         }
     }
 

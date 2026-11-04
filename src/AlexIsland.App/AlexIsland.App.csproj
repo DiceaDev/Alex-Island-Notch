@@ -11,9 +11,13 @@
     <RootNamespace>AlexIsland.App</RootNamespace>
     <AssemblyName>AlexIsland</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\AlexIsland.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\AlexIsland.Core\AlexIsland.Core.csproj" />
     <PackageReference Include="Microsoft.WindowsAppSDK" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Assets\AlexIsland.ico" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

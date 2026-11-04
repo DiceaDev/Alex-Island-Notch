@@ -5,9 +5,10 @@
 - [x] Configurar el nivel de ejecución `asInvoker`
 - [x] Incorporar el contrato del ciclo de vida de módulos
 - [x] Persistir la configuración por usuario
+- [x] Dividir la ventana principal en archivos por función
 - [ ] Incorporar inyección de dependencias y host de módulos
 - [ ] Incorporar registro estructurado y gestión de fallos
-- [ ] Agregar proyecto de pruebas unitarias y compilación CI
+- [x] Agregar proyecto de pruebas unitarias y compilación CI
 
 ## Fase 2 — Interfaz Dynamic Island
 - [x] Crear la ventana flotante inicial
@@ -21,15 +22,19 @@
 - [x] Eliminar bordes nativos WS_BORDER/WS_DLGFRAME y bordes extendidos WS_EX_WINDOWEDGE/CLIENTEDGE
 - [x] Desactivar el contorno DWM para que las esquinas visibles dependan de XAML
 - [ ] Validar visualmente en Windows 11 la integración al borde físico superior, la transparencia exterior y el suavizado de las esquinas
-- [ ] Incorporar gestión de múltiples monitores y cambios de DPI
-- [ ] Incorporar tamaño, posición y apariencia configurables
+- [x] Calcular ventana y región en píxeles físicos según el DPI del monitor
+- [x] Tamaño del notch, notch mínimo y mascota configurables
+- [x] Ícono en bandeja, ventana de ajustes y ocultar en pantalla completa
+- [ ] Elegir monitor y posición de la isla
 
 ## Fase 3 — Integración con Windows
 - [x] Conectar sesión multimedia activa mediante GSMTC y leer metadatos, portada y línea de tiempo
 - [x] Implementar controles de anterior, reproducir/pausar y siguiente
-- [ ] Servicio de volumen mediante Windows Core Audio
+- [x] Letras sincronizadas desde LRCLIB
+- [x] Avisos de volumen (Core Audio), brillo e idioma del teclado
 - [ ] Integración con notificaciones de Windows
-- [ ] Batería, red y estado básico del sistema
+- [x] Batería, red, VPN, latencia y estado básico del sistema (pestaña Sistema)
+- [x] Shelf de archivos y textos
 - [ ] Limpieza de suscripciones a eventos y recuperación de conexiones
 
 ## Criterios de liberación
