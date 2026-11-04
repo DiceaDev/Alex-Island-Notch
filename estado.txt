@@ -1,0 +1,2 @@
+composicion terminado antes de la captura: False (código )
+xaml terminado antes de la captura: False (código )

@@ -1,0 +1,2 @@
+Ventana: 0x3014E
+Composición lista.

@@ -1,0 +1,3 @@
+XAML inicializado.
+Ventana: 0x70066
+Contenido XAML asignado.
