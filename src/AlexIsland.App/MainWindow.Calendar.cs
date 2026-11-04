@@ -935,6 +935,15 @@ public sealed partial class MainWindow : UserControl
                 ShowSyncStatus("No se encontró texto o archivo en el portapapeles", isError: true);
             }
         }
+        catch (System.Net.Http.HttpRequestException ex)
+        {
+            var status = ex.StatusCode is { } code ? $" (HTTP {(int)code})" : string.Empty;
+            ShowSyncStatus($"No se pudo descargar el calendario{status}. Revisa que el enlace siga publicado.", isError: true);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or TaskCanceledException or InvalidDataException)
+        {
+            ShowSyncStatus("El calendario es demasiado grande (máx. 2 MB) o tardó demasiado en responder.", isError: true);
+        }
         catch (Exception ex)
         {
             ShowSyncStatus($"Error al importar: {ex.Message}", isError: true);
