@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using AlexIsland.Core.Security;
 
 namespace AlexIsland.Core.Models;
 
@@ -68,16 +69,35 @@ public sealed partial class CalendarEvent
         return StartTime > now && (StartTime - now) <= threshold;
     }
 
+    // Localiza candidatos dentro de texto libre. La validación real la hace
+    // MeetingUrlPolicy: este patrón solo busca, nunca decide qué es seguro.
     private static readonly Regex MeetingUrlRegex = new(
-        @"(https?://(meet\.google\.com|teams\.microsoft\.com|teams\.live\.com|[a-zA-Z0-9\-]+\.zoom\.us|[a-zA-Z0-9\-]+\.webex\.com)/[^\s""'>]+)",
-        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        @"https://[^\s""'<>]+",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled,
+        TimeSpan.FromMilliseconds(250));
 
+    /// <summary>
+    /// Busca en el texto el primer enlace de reunión que cumpla
+    /// <see cref="MeetingUrlPolicy"/>. Devuelve <c>null</c> si no hay ninguno.
+    /// </summary>
     public static string? TryExtractMeetingUrl(string? text)
     {
         if (string.IsNullOrWhiteSpace(text)) return null;
 
-        var match = MeetingUrlRegex.Match(text);
-        return match.Success ? match.Value : null;
+        try
+        {
+            foreach (Match match in MeetingUrlRegex.Matches(text))
+            {
+                var safe = MeetingUrlPolicy.Sanitize(match.Value.TrimEnd('.', ',', ';', ')', ']'));
+                if (safe is not null) return safe;
+            }
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            // Texto anómalo o malicioso: se trata como si no hubiera enlace.
+        }
+
+        return null;
     }
 }
 

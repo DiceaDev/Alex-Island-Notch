@@ -1,6 +1,7 @@
 using AlexIsland.App.Native;
 using AlexIsland.App.Services;
 using AlexIsland.Core.Models;
+using AlexIsland.Core.Security;
 using AlexIsland.Core.Services;
 using Microsoft.UI;
 using Microsoft.UI.Dispatching;
@@ -1859,7 +1860,7 @@ public sealed partial class MainWindow : Window
 
         if (upcoming is not null)
         {
-            _upcomingMeetingUrl = upcoming.MeetingUrl;
+            _upcomingMeetingUrl = MeetingUrlPolicy.Sanitize(upcoming.MeetingUrl);
 
             if (now >= upcoming.StartTime)
             {
@@ -1887,15 +1888,25 @@ public sealed partial class MainWindow : Window
 
     private async void UpcomingBannerJoinBtn_Click(object sender, RoutedEventArgs e)
     {
-        if (!string.IsNullOrWhiteSpace(_upcomingMeetingUrl) && Uri.TryCreate(_upcomingMeetingUrl, UriKind.Absolute, out var uri))
+        await LaunchMeetingAsync(_upcomingMeetingUrl);
+    }
+
+    /// <summary>
+    /// Único punto de la app que abre enlaces de reunión. Vuelve a validar el
+    /// enlace justo antes de abrirlo, aunque ya se haya filtrado al importarlo,
+    /// porque el archivo de eventos en disco puede haberse modificado.
+    /// </summary>
+    private static async Task LaunchMeetingAsync(string? meetingUrl)
+    {
+        if (!MeetingUrlPolicy.TryGetSafeUri(meetingUrl, out var uri)) return;
+
+        try
         {
-            try
-            {
-                await Windows.System.Launcher.LaunchUriAsync(uri);
-            }
-            catch
-            {
-            }
+            await Windows.System.Launcher.LaunchUriAsync(uri);
+        }
+        catch
+        {
+            // Si el sistema no puede abrir el enlace, no hay nada más que hacer.
         }
     }
 
@@ -2165,7 +2176,7 @@ public sealed partial class MainWindow : Window
             // Col 3: Acciones rápidas (Unirse a videollamada, editar, borrar)
             var actionsStack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 3, VerticalAlignment = VerticalAlignment.Center };
 
-            if (!string.IsNullOrWhiteSpace(ev.MeetingUrl))
+            if (MeetingUrlPolicy.TryGetSafeUri(ev.MeetingUrl, out _))
             {
                 var joinBtn = new Button
                 {
@@ -2186,13 +2197,7 @@ public sealed partial class MainWindow : Window
                         }
                     }
                 };
-                joinBtn.Click += async (_, _) =>
-                {
-                    if (Uri.TryCreate(ev.MeetingUrl, UriKind.Absolute, out var uri))
-                    {
-                        try { await Windows.System.Launcher.LaunchUriAsync(uri); } catch { }
-                    }
-                };
+                joinBtn.Click += async (_, _) => await LaunchMeetingAsync(ev.MeetingUrl);
                 actionsStack.Children.Add(joinBtn);
             }
 
@@ -2579,6 +2584,16 @@ public sealed partial class MainWindow : Window
         {
             meetingUrl = CalendarEvent.TryExtractMeetingUrl(title) ?? string.Empty;
         }
+        else
+        {
+            var safeUrl = MeetingUrlPolicy.Sanitize(meetingUrl);
+            if (safeUrl is null)
+            {
+                FormConflictWarning.Text = "⚠️ Enlace no válido: usa https:// de Meet, Teams, Zoom o Webex";
+                return;
+            }
+            meetingUrl = safeUrl;
+        }
 
         string? linkedTaskId = null;
         string? linkedTaskTitle = null;
@@ -2668,6 +2683,13 @@ public sealed partial class MainWindow : Window
             var file = await picker.PickSingleFileAsync();
             if (file is null) return;
 
+            var properties = await file.GetBasicPropertiesAsync();
+            if (properties.Size > (ulong)IcsCalendarHelper.MaxIcsLength)
+            {
+                ShowSyncStatus("El archivo es demasiado grande para ser un calendario (máx. 2 MB)", isError: true);
+                return;
+            }
+
             var content = await Windows.Storage.FileIO.ReadTextAsync(file);
             await ProcessIcsImportAsync(content, file.Name);
         }
@@ -2692,17 +2714,16 @@ public sealed partial class MainWindow : Window
                 }
 
                 var trimmed = text.Trim();
-                if (trimmed.StartsWith("webcal://", StringComparison.OrdinalIgnoreCase) ||
-                    (trimmed.StartsWith("http", StringComparison.OrdinalIgnoreCase) && (trimmed.EndsWith(".ics", StringComparison.OrdinalIgnoreCase) || trimmed.Contains("calendar"))))
+                if (LooksLikeUrl(trimmed))
                 {
-                    var url = trimmed.StartsWith("webcal://", StringComparison.OrdinalIgnoreCase)
-                        ? "https://" + trimmed[9..]
-                        : trimmed;
+                    if (!TryGetCalendarDownloadUri(trimmed, out var calendarUri))
+                    {
+                        ShowSyncStatus("Solo se pueden importar calendarios desde enlaces https:// o webcal://", isError: true);
+                        return;
+                    }
 
                     ShowSyncStatus("Descargando calendario desde URL...", isError: false);
-                    using var client = new System.Net.Http.HttpClient();
-                    client.Timeout = TimeSpan.FromSeconds(10);
-                    var downloaded = await client.GetStringAsync(url);
+                    var downloaded = await DownloadCalendarAsync(calendarUri);
                     await ProcessIcsImportAsync(downloaded, "Enlace de Calendario");
                     return;
                 }
@@ -2718,6 +2739,63 @@ public sealed partial class MainWindow : Window
         {
             ShowSyncStatus($"Error al importar: {ex.Message}", isError: true);
         }
+    }
+
+    private static readonly System.Net.Http.HttpClient CalendarHttpClient = CreateCalendarHttpClient();
+
+    private static System.Net.Http.HttpClient CreateCalendarHttpClient()
+    {
+        // .NET ya bloquea las redirecciones de https a http; además se limita
+        // su número y se fija un tope de tamaño para no cargar respuestas enormes.
+        var handler = new System.Net.Http.SocketsHttpHandler
+        {
+            AllowAutoRedirect = true,
+            MaxAutomaticRedirections = 5,
+        };
+
+        return new System.Net.Http.HttpClient(handler)
+        {
+            Timeout = TimeSpan.FromSeconds(15),
+            MaxResponseContentBufferSize = IcsCalendarHelper.MaxIcsLength,
+        };
+    }
+
+    private static bool LooksLikeUrl(string text)
+        => !text.Contains('\n') && text.Contains("://", StringComparison.Ordinal);
+
+    /// <summary>
+    /// Acepta únicamente enlaces https:// y webcal:// (que se convierte en https://).
+    /// http:// sin cifrar y cualquier otro esquema se rechazan.
+    /// </summary>
+    private static bool TryGetCalendarDownloadUri(string text, out Uri uri)
+    {
+        uri = null!;
+        var candidate = text.StartsWith("webcal://", StringComparison.OrdinalIgnoreCase)
+            ? "https://" + text["webcal://".Length..]
+            : text;
+
+        if (!Uri.TryCreate(candidate, UriKind.Absolute, out var parsed)) return false;
+        if (parsed.Scheme != Uri.UriSchemeHttps) return false;
+        if (!string.IsNullOrEmpty(parsed.UserInfo)) return false;
+        if (parsed.HostNameType != UriHostNameType.Dns) return false;
+
+        uri = parsed;
+        return true;
+    }
+
+    private static async Task<string> DownloadCalendarAsync(Uri uri)
+    {
+        using var response = await CalendarHttpClient.GetAsync(uri);
+        response.EnsureSuccessStatusCode();
+
+        if (response.Content.Headers.ContentLength is long length && length > IcsCalendarHelper.MaxIcsLength)
+        {
+            throw new InvalidDataException("El calendario descargado es demasiado grande (máx. 2 MB).");
+        }
+
+        // MaxResponseContentBufferSize aborta la lectura si el servidor
+        // envía más datos de los permitidos aunque no declare el tamaño.
+        return await response.Content.ReadAsStringAsync();
     }
 
     private async Task ProcessIcsImportAsync(string icsText, string sourceName)
