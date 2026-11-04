@@ -22,9 +22,83 @@ namespace AlexIsland.App;
 
 public sealed partial class MainWindow : UserControl
 {
+    // ------------------------------------------------------------ Mascota: dormir
+
+    /// <summary>Segundos en reposo antes de que el zorro cierre los ojos.</summary>
+    private const double DozeAfterSeconds = 30;
+
+    private DispatcherQueueTimer? _dozeTimer;
+    private Storyboard? _dozeStoryboard;
+    private bool _isDozing;
+
+    /// <summary>
+    /// Se llama cada vez que cambia el estado de la isla. En reposo programa la
+    /// "siesta"; al salir del reposo (cursor, música, aviso) los ojos se abren.
+    /// </summary>
+    private void UpdateMascotSleep(bool restingVisible)
+    {
+        if (_dozeTimer is null)
+        {
+            _dozeTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
+            _dozeTimer.Interval = TimeSpan.FromSeconds(DozeAfterSeconds);
+            _dozeTimer.IsRepeating = false;
+            _dozeTimer.Tick += (_, _) =>
+            {
+                _dozeTimer.Stop();
+                StartDozing();
+            };
+        }
+
+        if (restingVisible)
+        {
+            if (!_isDozing && !_dozeTimer.IsRunning) _dozeTimer.Start();
+            return;
+        }
+
+        _dozeTimer.Stop();
+        if (_isDozing) WakeUp();
+    }
+
+    private void StartDozing()
+    {
+        if (_currentDisplayMode != NotchDisplayMode.Resting || _isDozing) return;
+        _isDozing = true;
+        _blinkTimer?.Stop();
+
+        // Los ojos se cierran despacio y quedan casi como una línea; el brillo baja.
+        _dozeStoryboard = new Storyboard();
+        foreach (var eye in new[] { LeftEyeScale, RightEyeScale })
+        {
+            var close = new DoubleAnimation
+            {
+                To = 0.14,
+                Duration = TimeSpan.FromMilliseconds(900),
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut },
+            };
+            Storyboard.SetTarget(close, eye);
+            Storyboard.SetTargetProperty(close, "ScaleY");
+            _dozeStoryboard.Children.Add(close);
+        }
+
+        var dim = new DoubleAnimation { To = 0.35, Duration = TimeSpan.FromMilliseconds(900) };
+        Storyboard.SetTarget(dim, FoxEyesGlow);
+        Storyboard.SetTargetProperty(dim, "Opacity");
+        _dozeStoryboard.Children.Add(dim);
+
+        _dozeStoryboard.Begin();
+    }
+
+    private void WakeUp()
+    {
+        _isDozing = false;
+        // Al detener la animación, los ojos y el brillo vuelven a su valor normal.
+        _dozeStoryboard?.Stop();
+        _dozeStoryboard = null;
+    }
+
     private void TriggerEyeBlink()
     {
-        if (_currentDisplayMode != NotchDisplayMode.Resting) return;
+        if (_currentDisplayMode != NotchDisplayMode.Resting || _isDozing) return;
 
         var sb = new Storyboard();
 
@@ -203,6 +277,10 @@ public sealed partial class MainWindow : UserControl
             _peekTimer.Stop();
             _isPeekActive = false;
             ApplyIslandState();
+
+            // Tras un aviso, si nadie interactúa, la isla vuelve al reposo.
+            _idleTimer.Stop();
+            _idleTimer.Start();
         };
         _peekTimer.Start();
     }

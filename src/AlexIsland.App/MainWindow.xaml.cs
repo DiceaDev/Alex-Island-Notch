@@ -490,7 +490,8 @@ public sealed partial class MainWindow : UserControl
         ResizeIsland(width, height);
         PositionAtTopCenter();
 
-        if (_currentDisplayMode == NotchDisplayMode.Resting && RestingContent.Visibility == Visibility.Visible)
+        var restingVisible = _currentDisplayMode == NotchDisplayMode.Resting && RestingContent.Visibility == Visibility.Visible;
+        if (restingVisible && !_isDozing)
         {
             _blinkTimer?.Start();
         }
@@ -498,6 +499,7 @@ public sealed partial class MainWindow : UserControl
         {
             _blinkTimer?.Stop();
         }
+        UpdateMascotSleep(restingVisible);
 
         if (_isExpanded || _currentDisplayMode == NotchDisplayMode.Closed)
         {

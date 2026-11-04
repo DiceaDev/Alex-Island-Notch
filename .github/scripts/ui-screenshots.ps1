@@ -163,7 +163,14 @@ Start-Sleep -Milliseconds 700
 Assert-Running $proc
 Save-Shot '02b-aviso'
 [UiInput]::PressKey(0x14) # deja Bloq Mayús como estaba
-Start-Sleep -Seconds 4
+
+# Tras el aviso vuelve al reposo (~9 s) y, 30 s después, la mascota cierra los ojos.
+Start-Sleep -Seconds 12
+Assert-Running $proc
+Save-Shot '02c-reposo-despierto'
+Start-Sleep -Seconds 32
+Assert-Running $proc
+Save-Shot '02d-reposo-dormido'
 
 # Pasar el cursor sobre el notch: se expande (pestaña Música).
 Move-To $cx (8 * $s)

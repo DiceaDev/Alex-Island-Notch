@@ -39,19 +39,44 @@
                   HorizontalAlignment="Left"
                   VerticalAlignment="Top"/>
 
-            <!-- Modo 1: Resting (Ojitos interactivos estilo mascota robot de Nusa) -->
+            <!-- Modo 1: Resting. Mascota: los ojos rasgados del zorro de Alex Island.
+                 Parpadean de vez en cuando y, tras un rato sin actividad, se cierran (duerme). -->
             <Grid x:Name="RestingContent" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center" Height="32">
-                <StackPanel Orientation="Horizontal" Spacing="9" VerticalAlignment="Center">
-                    <Border x:Name="LeftEye" Width="6" Height="9" Background="White" CornerRadius="3">
-                        <Border.RenderTransform>
-                            <ScaleTransform x:Name="LeftEyeScale" CenterX="3" CenterY="4.5"/>
-                        </Border.RenderTransform>
-                    </Border>
-                    <Border x:Name="RightEye" Width="6" Height="9" Background="White" CornerRadius="3">
-                        <Border.RenderTransform>
-                            <ScaleTransform x:Name="RightEyeScale" CenterX="3" CenterY="4.5"/>
-                        </Border.RenderTransform>
-                    </Border>
+                <!-- Resplandor cálido detrás de los ojos, como en el logo -->
+                <Ellipse x:Name="FoxEyesGlow" Width="46" Height="22" IsHitTestVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Ellipse.Fill>
+                        <RadialGradientBrush>
+                            <GradientStop Color="#55FF8A00" Offset="0"/>
+                            <GradientStop Color="#22FF6A00" Offset="0.55"/>
+                            <GradientStop Color="#00FF6A00" Offset="1"/>
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                </Ellipse>
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Polygon x:Name="LeftEye" Points="0,0 4,1.2 10,8 5,6.4" Width="10" Height="8">
+                        <Polygon.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#FFFFE680" Offset="0"/>
+                                <GradientStop Color="#FFFFB300" Offset="0.6"/>
+                                <GradientStop Color="#FFFF7A00" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Polygon.Fill>
+                        <Polygon.RenderTransform>
+                            <ScaleTransform x:Name="LeftEyeScale" CenterX="5" CenterY="4"/>
+                        </Polygon.RenderTransform>
+                    </Polygon>
+                    <Polygon x:Name="RightEye" Points="10,0 6,1.2 0,8 5,6.4" Width="10" Height="8">
+                        <Polygon.Fill>
+                            <LinearGradientBrush StartPoint="1,0" EndPoint="0,1">
+                                <GradientStop Color="#FFFFE680" Offset="0"/>
+                                <GradientStop Color="#FFFFB300" Offset="0.6"/>
+                                <GradientStop Color="#FFFF7A00" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Polygon.Fill>
+                        <Polygon.RenderTransform>
+                            <ScaleTransform x:Name="RightEyeScale" CenterX="5" CenterY="4"/>
+                        </Polygon.RenderTransform>
+                    </Polygon>
                 </StackPanel>
             </Grid>
 
