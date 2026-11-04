@@ -1,0 +1,55 @@
+name: ui-screenshots
+
+# Revisión visual: compila la app, la abre en Windows, la recorre con el mouse
+# y guarda capturas como artefacto. Se ejecuta en los PR y a pedido.
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  screenshots:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        notch_scale: ['1.0', '1.4']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      # Autocontenida: el runner no tiene instalado el runtime de Windows App SDK.
+      - name: Publicar app
+        run: >
+          dotnet publish src/AlexIsland.App/AlexIsland.App.csproj
+          -c Release -r win-x64 -p:Platform=x64
+          -p:SelfContained=true -p:WindowsAppSDKSelfContained=true
+          -o publish
+
+      - name: Capturas
+        shell: pwsh
+        run: >
+          ./.github/scripts/ui-screenshots.ps1
+          -AppPath "$PWD/publish/AlexIsland.exe"
+          -OutDir "$PWD/screenshots"
+          -NotchScale ${{ matrix.notch_scale }}
+
+      - name: Copiar registro de arranque
+        if: always()
+        shell: pwsh
+        run: |
+          $log = Join-Path $env:LOCALAPPDATA 'AlexIsland\logs\startup.log'
+          New-Item -ItemType Directory -Force -Path screenshots | Out-Null
+          if (Test-Path $log) { Copy-Item $log screenshots/startup.log }
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots-escala-${{ matrix.notch_scale }}
+          path: screenshots
+          retention-days: 7
