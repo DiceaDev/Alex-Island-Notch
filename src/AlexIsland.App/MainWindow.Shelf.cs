@@ -395,17 +395,17 @@ public sealed partial class MainWindow : Window
 
         if (item.Kind == ShelfItemKind.Text)
         {
-            var copy = new MenuFlyoutItem { Text = "Copiar texto", Icon = new FontIcon { Glyph = "" } };
+            var copy = new MenuFlyoutItem { Text = "Copiar texto", Icon = new FontIcon { Glyph = "\uE8C8" } };
             copy.Click += (_, _) => CopyShelfText(item);
             menu.Items.Add(copy);
         }
         else
         {
-            var reveal = new MenuFlyoutItem { Text = "Mostrar en la carpeta", Icon = new FontIcon { Glyph = "" } };
+            var reveal = new MenuFlyoutItem { Text = "Mostrar en la carpeta", Icon = new FontIcon { Glyph = "\uE838" } };
             reveal.Click += async (_, _) => await RevealInExplorerAsync(item);
             menu.Items.Add(reveal);
 
-            var copyPath = new MenuFlyoutItem { Text = "Copiar ruta", Icon = new FontIcon { Glyph = "" } };
+            var copyPath = new MenuFlyoutItem { Text = "Copiar ruta", Icon = new FontIcon { Glyph = "\uE8C8" } };
             copyPath.Click += (_, _) =>
             {
                 var package = new DataPackage();
@@ -417,7 +417,7 @@ public sealed partial class MainWindow : Window
         }
 
         menu.Items.Add(new MenuFlyoutSeparator());
-        var remove = new MenuFlyoutItem { Text = "Quitar del shelf", Icon = new FontIcon { Glyph = "" } };
+        var remove = new MenuFlyoutItem { Text = "Quitar del shelf", Icon = new FontIcon { Glyph = "\uE711" } };
         remove.Click += (_, _) => RemoveShelfItem(item);
         menu.Items.Add(remove);
 
@@ -426,19 +426,19 @@ public sealed partial class MainWindow : Window
 
     private static string GlyphFor(ShelfItem item)
     {
-        if (item.Kind == ShelfItemKind.Text) return "";
-        if (item.Kind == ShelfItemKind.Folder) return "";
+        if (item.Kind == ShelfItemKind.Text) return "\uE8C1";
+        if (item.Kind == ShelfItemKind.Folder) return "\uE8B7";
 
         return Path.GetExtension(item.Path ?? string.Empty).ToLowerInvariant() switch
         {
-            ".png" or ".jpg" or ".jpeg" or ".gif" or ".bmp" or ".webp" or ".svg" => "",
-            ".mp4" or ".mov" or ".mkv" or ".avi" => "",
-            ".mp3" or ".wav" or ".flac" or ".m4a" => "",
-            ".zip" or ".7z" or ".rar" or ".tar" or ".gz" => "",
-            ".cs" or ".js" or ".ts" or ".py" or ".json" or ".xml" or ".ps1" or ".sh" or ".sql" or ".yml" or ".yaml" => "",
-            ".log" or ".txt" or ".md" => "",
-            ".exe" or ".msi" or ".bat" or ".cmd" => "",
-            _ => "",
+            ".png" or ".jpg" or ".jpeg" or ".gif" or ".bmp" or ".webp" or ".svg" => "\uEB9F",
+            ".mp4" or ".mov" or ".mkv" or ".avi" => "\uE714",
+            ".mp3" or ".wav" or ".flac" or ".m4a" => "\uE8D6",
+            ".zip" or ".7z" or ".rar" or ".tar" or ".gz" => "\uF012",
+            ".cs" or ".js" or ".ts" or ".py" or ".json" or ".xml" or ".ps1" or ".sh" or ".sql" or ".yml" or ".yaml" => "\uE943",
+            ".log" or ".txt" or ".md" => "\uE8A5",
+            ".exe" or ".msi" or ".bat" or ".cmd" => "\uE756",
+            _ => "\uE7C3",
         };
     }
 

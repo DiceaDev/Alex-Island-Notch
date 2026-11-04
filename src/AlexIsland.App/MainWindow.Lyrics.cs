@@ -24,6 +24,7 @@ public sealed partial class MainWindow : Window
     private string _currentTrackTitle = string.Empty;
     private string _currentTrackArtist = string.Empty;
     private int _lyricsIndex = -2;
+    private bool _lyricShownInCompact;
 
     private bool HasLyrics => _lyrics is not null && _settings.ShowLyrics;
 
@@ -121,7 +122,7 @@ public sealed partial class MainWindow : Window
         else
         {
             _lyricsTimer?.Stop();
-            if (!HasLyrics) CompactTrackArtist.Text = _currentTrackArtist;
+            RestoreCompactArtist();
         }
 
         // La altura de la pestaña Música depende de si hay letra.
@@ -150,7 +151,26 @@ public sealed partial class MainWindow : Window
         LyricsNextLine.Tag = index + 1 < _lyrics.Lines.Count ? _lyrics.Lines[index + 1].Time : null;
 
         // En el notch cerrado, la línea actual reemplaza al artista (como en Nusa).
-        CompactTrackArtist.Text = string.IsNullOrWhiteSpace(current) ? _currentTrackArtist : current;
+        if (string.IsNullOrWhiteSpace(current))
+        {
+            RestoreCompactArtist();
+        }
+        else
+        {
+            CompactTrackArtist.Text = current;
+            _lyricShownInCompact = true;
+        }
+    }
+
+    /// <summary>
+    /// Devuelve el subtítulo del notch cerrado al artista (o a la app que reproduce,
+    /// tal como lo dejó la sección multimedia), solo si antes se mostraba una letra.
+    /// </summary>
+    private void RestoreCompactArtist()
+    {
+        if (!_lyricShownInCompact) return;
+        _lyricShownInCompact = false;
+        CompactTrackArtist.Text = TrackArtist.Text;
     }
 
     private async void LyricsLine_Tapped(object sender, TappedRoutedEventArgs e)

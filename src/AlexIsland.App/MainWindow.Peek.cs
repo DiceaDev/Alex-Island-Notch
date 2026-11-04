@@ -259,7 +259,7 @@ public sealed partial class MainWindow : Window
                 var newCaps = !_lastCapsLockState;
                 _lastCapsLockState = newCaps;
 
-                if (_settings.ShowCapsLockPeeks)
+                if (_settings.ShowCapsLockPeeks && CanShowAutomaticPeek)
                 {
                     ShowHardwarePeek(
                         HardwarePeekType.CapsLock,

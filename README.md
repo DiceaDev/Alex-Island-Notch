@@ -22,6 +22,17 @@ El desarrollo está organizado en etapas. Actualmente, el repositorio contiene l
 | 8. Personalización y optimización | Apariencia, preferencias y optimización de recursos. | Planificada |
 | 9. Instalación y distribución | Instalador, actualizaciones, seguridad y publicación de versiones. | Planificada |
 
+## Funciones
+
+- **Música:** controles, carátula, progreso y **letras sincronizadas** (LRCLIB). En el notch cerrado, la línea actual reemplaza al artista.
+- **Sistema (IT):** CPU, memoria, disco, tiempo encendido y batería; conexión principal, IP, puerta de enlace, **VPN** y **latencia**. Botón para copiar los datos del equipo a un ticket.
+- **Avisos (peeks):** red caída o recuperada, VPN, volumen, brillo, idioma del teclado, Bloq Mayús, cargador y auriculares.
+- **Shelf:** arrastra archivos, carpetas o texto al notch para tenerlos a mano y sacarlos arrastrando.
+- **Productividad:** backlog de tareas, agenda con importación `.ics` y temporizador Pomodoro.
+- **Bandeja y ajustes:** iniciar con Windows, ocultar en pantalla completa, mascota, notch mínimo, tamaño y cada tipo de aviso.
+
+Navegación: pasa el cursor para abrir, clic para fijar y rueda del mouse sobre las pestañas para cambiar de página.
+
 ## Tecnologías
 
 - **Lenguaje:** C#
@@ -80,6 +91,18 @@ Criterios de implementación:
 - **Resiliencia:** aislar los errores de módulos opcionales para que no afecten al funcionamiento del núcleo.
 - **Privacidad y seguridad:** proteger credenciales y no almacenar secretos en texto plano ni en el repositorio.
 - **Compatibilidad:** considerar múltiples monitores, escalado DPI y cambios en el estado de Windows.
+
+## Privacidad y conexiones de red
+
+La app funciona sin conexión. Solo se conecta a Internet en estos casos:
+
+| Función | Destino | Qué se envía | Cómo desactivarlo |
+| --- | --- | --- | --- |
+| Letras sincronizadas | `lrclib.net` (HTTPS) | Título, artista y duración de la canción | Ajustes → Música |
+| Latencia | Host configurado (por defecto `1.1.1.1`) | Un ping ICMP cada 4 s, solo con la pestaña Sistema abierta | Ajustes → Sistema y red (puedes usar un host interno) |
+| Importar calendario por enlace | La URL `https://` o `webcal://` que pegues | Una descarga de hasta 2 MB | Solo ocurre si lo pides |
+
+Todo lo demás (tareas, agenda, shelf, ajustes) se guarda solo en `%LocalAppData%\AlexIsland`. El shelf guarda rutas, no copias de archivos. El inicio automático usa la clave `Run` del usuario actual (HKCU).
 
 ## Seguridad
 

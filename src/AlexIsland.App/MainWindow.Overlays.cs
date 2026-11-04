@@ -61,9 +61,16 @@ public sealed partial class MainWindow : Window
         _brightnessNotifier = null;
     }
 
+    /// <summary>
+    /// Los avisos automáticos no interrumpen al usuario: si la isla está abierta
+    /// (escribiendo una tarea, mirando la agenda...) o está oculta, se omiten.
+    /// </summary>
+    private bool CanShowAutomaticPeek =>
+        !_isDisposed && !_isExpanded && !_isHiddenByUser && !_isHiddenForFullscreen;
+
     private void OnVolumeChanged(float level, bool muted)
     {
-        if (_isDisposed || !_settings.ShowVolumePeeks) return;
+        if (!CanShowAutomaticPeek || !_settings.ShowVolumePeeks) return;
 
         var percent = (int)Math.Round(level * 100);
         ShowHardwarePeek(
@@ -71,12 +78,12 @@ public sealed partial class MainWindow : Window
             muted ? "Silenciado" : "Volumen",
             muted ? "Sonido desactivado" : $"{percent}%",
             percent01: muted ? 0 : level,
-            rightGlyph: muted ? "" : VolumeGlyph(level));
+            rightGlyph: muted ? "\uE74F" : VolumeGlyph(level));
     }
 
     private void OnBrightnessChanged(int percent)
     {
-        if (_isDisposed || !_settings.ShowBrightnessPeeks) return;
+        if (!CanShowAutomaticPeek || !_settings.ShowBrightnessPeeks) return;
 
         ShowHardwarePeek(
             HardwarePeekType.Brightness,
@@ -98,7 +105,7 @@ public sealed partial class MainWindow : Window
         _lastKeyboardWindow = window;
         _lastKeyboardLayout = layout;
 
-        if (!changedInSameWindow || !_settings.ShowKeyboardLayoutPeeks || window == _hwnd) return;
+        if (!changedInSameWindow || !_settings.ShowKeyboardLayoutPeeks || window == _hwnd || !CanShowAutomaticPeek) return;
 
         var (code, name) = KeyboardLayoutInfo.Describe(KeyboardLayoutInfo.LanguageIdFromLayout(layout.ToInt64()));
         ShowHardwarePeek(
@@ -110,9 +117,9 @@ public sealed partial class MainWindow : Window
 
     private static string VolumeGlyph(float level) => level switch
     {
-        <= 0.01f => "",
-        < 0.34f => "",
-        < 0.67f => "",
-        _ => "",
+        <= 0.01f => "\uE992",
+        < 0.34f => "\uE993",
+        < 0.67f => "\uE994",
+        _ => "\uE995",
     };
 }

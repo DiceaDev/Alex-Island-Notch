@@ -113,7 +113,7 @@ public sealed partial class MainWindow : Window
                 var current = t.Result;
                 _lastNetwork = current;
 
-                if (_settings.ShowNetworkPeeks && current.IsNoticeableChangeFrom(previous))
+                if (_settings.ShowNetworkPeeks && CanShowAutomaticPeek && current.IsNoticeableChangeFrom(previous))
                 {
                     ShowNetworkPeek(previous, current);
                 }
@@ -135,7 +135,7 @@ public sealed partial class MainWindow : Window
                 current.IsVpnActive ? "VPN conectada" : "VPN desconectada",
                 current.IsVpnActive ? string.Join(", ", current.VpnAdapters) : current.Describe(),
                 percent01: current.IsVpnActive ? 1.0 : 0.0,
-                rightGlyph: "",
+                rightGlyph: "\uE705",
                 accentColor: ColorHelper.FromArgb(255, 66, 165, 245));
             return;
         }
@@ -147,7 +147,7 @@ public sealed partial class MainWindow : Window
                 current.IsConnected ? "Sin acceso a Internet" : "Conexión perdida",
                 current.IsConnected ? current.Describe() : "Revisa el cable o la Wi-Fi",
                 percent01: 0.0,
-                rightGlyph: "",
+                rightGlyph: "\uE7BA",
                 accentColor: ColorHelper.FromArgb(255, 239, 83, 80));
             return;
         }
@@ -262,12 +262,12 @@ public sealed partial class MainWindow : Window
     }
 
     private static string NetworkGlyph(NetworkSnapshot n) => !n.IsConnected
-        ? ""
+        ? "\uE7BA"
         : n.Kind switch
         {
-            ConnectionKind.WiFi => "",
-            ConnectionKind.Ethernet => "",
-            _ => "",
+            ConnectionKind.WiFi => "\uE701",
+            ConnectionKind.Ethernet => "\uE839",
+            _ => "\uE774",
         };
 
     private async Task UpdateLatencyAsync()
