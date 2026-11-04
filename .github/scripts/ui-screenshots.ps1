@@ -71,7 +71,21 @@ function Save-Shot([string] $name) {
     $zg.Dispose()
 
     $zoom.Save((Join-Path $OutDir "$name.png"), [System.Drawing.Imaging.ImageFormat]::Png)
-    $zoom.Dispose(); $crop.Dispose(); $bmp.Dispose()
+    $zoom.Dispose(); $crop.Dispose()
+
+    # Detalle x4 del contorno del notch (curvas y orejas) para revisar el suavizado.
+    $dw = [Math]::Min(360, $screen.Width)
+    $dh = [Math]::Min([int](70 * $s), $screen.Height)
+    $detailRect = New-Object System.Drawing.Rectangle ([int]($cx - $dw / 2)), 0, $dw, $dh
+    $detail = $bmp.Clone($detailRect, $bmp.PixelFormat)
+    $detailZoom = New-Object System.Drawing.Bitmap ($dw * 4), ($dh * 4)
+    $dg = [System.Drawing.Graphics]::FromImage($detailZoom)
+    $dg.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::NearestNeighbor
+    $dg.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::Half
+    $dg.DrawImage($detail, 0, 0, $dw * 4, $dh * 4)
+    $dg.Dispose()
+    $detailZoom.Save((Join-Path $OutDir "$name-detalle.png"), [System.Drawing.Imaging.ImageFormat]::Png)
+    $detailZoom.Dispose(); $detail.Dispose(); $bmp.Dispose()
     Write-Host "Captura: $name"
 }
 

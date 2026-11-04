@@ -73,7 +73,13 @@ internal static class NativeMethods
         nint hwnd, int attribute, ref int value, int valueSize);
 
     [DllImport("gdi32.dll", SetLastError = true)]
-    private static extern nint CreatePolygonRgn(NativePoint[] lppt, int cPoints, int fnPolyFillMode);
+    private static extern nint CreateRectRgn(int left, int top, int right, int bottom);
+
+    [DllImport("gdi32.dll", SetLastError = true)]
+    private static extern nint CreateRoundRectRgn(int left, int top, int right, int bottom, int widthEllipse, int heightEllipse);
+
+    [DllImport("gdi32.dll", SetLastError = true)]
+    private static extern int CombineRgn(nint destination, nint source1, nint source2, int mode);
 
     [DllImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
@@ -83,16 +89,42 @@ internal static class NativeMethods
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool DeleteObject(nint hObject);
 
-    internal static void SetWindowPolygonRegion(nint hwnd, NativePoint[] points)
+    /// <summary>
+    /// Región de la ventana (zona que recibe el mouse) un poco más holgada que la
+    /// silueta del notch. Las regiones de Windows no tienen suavizado; por eso su
+    /// borde se deja en la zona transparente, donde no se ve, y el contorno
+    /// visible lo dibuja XAML con antialiasing. Todas las medidas en píxeles físicos.
+    /// </summary>
+    internal static void SetWindowNotchRegion(nint hwnd, int width, int height, int ear, int bottomRadius, int margin)
     {
-        if (hwnd == 0 || points == null || points.Length < 3) return;
-        var rgn = CreatePolygonRgn(points, points.Length, 2); // 2 = WINDING
-        if (rgn != 0)
+        if (hwnd == 0 || width <= 0 || height <= 0) return;
+
+        // Cuerpo con las esquinas inferiores redondeadas. Empieza por encima de la
+        // ventana para que sus esquinas superiores (también redondeadas) queden fuera.
+        var radius = Math.Max(1, bottomRadius + margin);
+        var body = CreateRoundRectRgn(
+            ear - margin, -2 * radius,
+            width - ear + margin + 1, height + 1,
+            2 * radius, 2 * radius);
+
+        // Franja superior que cubre las "orejas" cóncavas que unen el notch al borde.
+        var ears = CreateRectRgn(0, 0, width, Math.Min(height, ear + margin));
+
+        if (body == 0 || ears == 0)
         {
-            if (!SetWindowRgn(hwnd, rgn, true))
-            {
-                DeleteObject(rgn);
-            }
+            if (body != 0) DeleteObject(body);
+            if (ears != 0) DeleteObject(ears);
+            return;
+        }
+
+        const int RgnOr = 2;
+        _ = CombineRgn(body, body, ears, RgnOr);
+        DeleteObject(ears);
+
+        // Si SetWindowRgn tiene éxito, Windows pasa a ser dueño de la región.
+        if (!SetWindowRgn(hwnd, body, true))
+        {
+            DeleteObject(body);
         }
     }
 

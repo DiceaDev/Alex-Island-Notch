@@ -4,9 +4,10 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="Alex Island">
 
-    <!-- Fondo negro: la región de la ventana ya recorta la silueta del notch, así
-         que lo que asome durante una animación se ve negro y no del color del tema. -->
-    <Grid Background="#FF000000">
+    <!-- Fondo transparente: con TransparentBackdrop el escritorio se ve alrededor
+         del notch y sus curvas quedan suavizadas. Si la transparencia no está
+         disponible, el código pone este fondo en negro. -->
+    <Grid x:Name="RootGrid" Background="Transparent">
         <!-- Escala elegida por el usuario en Ajustes; la ventana se ajusta al mismo factor. -->
         <Grid.RenderTransform>
             <ScaleTransform x:Name="NotchUserScale" ScaleX="1" ScaleY="1" CenterX="0" CenterY="0"/>
