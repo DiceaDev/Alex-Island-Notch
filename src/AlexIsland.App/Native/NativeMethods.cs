@@ -128,6 +128,50 @@ internal static class NativeMethods
         }
     }
 
+    // ------------------------------------------------------------ Transparencia
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct DwmBlurBehind
+    {
+        public uint Flags;
+        public int Enable;
+        public nint BlurRegion;
+        public int TransitionOnMaximized;
+    }
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmEnableBlurBehindWindow(nint hwnd, ref DwmBlurBehind blurBehind);
+
+    /// <summary>
+    /// Pide a DWM que respete el canal alfa de la ventana. Se usa "blur behind"
+    /// con una región fuera de la ventana: activa la transparencia por píxel sin
+    /// aplicar ningún desenfoque. Devuelve false si DWM no lo aceptó.
+    /// </summary>
+    internal static bool EnablePerPixelTransparency(nint hwnd)
+    {
+        if (hwnd == 0) return false;
+
+        var region = CreateRectRgn(-2, -2, -1, -1);
+        try
+        {
+            var blur = new DwmBlurBehind
+            {
+                Flags = 0x1 | 0x2, // DWM_BB_ENABLE | DWM_BB_BLURREGION
+                Enable = 1,
+                BlurRegion = region,
+            };
+            return DwmEnableBlurBehindWindow(hwnd, ref blur) == 0;
+        }
+        catch
+        {
+            return false;
+        }
+        finally
+        {
+            if (region != 0) DeleteObject(region);
+        }
+    }
+
     // ------------------------------------------------------------ DPI
 
     [DllImport("user32.dll")]
@@ -317,6 +361,8 @@ internal static class NativeMethods
         var borderColor = DwmColorNone;
         _ = DwmSetWindowAttribute(
             hwnd, DwmwaBorderColor, ref borderColor, sizeof(int));
+
+        EnablePerPixelTransparency(hwnd);
 
         _ = SetWindowPos(
             hwnd,
