@@ -39,16 +39,17 @@
                   HorizontalAlignment="Left"
                   VerticalAlignment="Top"/>
 
-            <!-- Modo 1: Resting. Mascota: los ojos rasgados del zorro de Alex Island.
+            <!-- Modo 1: Resting. Mascota: los ojos rasgados del zorro de Alex Island,
+                 en el naranja de la marca (#FF5A00).
                  Parpadean de vez en cuando y, tras un rato sin actividad, se cierran (duerme). -->
             <Grid x:Name="RestingContent" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center" Height="32">
                 <!-- Resplandor cálido detrás de los ojos, como en el logo -->
                 <Ellipse x:Name="FoxEyesGlow" Width="46" Height="22" IsHitTestVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <Ellipse.Fill>
                         <RadialGradientBrush>
-                            <GradientStop Color="#55FF8A00" Offset="0"/>
-                            <GradientStop Color="#22FF6A00" Offset="0.55"/>
-                            <GradientStop Color="#00FF6A00" Offset="1"/>
+                            <GradientStop Color="#66FF5A00" Offset="0"/>
+                            <GradientStop Color="#26FF5A00" Offset="0.55"/>
+                            <GradientStop Color="#00FF5A00" Offset="1"/>
                         </RadialGradientBrush>
                     </Ellipse.Fill>
                 </Ellipse>
@@ -56,9 +57,9 @@
                     <Polygon x:Name="LeftEye" Points="0,0 4,1.2 10,8 5,6.4" Width="10" Height="8">
                         <Polygon.Fill>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#FFFFE680" Offset="0"/>
-                                <GradientStop Color="#FFFFB300" Offset="0.6"/>
-                                <GradientStop Color="#FFFF7A00" Offset="1"/>
+                                <GradientStop Color="#FFFFB27A" Offset="0"/>
+                                <GradientStop Color="#FFFF7A2E" Offset="0.5"/>
+                                <GradientStop Color="#FFFF5A00" Offset="1"/>
                             </LinearGradientBrush>
                         </Polygon.Fill>
                         <Polygon.RenderTransform>
@@ -68,9 +69,9 @@
                     <Polygon x:Name="RightEye" Points="10,0 6,1.2 0,8 5,6.4" Width="10" Height="8">
                         <Polygon.Fill>
                             <LinearGradientBrush StartPoint="1,0" EndPoint="0,1">
-                                <GradientStop Color="#FFFFE680" Offset="0"/>
-                                <GradientStop Color="#FFFFB300" Offset="0.6"/>
-                                <GradientStop Color="#FFFF7A00" Offset="1"/>
+                                <GradientStop Color="#FFFFB27A" Offset="0"/>
+                                <GradientStop Color="#FFFF7A2E" Offset="0.5"/>
+                                <GradientStop Color="#FFFF5A00" Offset="1"/>
                             </LinearGradientBrush>
                         </Polygon.Fill>
                         <Polygon.RenderTransform>
