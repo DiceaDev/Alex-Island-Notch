@@ -812,9 +812,8 @@ public sealed partial class MainWindow : UserControl
         WaveBar2.Height = 11;
         WaveBar3.Height = 14;
         WaveBar4.Height = 7;
-        var brush = new SolidColorBrush(_isPlaying
-            ? AccentColor
-            : ColorHelper.FromArgb(180, 245, 245, 247));
+        // Siempre en el naranja de la marca: intenso con música, más tenue en pausa.
+        var brush = new SolidColorBrush(_isPlaying ? AccentColor : Accent(150));
         WaveBar1.Background = brush;
         WaveBar2.Background = brush;
         WaveBar3.Background = brush;
