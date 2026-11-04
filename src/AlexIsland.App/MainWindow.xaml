@@ -5,10 +5,14 @@
     Title="Alex Island">
 
     <Grid Background="Transparent">
+        <!-- Escala elegida por el usuario en Ajustes; la ventana se ajusta al mismo factor. -->
+        <Grid.RenderTransform>
+            <ScaleTransform x:Name="NotchUserScale" ScaleX="1" ScaleY="1" CenterX="0" CenterY="0"/>
+        </Grid.RenderTransform>
         <Grid x:Name="IslandContainer"
               Width="196"
               Height="36"
-              HorizontalAlignment="Center"
+              HorizontalAlignment="Left"
               VerticalAlignment="Top"
               PointerEntered="IslandContainer_PointerEntered"
               PointerExited="IslandContainer_PointerExited"

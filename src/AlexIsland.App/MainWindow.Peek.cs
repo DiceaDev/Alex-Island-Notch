@@ -248,11 +248,14 @@ public sealed partial class MainWindow : Window
                 var newCaps = !_lastCapsLockState;
                 _lastCapsLockState = newCaps;
 
-                ShowHardwarePeek(
-                    HardwarePeekType.CapsLock,
-                    "Bloq Mayús",
-                    newCaps ? "ACTIVADO" : "DESACTIVADO",
-                    percent01: newCaps ? 1.0 : 0.0);
+                if (_settings.ShowCapsLockPeeks)
+                {
+                    ShowHardwarePeek(
+                        HardwarePeekType.CapsLock,
+                        "Bloq Mayús",
+                        newCaps ? "ACTIVADO" : "DESACTIVADO",
+                        percent01: newCaps ? 1.0 : 0.0);
+                }
             }
             else if (!isDown)
             {

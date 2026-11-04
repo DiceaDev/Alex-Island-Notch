@@ -71,6 +71,8 @@ public sealed partial class MainWindow : Window
     private const int ExpandedPomodoroHeight = 188;
     private const int ExpandedSystemHeight = 172;
     private const double EarRadius = 12.0;
+    private const int MinimalWidth = 120;
+    private const int MinimalHeight = 8;
 
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     private static extern short GetAsyncKeyState(int vKey);
@@ -270,6 +272,16 @@ public sealed partial class MainWindow : Window
         catch { }
 
         InitializeSystemModule();
+        InitializeShellIntegration();
+
+        // Si cambia el DPI (por ejemplo, al mover la isla a otro monitor), se recalcula el tamaño real.
+        IslandContainer.Loaded += (_, _) =>
+        {
+            if (IslandContainer.XamlRoot is { } root)
+            {
+                root.Changed += (_, _) => ApplyIslandState();
+            }
+        };
 
         UpdateClock();
         ApplyIslandState();
@@ -285,7 +297,7 @@ public sealed partial class MainWindow : Window
         try
         {
             NativeMethods.ConfigureIslandWindow(_hwnd);
-            UpdateWindowRegion((int)IslandContainer.Width, (int)IslandContainer.Height, EarRadius, _isExpanded ? 18.0 : 16.0);
+            UpdateNotchGeometry(IslandContainer.Width, IslandContainer.Height);
         }
         catch
         {
@@ -312,6 +324,7 @@ public sealed partial class MainWindow : Window
         }
         DetachMediaSession();
         StopSystemModule();
+        StopShellIntegration();
     }
 
     private async Task LoadSettingsAsync()
@@ -331,8 +344,15 @@ public sealed partial class MainWindow : Window
     /// <summary>Aplica en la interfaz los ajustes que no se leen en el momento de usarse.</summary>
     private void ApplySettings()
     {
+        ApplyShellSettings();
         ApplyIslandState();
     }
+
+    /// <summary>
+    /// Píxeles físicos por unidad de XAML: escala del monitor (DPI) por el tamaño
+    /// elegido en los ajustes. La ventana y su región se calculan con este factor.
+    /// </summary>
+    private double PixelScale => NativeMethods.GetDpiScale(_hwnd) * _settings.NotchScale;
 
     private void IslandContainer_PointerEntered(object sender, PointerRoutedEventArgs e)
     {
@@ -419,7 +439,9 @@ public sealed partial class MainWindow : Window
             _currentDisplayMode = NotchDisplayMode.Resting;
         }
 
-        RestingContent.Visibility = _currentDisplayMode == NotchDisplayMode.Resting ? Visibility.Visible : Visibility.Collapsed;
+        RestingContent.Visibility = _currentDisplayMode == NotchDisplayMode.Resting && _settings.ShowMascot && !_settings.MinimalNotch
+            ? Visibility.Visible
+            : Visibility.Collapsed;
         CompactContent.Visibility = _currentDisplayMode == NotchDisplayMode.Closed ? Visibility.Visible : Visibility.Collapsed;
         PeekContent.Visibility = _currentDisplayMode == NotchDisplayMode.Peek ? Visibility.Visible : Visibility.Collapsed;
         ExpandedContent.Visibility = _currentDisplayMode == NotchDisplayMode.Expanded ? Visibility.Visible : Visibility.Collapsed;
@@ -427,6 +449,7 @@ public sealed partial class MainWindow : Window
 
         var (width, height) = _currentDisplayMode switch
         {
+            NotchDisplayMode.Resting when _settings.MinimalNotch => (MinimalWidth, MinimalHeight),
             NotchDisplayMode.Resting => (RestingWidth, RestingHeight),
             NotchDisplayMode.Closed => (_isPlaying ? NotchPlayingWidth : NotchWidth, NotchHeight),
             NotchDisplayMode.Peek => (PeekWidth, PeekHeight),
@@ -445,12 +468,14 @@ public sealed partial class MainWindow : Window
 
         IslandContainer.Width = width;
         IslandContainer.Height = height;
+        NotchUserScale.ScaleX = _settings.NotchScale;
+        NotchUserScale.ScaleY = _settings.NotchScale;
 
         UpdateNotchGeometry(width, height);
         ResizeIsland(width, height);
         PositionAtTopCenter();
 
-        if (_currentDisplayMode == NotchDisplayMode.Resting)
+        if (_currentDisplayMode == NotchDisplayMode.Resting && RestingContent.Visibility == Visibility.Visible)
         {
             _blinkTimer?.Start();
         }
@@ -504,8 +529,11 @@ public sealed partial class MainWindow : Window
     {
         if (width <= 0 || height <= 0) return;
 
-        var earRadius = EarRadius;
+        // En el notch mínimo la altura es muy baja: los radios se limitan para
+        // que la silueta no se cruce consigo misma.
+        var earRadius = Math.Min(EarRadius, height / 2.0);
         var bottomRadius = _isExpanded ? 18.0 : (_currentDisplayMode == NotchDisplayMode.Resting ? 13.0 : 16.0);
+        bottomRadius = Math.Min(bottomRadius, height / 2.0);
         var bodyWidth = width - 2 * earRadius;
         if (bodyWidth <= 0) bodyWidth = width;
 
@@ -625,7 +653,16 @@ public sealed partial class MainWindow : Window
             (int)(earRadius + bodyWidth + earRadius), 0,
             points, 5);
 
-        NativeMethods.SetWindowPolygonRegion(_hwnd, points.ToArray());
+        // Los puntos están en unidades de XAML; la región de la ventana va en píxeles físicos.
+        var scale = PixelScale;
+        var scaled = points
+            .Select(p => new NativeMethods.NativePoint
+            {
+                X = (int)Math.Round(p.X * scale),
+                Y = (int)Math.Round(p.Y * scale),
+            })
+            .ToArray();
+        NativeMethods.SetWindowPolygonRegion(_hwnd, scaled);
     }
 
     private static void SampleBezier(
@@ -776,7 +813,12 @@ public sealed partial class MainWindow : Window
         {
             IslandScale.CenterX = width / 2.0;
             IslandScale.CenterY = 0; // Escala anclada al borde superior de la pantalla
-            _appWindow.Resize(new SizeInt32(width, height));
+
+            // AppWindow trabaja en píxeles físicos; XAML, en unidades independientes del DPI.
+            var scale = PixelScale;
+            _appWindow.Resize(new SizeInt32(
+                (int)Math.Ceiling(width * scale),
+                (int)Math.Ceiling(height * scale)));
         }
         catch
         {
@@ -800,7 +842,7 @@ public sealed partial class MainWindow : Window
             if (display is null) return;
 
             var bounds = display.OuterBounds;
-            var width = (int)IslandContainer.Width;
+            var width = (int)Math.Ceiling(IslandContainer.Width * PixelScale);
             var x = bounds.X + ((bounds.Width - width) / 2);
             _appWindow.Move(new PointInt32(x, bounds.Y));
         }
