@@ -101,8 +101,10 @@ jobs:
         with:
           global-json-file: global.json
 
-      - name: Compilar prueba
-        run: dotnet build tools/TransparencyProbe/TransparencyProbe.csproj -c Release -o probe
+      - name: Compilar pruebas
+        run: |
+          dotnet build tools/TransparencyProbe/TransparencyProbe.csproj -c Release -o probe/composicion
+          dotnet build tools/XamlIslandProbe/XamlIslandProbe.csproj -c Release -o probe/xaml
 
       - name: Ejecutar y capturar
         shell: pwsh
@@ -111,22 +113,29 @@ jobs:
           Add-Type 'using System.Runtime.InteropServices; public static class Dpi { [DllImport("user32.dll")] public static extern bool SetProcessDPIAware(); }'
           [Dpi]::SetProcessDPIAware() | Out-Null
           New-Item -ItemType Directory -Force -Path probe-shots | Out-Null
-          $proc = Start-Process -FilePath probe/TransparencyProbe.exe -ArgumentList 20 -PassThru -RedirectStandardOutput probe-shots/salida.txt -RedirectStandardError probe-shots/errores.txt
-          Start-Sleep -Seconds 6
-          $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
-          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
-          $g = [System.Drawing.Graphics]::FromImage($bmp); $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size); $g.Dispose()
-          $w = 360; $h = 90; $x = [int]($b.Width / 2 - $w / 2)
-          $crop = $bmp.Clone((New-Object System.Drawing.Rectangle $x, 0, $w, $h), $bmp.PixelFormat)
-          $zoom = New-Object System.Drawing.Bitmap ($w * 4), ($h * 4)
-          $zg = [System.Drawing.Graphics]::FromImage($zoom)
-          $zg.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::NearestNeighbor
-          $zg.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::Half
-          $zg.DrawImage($crop, 0, 0, $w * 4, $h * 4); $zg.Dispose()
-          $zoom.Save("probe-shots/referencia-detalle.png", [System.Drawing.Imaging.ImageFormat]::Png)
-          $bmp.Save("probe-shots/pantalla.png", [System.Drawing.Imaging.ImageFormat]::Png)
-          "Proceso terminado: $($proc.HasExited)" | Out-File probe-shots/estado.txt
-          if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
+
+          function Capture-Probe([string] $name, [string] $exe) {
+            $proc = Start-Process -FilePath $exe -ArgumentList 20 -PassThru `
+              -RedirectStandardOutput "probe-shots/$name-salida.txt" -RedirectStandardError "probe-shots/$name-errores.txt"
+            Start-Sleep -Seconds 8
+            $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+            $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+            $g = [System.Drawing.Graphics]::FromImage($bmp); $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size); $g.Dispose()
+            $w = 360; $h = 90; $x = [int]($b.Width / 2 - $w / 2)
+            $crop = $bmp.Clone((New-Object System.Drawing.Rectangle $x, 0, $w, $h), $bmp.PixelFormat)
+            $zoom = New-Object System.Drawing.Bitmap ($w * 4), ($h * 4)
+            $zg = [System.Drawing.Graphics]::FromImage($zoom)
+            $zg.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::NearestNeighbor
+            $zg.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::Half
+            $zg.DrawImage($crop, 0, 0, $w * 4, $h * 4); $zg.Dispose()
+            $zoom.Save("probe-shots/$name-detalle.png", [System.Drawing.Imaging.ImageFormat]::Png)
+            "$name terminado antes de la captura: $($proc.HasExited) (código $(if ($proc.HasExited) { $proc.ExitCode }))" | Out-File -Append probe-shots/estado.txt
+            if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
+            Start-Sleep -Seconds 2
+          }
+
+          Capture-Probe 'composicion' 'probe/composicion/TransparencyProbe.exe'
+          Capture-Probe 'xaml' 'probe/xaml/XamlIslandProbe.exe'
 
       - name: Publicar capturas en una rama aparte
         if: always() && (github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository)
