@@ -464,11 +464,20 @@
                                     Background="Transparent" Foreground="#FFD0D2D8" FontSize="12"
                                     Width="26" Height="26" Padding="0"
                                     HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <!-- Reproducir/pausar en el naranja de la marca, igual que en Focus -->
                             <Button x:Name="PlayPauseButton" Content="&#xE768;"
                                     FontFamily="Segoe MDL2 Assets" Click="PlayPauseButton_Click"
                                     Width="30" Height="30" CornerRadius="15"
-                                    Background="#FF2D2F36" Foreground="White" FontSize="13"
-                                    Padding="0" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    Background="#FFFF5A00" Foreground="White" FontSize="13" BorderThickness="0"
+                                    Padding="0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Button.Resources>
+                                    <!-- Que el botón siga naranja al pasar el cursor o presionarlo -->
+                                    <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#FFFF7A33"/>
+                                    <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#FFD94D00"/>
+                                    <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="White"/>
+                                    <SolidColorBrush x:Key="ButtonForegroundPressed" Color="White"/>
+                                </Button.Resources>
+                            </Button>
                             <Button Content="&#xE893;" FontFamily="Segoe MDL2 Assets"
                                     Click="NextButton_Click" Background="Transparent"
                                     Foreground="#FFD0D2D8" FontSize="12"
