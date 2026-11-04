@@ -95,6 +95,11 @@ internal static class NativeMethods
     /// borde se deja en la zona transparente, donde no se ve, y el contorno
     /// visible lo dibuja XAML con antialiasing. Todas las medidas en píxeles físicos.
     /// </summary>
+    internal static void ClearWindowRegion(nint hwnd)
+    {
+        if (hwnd != 0) _ = SetWindowRgn(hwnd, 0, true);
+    }
+
     internal static void SetWindowNotchRegion(nint hwnd, int width, int height, int ear, int bottomRadius, int margin)
     {
         if (hwnd == 0 || width <= 0 || height <= 0) return;

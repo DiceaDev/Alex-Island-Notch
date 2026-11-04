@@ -176,7 +176,8 @@ public sealed partial class MainWindow : Window
         }
 
         _hwnd = WindowNative.GetWindowHandle(this);
-        App.Log($"Transparencia: canal alfa de DWM {(NativeMethods.EnablePerPixelTransparency(_hwnd) ? "activado" : "NO activado")}.");
+        _hasPerPixelTransparency = NativeMethods.EnablePerPixelTransparency(_hwnd);
+        App.Log($"Transparencia: canal alfa de DWM {(_hasPerPixelTransparency ? "activado" : "NO activado")}.");
         var windowId = Win32Interop.GetWindowIdFromWindow(_hwnd);
         _appWindow = AppWindow.GetFromWindowId(windowId);
 
@@ -646,9 +647,19 @@ public sealed partial class MainWindow : Window
         UpdateWindowRegion((int)width, (int)height, earRadius, bottomRadius);
     }
 
+    private bool _hasPerPixelTransparency;
+
     private void UpdateWindowRegion(int width, int height, double earRadius, double bottomRadius)
     {
         if (_hwnd == 0) return;
+
+        // Con transparencia por píxel no se recorta la ventana: una región de
+        // Windows anula el canal alfa y vuelve a dejar los bordes en escalera.
+        if (_hasPerPixelTransparency)
+        {
+            NativeMethods.ClearWindowRegion(_hwnd);
+            return;
+        }
 
         // Medidas de XAML convertidas a píxeles físicos. El margen deja el borde
         // de la región (sin suavizado) en la zona transparente alrededor del notch.
