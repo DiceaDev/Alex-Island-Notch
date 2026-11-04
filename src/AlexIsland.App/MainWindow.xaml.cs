@@ -105,7 +105,6 @@ public sealed partial class MainWindow : UserControl
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     private static extern short GetKeyState(int nVirtKey);
     private const int VK_CAPITAL = 0x14;
-    private bool _lastCapsKeyWasDown;
     private bool _showClockInCompactCenter;
     private int _demoPeekIndex = 0;
 
