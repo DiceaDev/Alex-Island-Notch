@@ -279,28 +279,28 @@
                     <Grid.Resources>
                         <Style x:Key="IslandTabButtonStyle" TargetType="Button">
                             <Setter Property="CornerRadius" Value="13"/>
-                            <Setter Property="Padding" Value="9,0"/>
+                            <Setter Property="Padding" Value="7,0"/>
                             <Setter Property="Height" Value="26"/>
                             <Setter Property="Background" Value="Transparent"/>
                             <Setter Property="BorderThickness" Value="0"/>
                         </Style>
                     </Grid.Resources>
 
-                    <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center"
+                    <StackPanel Orientation="Horizontal" Spacing="0" VerticalAlignment="Center"
                                 PointerWheelChanged="TabBar_PointerWheelChanged" Background="Transparent">
-                        <Button x:Name="TabMediaButton" Click="TabMediaButton_Click" Style="{StaticResource IslandTabButtonStyle}">
+                        <Button x:Name="TabMediaButton" Click="TabMediaButton_Click" Style="{StaticResource IslandTabButtonStyle}" Background="#FF2C2D33">
                             <Grid>
-                                <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
-                                    <FontIcon x:Name="TabMediaIcon" Glyph="&#xE80F;" FontSize="12" Foreground="#FF8E929C"/>
-                                    <TextBlock x:Name="TabMediaLabel" Text="Inicio" FontSize="11" Foreground="#FF8E929C" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                    <FontIcon x:Name="TabMediaIcon" Glyph="&#xE80F;" FontSize="12" Foreground="White"/>
+                                    <TextBlock x:Name="TabMediaLabel" Text="Inicio" FontSize="10.5" Foreground="White" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Grid>
                         </Button>
                         <Button x:Name="TabCalendarButton" Click="TabCalendarButton_Click" Style="{StaticResource IslandTabButtonStyle}">
                             <Grid>
-                                <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                                     <FontIcon x:Name="TabCalendarIcon" Glyph="&#xE787;" FontSize="12" Foreground="#FF8E929C"/>
-                                    <TextBlock x:Name="TabCalendarLabel" Text="Agenda" FontSize="11" Foreground="#FF8E929C" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="TabCalendarLabel" Text="Agenda" FontSize="10.5" Foreground="#FF8E929C" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                     <Border x:Name="HeaderCalendarBadge" Visibility="Collapsed" Background="#33FFFFFF" CornerRadius="7" Padding="5,0" MinWidth="16" VerticalAlignment="Center">
                                         <TextBlock x:Name="HeaderCalendarCount" Text="0" FontSize="10" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                                     </Border>
@@ -310,9 +310,9 @@
                         </Button>
                         <Button x:Name="TabBacklogButton" Click="TabBacklogButton_Click" Style="{StaticResource IslandTabButtonStyle}">
                             <Grid>
-                                <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                                     <FontIcon x:Name="TabBacklogIcon" Glyph="&#xE9D5;" FontSize="12" Foreground="#FF8E929C"/>
-                                    <TextBlock x:Name="TabBacklogLabel" Text="Tareas" FontSize="11" Foreground="#FF8E929C" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="TabBacklogLabel" Text="Tareas" FontSize="10.5" Foreground="#FF8E929C" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                     <Border x:Name="HeaderBacklogBadge" Visibility="Collapsed" Background="#33FFFFFF" CornerRadius="7" Padding="5,0" MinWidth="16" VerticalAlignment="Center">
                                         <TextBlock x:Name="HeaderBacklogCount" Text="0" FontSize="10" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                                     </Border>
@@ -321,9 +321,9 @@
                         </Button>
                         <Button x:Name="TabPomodoroButton" Click="TabPomodoroButton_Click" Style="{StaticResource IslandTabButtonStyle}">
                             <Grid>
-                                <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                                     <FontIcon x:Name="TabPomodoroIcon" Glyph="&#xE916;" FontSize="12" Foreground="#FF8E929C"/>
-                                    <TextBlock x:Name="TabPomodoroLabel" Text="Enfoque" FontSize="11" Foreground="#FF8E929C" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="TabPomodoroLabel" Text="Enfoque" FontSize="10.5" Foreground="#FF8E929C" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                     <Border x:Name="HeaderPomodoroBadge" Visibility="Collapsed" Background="#33FFFFFF" CornerRadius="7" Padding="5,0" MinWidth="16" VerticalAlignment="Center">
                                         <TextBlock x:Name="HeaderPomodoroCount" Text="0" FontSize="10" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                                     </Border>
@@ -333,17 +333,17 @@
                         </Button>
                         <Button x:Name="TabSystemButton" Click="TabSystemButton_Click" Style="{StaticResource IslandTabButtonStyle}">
                             <Grid>
-                                <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                                     <FontIcon x:Name="TabSystemIcon" Glyph="&#xE9D9;" FontSize="12" Foreground="#FF8E929C"/>
-                                    <TextBlock x:Name="TabSystemLabel" Text="Sistema" FontSize="11" Foreground="#FF8E929C" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="TabSystemLabel" Text="Sistema" FontSize="10.5" Foreground="#FF8E929C" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Grid>
                         </Button>
                         <Button x:Name="TabShelfButton" Click="TabShelfButton_Click" Style="{StaticResource IslandTabButtonStyle}">
                             <Grid>
-                                <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                                     <FontIcon x:Name="TabShelfIcon" Glyph="&#xE7B8;" FontSize="12" Foreground="#FF8E929C"/>
-                                    <TextBlock x:Name="TabShelfLabel" Text="Archivos" FontSize="11" Foreground="#FF8E929C" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="TabShelfLabel" Text="Archivos" FontSize="10.5" Foreground="#FF8E929C" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                     <Border x:Name="HeaderShelfBadge" Visibility="Collapsed" Background="#33FFFFFF" CornerRadius="7" Padding="5,0" MinWidth="16" VerticalAlignment="Center">
                                         <TextBlock x:Name="HeaderShelfCount" Text="0" FontSize="10" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                                     </Border>
@@ -553,14 +553,23 @@
                                  Grid.Column="1"
                                  Height="26"
                                  FontSize="11"
-                                 PlaceholderText="Nueva tarea dev (ej: fix: bug en login...)"
+                                 PlaceholderText="Nueva tarea (ej: fix: error al iniciar sesión)"
                                  Background="#FF171920"
                                  Foreground="#FFF0F2F5"
                                  BorderBrush="#FF2F3342"
                                  BorderThickness="1"
                                  CornerRadius="5"
                                  Padding="7,2"
-                                 KeyDown="NewTaskInput_KeyDown"/>
+                                 KeyDown="NewTaskInput_KeyDown">
+                            <!-- Oscuro también al escribir: el tema por defecto lo vuelve blanco al enfocarlo -->
+                            <TextBox.Resources>
+                                <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#FF1C1D22"/>
+                                <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#FF1C1D22"/>
+                                <SolidColorBrush x:Key="TextControlForegroundFocused" Color="#FFF0F2F5"/>
+                                <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#FFFF5A00"/>
+                                <SolidColorBrush x:Key="TextControlPlaceholderForegroundFocused" Color="#FF6F7480"/>
+                            </TextBox.Resources>
+                        </TextBox>
 
                         <!-- Botón añadir tarea -->
                         <Button x:Name="AddTaskButton"

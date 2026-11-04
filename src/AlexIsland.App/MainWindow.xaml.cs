@@ -70,11 +70,11 @@ public sealed partial class MainWindow : UserControl
     private const int PeekWidth = 300;
     private const int PeekHeight = 42;
     // Más ancha para que las seis pestañas muestren su nombre y Inicio tenga dos columnas.
-    private const int ExpandedWidth = 540;
+    private const int ExpandedWidth = 570;
     private const int ExpandedHeight = 162;
     private const int ExpandedBacklogHeight = 196;
     private const int ExpandedCalendarHeight = 234;
-    private const int ExpandedPomodoroHeight = 196;
+    private const int ExpandedPomodoroHeight = 226;
     private const int ExpandedSystemHeight = 158;
     private const double EarRadius = 12.0;
 
