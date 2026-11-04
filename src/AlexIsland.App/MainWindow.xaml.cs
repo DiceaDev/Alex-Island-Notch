@@ -74,7 +74,7 @@ public sealed partial class MainWindow : UserControl
     private const int ExpandedHeight = 162;
     private const int ExpandedBacklogHeight = 196;
     private const int ExpandedCalendarHeight = 234;
-    private const int ExpandedPomodoroHeight = 226;
+    private const int ExpandedPomodoroHeight = 214;
     private const int ExpandedSystemHeight = 158;
     private const double EarRadius = 12.0;
 
