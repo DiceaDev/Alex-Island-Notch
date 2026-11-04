@@ -219,6 +219,8 @@ public sealed partial class MainWindow : UserControl
     {
         if (_isDisposed) return;
 
+        UpdateSatelliteVisibility();
+
         var fullscreen = NativeMethods.IsFullscreenAppActive(_hwnd);
         if (fullscreen == _isHiddenForFullscreen) return;
 
@@ -230,6 +232,7 @@ public sealed partial class MainWindow : UserControl
     {
         var visible = !_isHiddenByUser && !_isHiddenForFullscreen;
         NativeMethods.SetIslandVisible(_hwnd, visible);
+        UpdateSatelliteVisibility();
 
         if (visible)
         {

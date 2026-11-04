@@ -32,6 +32,9 @@ internal sealed class IslandHostWindow : IDisposable
     /// <summary>La ventana se destruyó (por Close o porque Windows la cerró).</summary>
     public event EventHandler? Closed;
 
+    /// <summary>Se conectó, desconectó o reordenó alguna pantalla.</summary>
+    public event EventHandler? DisplayChanged;
+
     public IslandHostWindow(UIElement content, int width, int height)
     {
         // Necesario antes de crear DesktopWindowXamlSource en este hilo.
@@ -132,12 +135,17 @@ internal sealed class IslandHostWindow : IDisposable
         const uint WmDestroy = 0x0002;
         const uint WmClose = 0x0010;
         const uint WmEraseBackground = 0x0014;
+        const uint WmDisplayChange = 0x007E;
 
         switch (msg)
         {
             case WmEraseBackground:
                 // Nada que borrar: el contenido lo compone XAML con transparencia.
                 return 1;
+
+            case WmDisplayChange:
+                if (s_windows.TryGetValue(hwnd, out var changed)) changed.DisplayChanged?.Invoke(changed, EventArgs.Empty);
+                break;
 
             case WmClose:
                 DestroyWindow(hwnd);

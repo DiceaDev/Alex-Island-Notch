@@ -25,7 +25,8 @@
 - [x] Calcular ventana y región en píxeles físicos según el DPI del monitor
 - [x] Tamaño del notch, notch mínimo y mascota configurables
 - [x] Ícono en bandeja, ventana de ajustes y ocultar en pantalla completa
-- [ ] Elegir monitor y posición de la isla
+- [x] Isla en todos los monitores (la completa sigue al cursor; notch liviano en los demás)
+- [ ] Elegir la posición de la isla
 
 ## Fase 3 — Integración con Windows
 - [x] Conectar sesión multimedia activa mediante GSMTC y leer metadatos, portada y línea de tiempo
