@@ -296,6 +296,11 @@ public sealed partial class MainWindow : Window
 
         UpdateClock();
         ApplyIslandState();
+
+        // Si nadie interactúa al abrir la app, a los pocos segundos pasa a reposo
+        // (mascota). Antes solo ocurría después de pasar el cursor por la isla.
+        _idleTimer.Start();
+
         _ = LoadSettingsAsync();
         _ = InitializeMediaAsync();
         _ = LoadTasksAsync();

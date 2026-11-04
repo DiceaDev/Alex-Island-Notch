@@ -13,13 +13,37 @@ New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
+# SendInput simula un mouse real: WinUI necesita esos eventos para detectar el puntero.
 Add-Type @"
 using System;
 using System.Runtime.InteropServices;
 public static class UiInput {
+    [StructLayout(LayoutKind.Sequential)]
+    public struct MouseInput { public int Dx; public int Dy; public int Data; public uint Flags; public uint Time; public IntPtr Extra; }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Input { public uint Type; public MouseInput Mouse; }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Point { public int X; public int Y; }
+
     [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
-    [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
-    [DllImport("user32.dll")] public static extern void mouse_event(uint flags, int dx, int dy, int data, UIntPtr extra);
+    [DllImport("user32.dll", SetLastError = true)] static extern uint SendInput(uint count, Input[] inputs, int size);
+    [DllImport("user32.dll")] public static extern int GetSystemMetrics(int index);
+    [DllImport("user32.dll")] public static extern bool GetCursorPos(out Point p);
+
+    static uint Send(uint flags, int dx, int dy, int data) {
+        var input = new Input { Type = 0, Mouse = new MouseInput { Dx = dx, Dy = dy, Data = data, Flags = flags } };
+        var sent = SendInput(1, new[] { input }, Marshal.SizeOf(typeof(Input)));
+        if (sent == 0) Console.WriteLine("SendInput falló: error " + Marshal.GetLastWin32Error());
+        return sent;
+    }
+
+    public static void MoveTo(int x, int y) {
+        int w = GetSystemMetrics(0), h = GetSystemMetrics(1);
+        // Coordenadas absolutas normalizadas a 0..65535 (MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE).
+        Send(0x0001 | 0x8000, (int)Math.Round(x * 65535.0 / (w - 1)), (int)Math.Round(y * 65535.0 / (h - 1)), 0);
+    }
+    public static void LeftClick() { Send(0x0002, 0, 0, 0); Send(0x0004, 0, 0, 0); }
+    public static void Wheel(int delta) { Send(0x0800, 0, 0, delta); }
 }
 "@
 [UiInput]::SetProcessDPIAware() | Out-Null
@@ -52,18 +76,27 @@ function Save-Shot([string] $name) {
 }
 
 function Move-To([double] $x, [double] $y) {
-    [UiInput]::SetCursorPos([int]$x, [int]$y) | Out-Null
+    # Varios pasos cortos, como un mouse real, para que se generen eventos de entrada.
+    $p = New-Object UiInput+Point
+    [UiInput]::GetCursorPos([ref] $p) | Out-Null
+    for ($i = 1; $i -le 8; $i++) {
+        $ix = $p.X + ($x - $p.X) * $i / 8
+        $iy = $p.Y + ($y - $p.Y) * $i / 8
+        [UiInput]::MoveTo([int]$ix, [int]$iy)
+        Start-Sleep -Milliseconds 25
+    }
+    [UiInput]::GetCursorPos([ref] $p) | Out-Null
+    Write-Host "Cursor en ($($p.X), $($p.Y))"
 }
 
 function Click-At([double] $x, [double] $y) {
     Move-To $x $y
     Start-Sleep -Milliseconds 150
-    [UiInput]::mouse_event(0x0002, 0, 0, 0, [UIntPtr]::Zero) # izquierdo abajo
-    [UiInput]::mouse_event(0x0004, 0, 0, 0, [UIntPtr]::Zero) # izquierdo arriba
+    [UiInput]::LeftClick()
 }
 
 function Wheel-Next {
-    [UiInput]::mouse_event(0x0800, 0, 0, -120, [UIntPtr]::Zero)
+    [UiInput]::Wheel(-120)
 }
 
 $startupLog = Join-Path $env:LOCALAPPDATA 'AlexIsland\logs\startup.log'
