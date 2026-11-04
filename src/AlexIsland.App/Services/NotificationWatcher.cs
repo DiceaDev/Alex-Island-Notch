@@ -15,7 +15,7 @@ namespace AlexIsland.App.Services;
 /// </summary>
 internal sealed class NotificationWatcher : IDisposable
 {
-    private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(3);
 
     private readonly NotificationTracker _tracker = new();
     private CancellationTokenSource? _cts;
@@ -59,7 +59,11 @@ internal sealed class NotificationWatcher : IDisposable
 
         _tracker.Reset();
         _cts = new CancellationTokenSource();
-        _ = PollLoopAsync(_cts.Token);
+        var token = _cts.Token;
+
+        // En un hilo de fondo: si se llamara desde la interfaz, cada vuelta del
+        // bucle (y la lectura de todas las notificaciones) correría en ese hilo.
+        _ = Task.Run(() => PollLoopAsync(token), token);
     }
 
     public void Stop()
@@ -76,6 +80,11 @@ internal sealed class NotificationWatcher : IDisposable
         using var timer = new PeriodicTimer(PollInterval);
         var loggedAccessProblem = false;
         var consecutiveErrors = 0;
+
+        // Notificaciones ya convertidas, por Id. Leer el nombre de la app y el texto
+        // de cada una cuesta llamadas a otros procesos; así solo se hace con las nuevas.
+        // Es propia de este bucle, así que no se comparte entre hilos.
+        var converted = new Dictionary<uint, IslandNotification>();
 
         try
         {
@@ -98,7 +107,7 @@ internal sealed class NotificationWatcher : IDisposable
 
                 try
                 {
-                    var current = await ReadCurrentAsync().WaitAsync(token);
+                    var current = await ReadCurrentAsync(converted).WaitAsync(token).ConfigureAwait(false);
                     consecutiveErrors = 0;
 
                     var fresh = _tracker.Update(current);
@@ -115,7 +124,7 @@ internal sealed class NotificationWatcher : IDisposable
                     if (consecutiveErrors++ == 0) App.Log("Notificaciones: error al leer la lista.", ex);
                 }
             }
-            while (await timer.WaitForNextTickAsync(token));
+            while (await timer.WaitForNextTickAsync(token).ConfigureAwait(false));
         }
         catch (OperationCanceledException)
         {
@@ -123,21 +132,37 @@ internal sealed class NotificationWatcher : IDisposable
         }
     }
 
-    private static async Task<List<IslandNotification>> ReadCurrentAsync()
+    private static async Task<List<IslandNotification>> ReadCurrentAsync(Dictionary<uint, IslandNotification> converted)
     {
-        var raw = await UserNotificationListener.Current.GetNotificationsAsync(NotificationKinds.Toast);
+        var raw = await UserNotificationListener.Current.GetNotificationsAsync(NotificationKinds.Toast).AsTask().ConfigureAwait(false);
         var result = new List<IslandNotification>(raw.Count);
+        var present = new HashSet<uint>();
 
         foreach (var item in raw)
         {
+            present.Add(item.Id);
+            if (converted.TryGetValue(item.Id, out var known))
+            {
+                result.Add(known);
+                continue;
+            }
+
             try
             {
-                result.Add(Convert(item));
+                var notification = Convert(item);
+                converted[item.Id] = notification;
+                result.Add(notification);
             }
             catch
             {
                 // Una notificación con formato inesperado no impide leer las demás.
             }
+        }
+
+        // Se olvidan las que ya no están en el centro de notificaciones.
+        foreach (var id in converted.Keys.Where(id => !present.Contains(id)).ToList())
+        {
+            converted.Remove(id);
         }
 
         return result;

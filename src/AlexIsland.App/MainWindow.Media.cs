@@ -170,7 +170,6 @@ public sealed partial class MainWindow : UserControl
         _duration = TimeSpan.Zero;
         _lastSmtcPosition = TimeSpan.Zero;
         _lastPositionSyncTime = DateTimeOffset.UtcNow;
-        _waveformTimer.Stop();
         ResetWaveform();
         UpdateCompactCenter();
         ApplyIslandState();
@@ -181,7 +180,6 @@ public sealed partial class MainWindow : UserControl
         if (_mediaSession is null)
         {
             _isPlaying = false;
-            _waveformTimer.Stop();
             ResetWaveform();
             UpdateCompactCenter();
             return;
@@ -197,13 +195,11 @@ public sealed partial class MainWindow : UserControl
             if (_isPlaying)
             {
                 _lastPositionSyncTime = DateTimeOffset.UtcNow;
-                _waveformTimer.Start();
             }
             else
             {
                 _basePosition = GetCurrentPosition();
                 _lastPositionSyncTime = DateTimeOffset.UtcNow;
-                _waveformTimer.Stop();
                 ResetWaveform();
             }
             UpdateCompactCenter();

@@ -217,10 +217,10 @@
                 </Grid>
 
                 <StackPanel x:Name="WaveformPanel" Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center" Margin="0,0,2,0">
-                    <Border x:Name="WaveBar1" Width="2" Height="5" Background="#FFFF5A00" CornerRadius="1"/>
-                    <Border x:Name="WaveBar2" Width="2" Height="11" Background="#FFFF5A00" CornerRadius="1"/>
-                    <Border x:Name="WaveBar3" Width="2" Height="14" Background="#FFFF5A00" CornerRadius="1"/>
-                    <Border x:Name="WaveBar4" Width="2" Height="7" Background="#FFFF5A00" CornerRadius="1"/>
+                    <Border x:Name="WaveBar1" Width="2" Height="16" Background="#FFFF5A00" CornerRadius="1" RenderTransformOrigin="0.5,0.5"><Border.RenderTransform><ScaleTransform x:Name="WaveBar1Scale" ScaleY="0.35"/></Border.RenderTransform></Border>
+                    <Border x:Name="WaveBar2" Width="2" Height="16" Background="#FFFF5A00" CornerRadius="1" RenderTransformOrigin="0.5,0.5"><Border.RenderTransform><ScaleTransform x:Name="WaveBar2Scale" ScaleY="0.7"/></Border.RenderTransform></Border>
+                    <Border x:Name="WaveBar3" Width="2" Height="16" Background="#FFFF5A00" CornerRadius="1" RenderTransformOrigin="0.5,0.5"><Border.RenderTransform><ScaleTransform x:Name="WaveBar3Scale" ScaleY="0.9"/></Border.RenderTransform></Border>
+                    <Border x:Name="WaveBar4" Width="2" Height="16" Background="#FFFF5A00" CornerRadius="1" RenderTransformOrigin="0.5,0.5"><Border.RenderTransform><ScaleTransform x:Name="WaveBar4Scale" ScaleY="0.45"/></Border.RenderTransform></Border>
                 </StackPanel>
             </Grid>
 
