@@ -268,7 +268,7 @@ public sealed partial class MainWindow : UserControl
             var timePill = new Border
             {
                 Background = ev.IsHappeningNow()
-                    ? new SolidColorBrush(ColorHelper.FromArgb(50, 0, 230, 118))
+                    ? new SolidColorBrush(Accent(50))
                     : new SolidColorBrush(ColorHelper.FromArgb(255, 20, 22, 28)),
                 CornerRadius = new CornerRadius(3),
                 Padding = new Thickness(4, 2, 4, 2),
@@ -279,7 +279,7 @@ public sealed partial class MainWindow : UserControl
                     FontSize = 8.5,
                     FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                     Foreground = ev.IsHappeningNow()
-                        ? new SolidColorBrush(ColorHelper.FromArgb(255, 0, 230, 118))
+                        ? new SolidColorBrush(AccentColor)
                         : new SolidColorBrush(ColorHelper.FromArgb(255, 180, 185, 195))
                 }
             };
@@ -334,14 +334,14 @@ public sealed partial class MainWindow : UserControl
             {
                 var linkBadge = new Border
                 {
-                    Background = new SolidColorBrush(ColorHelper.FromArgb(40, 0, 230, 118)),
+                    Background = new SolidColorBrush(Accent(40)),
                     CornerRadius = new CornerRadius(2),
                     Padding = new Thickness(3, 0, 3, 0),
                     Child = new TextBlock
                     {
                         Text = $"⚡ {ev.LinkedTaskTitle}",
                         FontSize = 7.5,
-                        Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0, 230, 118)),
+                        Foreground = new SolidColorBrush(AccentColor),
                         TextTrimming = TextTrimming.CharacterEllipsis,
                         MaxWidth = 100
                     }
@@ -382,8 +382,8 @@ public sealed partial class MainWindow : UserControl
                     Height = 20,
                     Padding = new Thickness(5, 0, 5, 0),
                     CornerRadius = new CornerRadius(4),
-                    Background = new SolidColorBrush(ColorHelper.FromArgb(255, 0, 230, 118)),
-                    Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 10, 11, 14)),
+                    Background = new SolidColorBrush(AccentColor),
+                    Foreground = new SolidColorBrush(Colors.White),
                     BorderThickness = new Thickness(0),
                     Content = new StackPanel
                     {
@@ -396,6 +396,7 @@ public sealed partial class MainWindow : UserControl
                         }
                     }
                 };
+                ApplyAccentButtonStates(joinBtn);
                 joinBtn.Click += async (_, _) => await LaunchMeetingAsync(ev.MeetingUrl);
                 actionsStack.Children.Add(joinBtn);
             }
@@ -464,7 +465,7 @@ public sealed partial class MainWindow : UserControl
                     ? new SolidColorBrush(ColorHelper.FromArgb(255, 42, 45, 55))
                     : new SolidColorBrush(Colors.Transparent),
                 BorderBrush = isToday
-                    ? new SolidColorBrush(ColorHelper.FromArgb(255, 0, 230, 118))
+                    ? new SolidColorBrush(AccentColor)
                     : (isSelected ? new SolidColorBrush(ColorHelper.FromArgb(60, 255, 255, 255)) : new SolidColorBrush(Colors.Transparent)),
                 BorderThickness = new Thickness(1)
             };
@@ -478,7 +479,7 @@ public sealed partial class MainWindow : UserControl
                 FontSize = 8.5,
                 FontWeight = isSelected || isToday ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal,
                 Foreground = isToday
-                    ? new SolidColorBrush(ColorHelper.FromArgb(255, 0, 230, 118))
+                    ? new SolidColorBrush(AccentColor)
                     : new SolidColorBrush(Colors.White),
                 HorizontalAlignment = HorizontalAlignment.Center
             });
@@ -565,7 +566,7 @@ public sealed partial class MainWindow : UserControl
                     ? new SolidColorBrush(ColorHelper.FromArgb(255, 42, 45, 55))
                     : new SolidColorBrush(Colors.Transparent),
                 BorderBrush = isToday
-                    ? new SolidColorBrush(ColorHelper.FromArgb(255, 0, 230, 118))
+                    ? new SolidColorBrush(AccentColor)
                     : new SolidColorBrush(Colors.Transparent),
                 BorderThickness = new Thickness(1)
             };
@@ -577,7 +578,7 @@ public sealed partial class MainWindow : UserControl
                 FontSize = 8,
                 FontWeight = isToday || isSelected ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal,
                 Foreground = isToday
-                    ? new SolidColorBrush(ColorHelper.FromArgb(255, 0, 230, 118))
+                    ? new SolidColorBrush(AccentColor)
                     : new SolidColorBrush(Colors.White),
                 HorizontalAlignment = HorizontalAlignment.Center
             });
@@ -1046,7 +1047,7 @@ public sealed partial class MainWindow : UserControl
         SyncStatusMsg.Text = message;
         SyncStatusMsg.Foreground = new SolidColorBrush(isError
             ? ColorHelper.FromArgb(255, 255, 167, 38)
-            : ColorHelper.FromArgb(255, 0, 230, 118));
+            : ColorHelper.FromArgb(255, 0, 230, 118)); // verde: éxito (semántico)
         SyncStatusMsg.Visibility = Visibility.Visible;
 
         _syncStatusTimer?.Stop();

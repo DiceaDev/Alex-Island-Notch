@@ -22,9 +22,83 @@ namespace AlexIsland.App;
 
 public sealed partial class MainWindow : UserControl
 {
+    // ------------------------------------------------------------ Mascota: dormir
+
+    /// <summary>Segundos en reposo antes de que el zorro cierre los ojos.</summary>
+    private const double DozeAfterSeconds = 30;
+
+    private DispatcherQueueTimer? _dozeTimer;
+    private Storyboard? _dozeStoryboard;
+    private bool _isDozing;
+
+    /// <summary>
+    /// Se llama cada vez que cambia el estado de la isla. En reposo programa la
+    /// "siesta"; al salir del reposo (cursor, música, aviso) los ojos se abren.
+    /// </summary>
+    private void UpdateMascotSleep(bool restingVisible)
+    {
+        if (_dozeTimer is null)
+        {
+            _dozeTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
+            _dozeTimer.Interval = TimeSpan.FromSeconds(DozeAfterSeconds);
+            _dozeTimer.IsRepeating = false;
+            _dozeTimer.Tick += (_, _) =>
+            {
+                _dozeTimer.Stop();
+                StartDozing();
+            };
+        }
+
+        if (restingVisible)
+        {
+            if (!_isDozing && !_dozeTimer.IsRunning) _dozeTimer.Start();
+            return;
+        }
+
+        _dozeTimer.Stop();
+        if (_isDozing) WakeUp();
+    }
+
+    private void StartDozing()
+    {
+        if (_currentDisplayMode != NotchDisplayMode.Resting || _isDozing) return;
+        _isDozing = true;
+        _blinkTimer?.Stop();
+
+        // Los ojos se cierran despacio y quedan casi como una línea; el brillo baja.
+        _dozeStoryboard = new Storyboard();
+        foreach (var eye in new[] { LeftEyeScale, RightEyeScale })
+        {
+            var close = new DoubleAnimation
+            {
+                To = 0.14,
+                Duration = TimeSpan.FromMilliseconds(900),
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut },
+            };
+            Storyboard.SetTarget(close, eye);
+            Storyboard.SetTargetProperty(close, "ScaleY");
+            _dozeStoryboard.Children.Add(close);
+        }
+
+        var dim = new DoubleAnimation { To = 0.35, Duration = TimeSpan.FromMilliseconds(900) };
+        Storyboard.SetTarget(dim, FoxEyesGlow);
+        Storyboard.SetTargetProperty(dim, "Opacity");
+        _dozeStoryboard.Children.Add(dim);
+
+        _dozeStoryboard.Begin();
+    }
+
+    private void WakeUp()
+    {
+        _isDozing = false;
+        // Al detener la animación, los ojos y el brillo vuelven a su valor normal.
+        _dozeStoryboard?.Stop();
+        _dozeStoryboard = null;
+    }
+
     private void TriggerEyeBlink()
     {
-        if (_currentDisplayMode != NotchDisplayMode.Resting) return;
+        if (_currentDisplayMode != NotchDisplayMode.Resting || _isDozing) return;
 
         var sb = new Storyboard();
 
@@ -57,7 +131,7 @@ public sealed partial class MainWindow : UserControl
     private void UpdateCompactProgress(double progress01, Windows.UI.Color? color = null)
     {
         progress01 = Math.Clamp(progress01, 0.0, 1.0);
-        var strokeColor = color ?? ColorHelper.FromArgb(255, 0, 230, 118);
+        var strokeColor = color ?? AccentColor;
         CompactProgressArc.Stroke = new SolidColorBrush(strokeColor);
         CompactCenterDot.Fill = new SolidColorBrush(strokeColor);
 
@@ -184,6 +258,7 @@ public sealed partial class MainWindow : UserControl
         PeekRightIcon.Foreground = new SolidColorBrush(color);
         PeekRippleInner.Stroke = new SolidColorBrush(color) { Opacity = 0.4 };
         PeekRippleOuter.Stroke = new SolidColorBrush(color) { Opacity = 0.2 };
+        PeekGlow.Fill = CreateGlowBrush(color);
 
         UpdatePeekProgress(percent01, color);
         if (!isUpdate)
@@ -202,13 +277,43 @@ public sealed partial class MainWindow : UserControl
             _peekTimer.Stop();
             _isPeekActive = false;
             ApplyIslandState();
+
+            // Tras un aviso, si nadie interactúa, la isla vuelve al reposo.
+            _idleTimer.Stop();
+            _idleTimer.Start();
         };
         _peekTimer.Start();
+    }
+
+    /// <summary>Halo radial: color del aviso en el centro que se desvanece hacia el borde.</summary>
+    private static RadialGradientBrush CreateGlowBrush(Windows.UI.Color color)
+    {
+        Windows.UI.Color WithAlpha(byte alpha) => Windows.UI.Color.FromArgb(alpha, color.R, color.G, color.B);
+
+        var brush = new RadialGradientBrush();
+        brush.GradientStops.Add(new GradientStop { Color = WithAlpha(110), Offset = 0.0 });
+        brush.GradientStops.Add(new GradientStop { Color = WithAlpha(55), Offset = 0.45 });
+        brush.GradientStops.Add(new GradientStop { Color = WithAlpha(0), Offset = 1.0 });
+        return brush;
     }
 
     private void TriggerPeekRippleAnimation()
     {
         var sb = new Storyboard();
+
+        // El halo respira junto con las ondas.
+        var glow = new DoubleAnimation
+        {
+            From = 0.55,
+            To = 1.0,
+            Duration = TimeSpan.FromMilliseconds(650),
+            AutoReverse = true,
+            RepeatBehavior = new RepeatBehavior(3),
+            EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+        };
+        Storyboard.SetTarget(glow, PeekGlow);
+        Storyboard.SetTargetProperty(glow, "Opacity");
+        sb.Children.Add(glow);
         var rippleAnim = new DoubleAnimation
         {
             From = 0.85,
@@ -343,8 +448,8 @@ public sealed partial class MainWindow : UserControl
             var isBreak = _pomodoroMode != PomodoroMode.Work;
             CompactFocusTitle.Text = isBreak ? "Pausa de Descanso" : "Enfoque Activo";
             CompactFocusTitle.Foreground = new SolidColorBrush(isBreak
-                ? ColorHelper.FromArgb(255, 0, 230, 118)
-                : ColorHelper.FromArgb(255, 239, 83, 80));
+                ? ColorHelper.FromArgb(255, 0, 230, 118) // verde: pausa (semántico)
+                : AccentColor);
             CompactFocusTime.Text = $"{_pomodoroRemaining:mm\\:ss}";
             return;
         }

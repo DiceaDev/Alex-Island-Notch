@@ -75,6 +75,27 @@ public sealed partial class MainWindow : UserControl
     private const int ExpandedPomodoroHeight = 188;
     private const int ExpandedSystemHeight = 150;
     private const double EarRadius = 12.0;
+
+    /// <summary>Naranja de Alex Island (#FF5A00), color de acento de toda la isla.</summary>
+    private static readonly Windows.UI.Color AccentColor = ColorHelper.FromArgb(255, 255, 90, 0);
+
+    /// <summary>El color de acento con otra opacidad (fondos suaves, bordes).</summary>
+    private static Windows.UI.Color Accent(byte alpha) => ColorHelper.FromArgb(alpha, 255, 90, 0);
+
+    /// <summary>
+    /// Botón naranja creado en código: texto blanco y se mantiene naranja (más
+    /// claro u oscuro) al pasar el cursor o presionarlo, en vez del gris del tema.
+    /// </summary>
+    private static void ApplyAccentButtonStates(Button button)
+    {
+        button.Resources["ButtonBackgroundPointerOver"] = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 122, 51));
+        button.Resources["ButtonBackgroundPressed"] = new SolidColorBrush(ColorHelper.FromArgb(255, 217, 77, 0));
+        button.Resources["ButtonForegroundPointerOver"] = new SolidColorBrush(Colors.White);
+        button.Resources["ButtonForegroundPressed"] = new SolidColorBrush(Colors.White);
+    }
+
+    /// <summary>Espacio transparente a los lados y debajo del notch para su sombra difuminada.</summary>
+    private const double ShadowMargin = 16.0;
     private const int MinimalWidth = 120;
     private const int MinimalHeight = 8;
 
@@ -166,6 +187,10 @@ public sealed partial class MainWindow : UserControl
         _hwnd = _host.Hwnd;
         _host.Closed += (_, _) => OnHostClosed();
         NativeMethods.ConfigureIslandWindow(_hwnd);
+
+        // El notch queda pegado arriba y centrado; alrededor queda espacio para la sombra.
+        IslandContainer.Margin = new Thickness(ShadowMargin, 0, ShadowMargin, ShadowMargin);
+        InitializeNotchShadow();
 
         _collapseTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
         _collapseTimer.Interval = TimeSpan.FromMilliseconds(280);
@@ -386,7 +411,7 @@ public sealed partial class MainWindow : UserControl
         _collapseTimer.Stop();
         if (_isPinned) return;
 
-        _isPointerInside = NativeMethods.IsCursorWithinWindow(_hwnd);
+        _isPointerInside = IsCursorOverNotch();
         if (!_isPointerInside) ApplyIslandState();
     }
 
@@ -405,7 +430,7 @@ public sealed partial class MainWindow : UserControl
 
         _collapseTimer.Stop();
         _isPinned = !_isPinned;
-        if (!_isPinned) _isPointerInside = NativeMethods.IsCursorWithinWindow(_hwnd);
+        if (!_isPinned) _isPointerInside = IsCursorOverNotch();
         ApplyIslandState();
     }
 
@@ -483,7 +508,8 @@ public sealed partial class MainWindow : UserControl
         ResizeIsland(width, height);
         PositionAtTopCenter();
 
-        if (_currentDisplayMode == NotchDisplayMode.Resting && RestingContent.Visibility == Visibility.Visible)
+        var restingVisible = _currentDisplayMode == NotchDisplayMode.Resting && RestingContent.Visibility == Visibility.Visible;
+        if (restingVisible && !_isDozing)
         {
             _blinkTimer?.Start();
         }
@@ -491,6 +517,7 @@ public sealed partial class MainWindow : UserControl
         {
             _blinkTimer?.Stop();
         }
+        UpdateMascotSleep(restingVisible);
 
         if (_isExpanded || _currentDisplayMode == NotchDisplayMode.Closed)
         {
@@ -606,6 +633,8 @@ public sealed partial class MainWindow : UserControl
         var pathGeo = new PathGeometry();
         pathGeo.Figures.Add(figure);
         NotchBackground.Data = pathGeo;
+
+        UpdateNotchShadowSize(width, height);
 
     }
 
@@ -746,8 +775,8 @@ public sealed partial class MainWindow : UserControl
             // La ventana trabaja en píxeles físicos; XAML, en unidades independientes del DPI.
             var scale = PixelScale;
             _host.Resize(
-                (int)Math.Ceiling(width * scale),
-                (int)Math.Ceiling(height * scale));
+                (int)Math.Ceiling((width + 2 * ShadowMargin) * scale),
+                (int)Math.Ceiling((height + ShadowMargin) * scale));
         }
         catch
         {
@@ -771,7 +800,7 @@ public sealed partial class MainWindow : UserControl
             if (display is null) return;
 
             var bounds = display.OuterBounds;
-            var width = (int)Math.Ceiling(IslandContainer.Width * PixelScale);
+            var width = (int)Math.Ceiling((IslandContainer.Width + 2 * ShadowMargin) * PixelScale);
             var x = bounds.X + ((bounds.Width - width) / 2);
             _host.Move(x, bounds.Y);
         }
@@ -795,9 +824,8 @@ public sealed partial class MainWindow : UserControl
         WaveBar2.Height = 11;
         WaveBar3.Height = 14;
         WaveBar4.Height = 7;
-        var brush = new SolidColorBrush(_isPlaying
-            ? ColorHelper.FromArgb(255, 0, 230, 118)
-            : ColorHelper.FromArgb(180, 245, 245, 247));
+        // Siempre en el naranja de la marca: intenso con música, más tenue en pausa.
+        var brush = new SolidColorBrush(_isPlaying ? AccentColor : Accent(150));
         WaveBar1.Background = brush;
         WaveBar2.Background = brush;
         WaveBar3.Background = brush;

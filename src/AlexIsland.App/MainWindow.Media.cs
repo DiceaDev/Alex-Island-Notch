@@ -283,7 +283,7 @@ public sealed partial class MainWindow : UserControl
 
                 if (_pomodoroState != PomodoroState.Running)
                 {
-                    UpdateCompactProgress(ratio, ColorHelper.FromArgb(255, 0, 230, 118));
+                    UpdateCompactProgress(ratio, AccentColor);
                 }
             }
             else
