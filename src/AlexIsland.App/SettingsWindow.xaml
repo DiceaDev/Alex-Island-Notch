@@ -21,6 +21,9 @@
                                Text="No se pudo actualizar el inicio automático. Revisa que la app esté instalada en una carpeta a la que tengas acceso."/>
                     <ToggleSwitch x:Name="HideInFullscreenToggle" Header="Ocultar en pantalla completa (juegos, videos, presentaciones)" Foreground="White" Toggled="OnToggled"/>
                     <ToggleSwitch x:Name="ShowMascotToggle" Header="Mostrar la mascota cuando el equipo está inactivo" Foreground="White" Toggled="OnToggled"/>
+                    <ToggleSwitch x:Name="SmoothEdgesToggle" Header="Bordes suavizados" Foreground="White" Toggled="OnToggled"/>
+                    <TextBlock FontSize="11" Foreground="#FF9AA3B2" TextWrapping="Wrap" Margin="0,-4,0,4"
+                               Text="Necesita los efectos de transparencia de Windows (Configuración → Personalización → Colores). Si están desactivados, el notch usa bordes recortados."/>
                     <ToggleSwitch x:Name="MinimalNotchToggle" Header="Notch mínimo (una línea fina en reposo)" Foreground="White" Toggled="OnToggled"/>
                     <StackPanel Spacing="2">
                         <TextBlock Text="Tamaño del notch" FontSize="14" Foreground="White"/>

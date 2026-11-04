@@ -161,23 +161,8 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();
 
-        // Transparencia por píxel para que los bordes del notch se vean suaves.
-        // Sin transparencia se usa fondo negro, para que no asome el color del tema.
-        void UseOpaqueFallback() => RootGrid.Background = new SolidColorBrush(Colors.Black);
-        try
-        {
-            var backdrop = new TransparentBackdrop();
-            backdrop.Failed += UseOpaqueFallback;
-            SystemBackdrop = backdrop;
-        }
-        catch
-        {
-            UseOpaqueFallback();
-        }
-
         _hwnd = WindowNative.GetWindowHandle(this);
-        _hasPerPixelTransparency = NativeMethods.EnablePerPixelTransparency(_hwnd);
-        App.Log($"Transparencia: canal alfa de DWM {(_hasPerPixelTransparency ? "activado" : "NO activado")}.");
+        InitializeEdgeRendering();
         var windowId = Win32Interop.GetWindowIdFromWindow(_hwnd);
         _appWindow = AppWindow.GetFromWindowId(windowId);
 
@@ -380,6 +365,7 @@ public sealed partial class MainWindow : Window
     private void ApplySettings()
     {
         ApplyShellSettings();
+        UpdateEdgeRendering();
 
         // Si se activaron las letras con una canción sonando, se piden ahora.
         if (_settings.ShowLyrics && _lyrics is null && _lyricsTrackKey is not null)
@@ -647,15 +633,13 @@ public sealed partial class MainWindow : Window
         UpdateWindowRegion((int)width, (int)height, earRadius, bottomRadius);
     }
 
-    private bool _hasPerPixelTransparency;
-
     private void UpdateWindowRegion(int width, int height, double earRadius, double bottomRadius)
     {
         if (_hwnd == 0) return;
 
         // Con transparencia por píxel no se recorta la ventana: una región de
         // Windows anula el canal alfa y vuelve a dejar los bordes en escalera.
-        if (_hasPerPixelTransparency)
+        if (_useSmoothEdges)
         {
             NativeMethods.ClearWindowRegion(_hwnd);
             return;

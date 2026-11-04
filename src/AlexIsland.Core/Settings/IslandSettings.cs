@@ -13,6 +13,9 @@ public sealed class IslandSettings
     public bool MinimalNotch { get; set; }
     public double NotchScale { get; set; } = 1.0;
 
+    /// <summary>Bordes suavizados con transparencia por píxel (si Windows lo permite).</summary>
+    public bool SmoothEdges { get; set; } = true;
+
     // Avisos (peeks)
     public bool ShowNetworkPeeks { get; set; } = true;
     public bool ShowVolumePeeks { get; set; } = true;

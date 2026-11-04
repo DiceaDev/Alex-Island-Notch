@@ -4,9 +4,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="Alex Island">
 
-    <!-- Fondo transparente: con TransparentBackdrop el escritorio se ve alrededor
-         del notch y sus curvas quedan suavizadas. Si la transparencia no está
-         disponible, el código pone este fondo en negro. -->
+    <!-- Fondo transparente para los bordes suavizados; si Windows no permite
+         transparencia, MainWindow.Edges.cs lo pone en negro y recorta la ventana. -->
     <Grid x:Name="RootGrid" Background="Transparent">
         <!-- Escala elegida por el usuario en Ajustes; la ventana se ajusta al mismo factor. -->
         <Grid.RenderTransform>
