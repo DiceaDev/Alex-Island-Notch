@@ -62,6 +62,19 @@ public sealed partial class SettingsWindow : Window
         _loading = false;
     }
 
+    /// <summary>Refleja cambios hechos desde otro lugar (por ejemplo, el menú de la bandeja).</summary>
+    internal void Refresh(IslandSettings current)
+    {
+        _loading = true;
+        _settings.StartWithWindows = current.StartWithWindows;
+        _settings.ShowMascot = current.ShowMascot;
+        _settings.MinimalNotch = current.MinimalNotch;
+        StartWithWindowsToggle.IsOn = current.StartWithWindows;
+        ShowMascotToggle.IsOn = current.ShowMascot;
+        MinimalNotchToggle.IsOn = current.MinimalNotch;
+        _loading = false;
+    }
+
     private void OnToggled(object sender, RoutedEventArgs e)
     {
         if (_loading) return;

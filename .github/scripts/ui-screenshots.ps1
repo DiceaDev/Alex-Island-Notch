@@ -44,6 +44,14 @@ public static class UiInput {
     }
     public static void LeftClick() { Send(0x0002, 0, 0, 0); Send(0x0004, 0, 0, 0); }
     public static void Wheel(int delta) { Send(0x0800, 0, 0, delta); }
+
+    [DllImport("user32.dll")] static extern void keybd_event(byte vk, byte scan, uint flags, UIntPtr extra);
+    /// Mantiene la tecla presionada un momento: la app revisa Bloq Mayús cada 220 ms.
+    public static void PressKey(byte vk) {
+        keybd_event(vk, 0, 0, UIntPtr.Zero);
+        System.Threading.Thread.Sleep(450);
+        keybd_event(vk, 0, 0x0002, UIntPtr.Zero);
+    }
 }
 "@
 [UiInput]::SetProcessDPIAware() | Out-Null
@@ -148,6 +156,14 @@ Save-Shot '01-inicio'
 Start-Sleep -Seconds 7
 Assert-Running $proc
 Save-Shot '02-reposo'
+
+# Bloq Mayús muestra un aviso (peek): sirve para revisar el halo y la sombra.
+[UiInput]::PressKey(0x14)
+Start-Sleep -Milliseconds 700
+Assert-Running $proc
+Save-Shot '02b-aviso'
+[UiInput]::PressKey(0x14) # deja Bloq Mayús como estaba
+Start-Sleep -Seconds 4
 
 # Pasar el cursor sobre el notch: se expande (pestaña Música).
 Move-To $cx (8 * $s)

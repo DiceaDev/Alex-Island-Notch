@@ -229,15 +229,19 @@ internal static class NativeMethods
         }
     }
 
-    internal static bool IsCursorWithinWindow(nint hwnd)
+    /// <summary>
+    /// Indica si el cursor está sobre la ventana, descontando márgenes (en píxeles
+    /// físicos) que no cuentan como parte de la isla, como la zona de su sombra.
+    /// </summary>
+    internal static bool IsCursorWithinWindow(nint hwnd, int insetLeft = 0, int insetRight = 0, int insetBottom = 0)
     {
         if (!GetCursorPos(out var cursor) || !GetWindowRect(hwnd, out var rect))
         {
             return false;
         }
 
-        return cursor.X >= rect.Left && cursor.X < rect.Right
-            && cursor.Y >= rect.Top && cursor.Y < rect.Bottom;
+        return cursor.X >= rect.Left + insetLeft && cursor.X < rect.Right - insetRight
+            && cursor.Y >= rect.Top && cursor.Y < rect.Bottom - insetBottom;
     }
 
     internal static void ConfigureIslandWindow(nint hwnd)

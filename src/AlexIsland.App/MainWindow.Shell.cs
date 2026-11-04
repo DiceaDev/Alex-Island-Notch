@@ -26,7 +26,7 @@ public sealed partial class MainWindow : UserControl
             var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "AlexIsland.ico");
             _trayIcon = new TrayIcon(iconPath, "Alex Island")
             {
-                ToggleVisibilityText = () => _isHiddenByUser ? "Mostrar isla" : "Ocultar isla",
+                MenuItems = BuildTrayMenu,
             };
             _trayIcon.Activated += () => DispatcherQueue.TryEnqueue(OnTrayActivated);
             _trayIcon.CommandInvoked += command => DispatcherQueue.TryEnqueue(() => OnTrayCommand(command));
@@ -91,23 +91,95 @@ public sealed partial class MainWindow : UserControl
         ApplyIslandState();
     }
 
+    private const int TrayStartWithWindows = 1;
+    private const int TrayMascot = 2;
+    private const int TrayMinimalNotch = 3;
+    private const int TraySettings = 4;
+    private const int TrayToggleVisibility = 5;
+    private const int TrayAbout = 6;
+    private const int TrayExit = 7;
+
+    /// <summary>
+    /// Menú del ícono de la bandeja, como el de Nusa: los ajustes más usados
+    /// se cambian con un clic y muestran ✓ cuando están activos.
+    /// </summary>
+    private IReadOnlyList<TrayMenuItem> BuildTrayMenu() =>
+    [
+        new(TrayStartWithWindows, "Iniciar con Windows", _settings.StartWithWindows),
+        new(TrayMascot, "Mascota de Alex Island", _settings.ShowMascot),
+        new(TrayMinimalNotch, "Notch mínimo", _settings.MinimalNotch),
+        TrayMenuItem.Separator,
+        new(TraySettings, "Ajustes…"),
+        new(TrayToggleVisibility, _isHiddenByUser ? "Mostrar isla" : "Ocultar isla"),
+        TrayMenuItem.Separator,
+        new(TrayAbout, "Acerca de Alex Island"),
+        new(TrayExit, "Salir"),
+    ];
+
     private void OnTrayCommand(int command)
     {
         switch (command)
         {
-            case TrayIcon.CommandSettings:
+            case TrayStartWithWindows:
+                var enable = !_settings.StartWithWindows;
+                if (StartupRegistration.Apply(enable))
+                {
+                    UpdateSettingsFromTray(s => s.StartWithWindows = enable);
+                }
+                else
+                {
+                    ShowHardwarePeek(HardwarePeekType.Custom, "Inicio automático", "No se pudo cambiar", percent01: 0,
+                        accentColor: Microsoft.UI.ColorHelper.FromArgb(255, 239, 83, 80));
+                }
+                break;
+
+            case TrayMascot:
+                UpdateSettingsFromTray(s => s.ShowMascot = !s.ShowMascot);
+                break;
+
+            case TrayMinimalNotch:
+                UpdateSettingsFromTray(s => s.MinimalNotch = !s.MinimalNotch);
+                break;
+
+            case TraySettings:
                 OpenSettingsWindow();
                 break;
 
-            case TrayIcon.CommandToggleVisibility:
+            case TrayToggleVisibility:
                 _isHiddenByUser = !_isHiddenByUser;
                 UpdateIslandVisibility();
                 break;
 
-            case TrayIcon.CommandExit:
+            case TrayAbout:
+                ShowAbout();
+                break;
+
+            case TrayExit:
                 ExitApplication();
                 break;
         }
+    }
+
+    private void UpdateSettingsFromTray(Action<IslandSettings> change)
+    {
+        var updated = _settings.Clone();
+        change(updated);
+        OnSettingsChanged(updated.Normalize());
+
+        // Si la ventana de Ajustes está abierta, se actualiza para no mostrar valores viejos.
+        _settingsWindow?.Refresh(_settings);
+    }
+
+    private void ShowAbout()
+    {
+        var version = typeof(MainWindow).Assembly.GetName().Version;
+        ShowHardwarePeek(
+            HardwarePeekType.Custom,
+            "Alex Island",
+            $"Versión {version?.ToString(3) ?? "1.0.0"} · github.com/DiceaDev",
+            percent01: 1.0,
+            rightGlyph: "\uE946",
+            accentColor: Microsoft.UI.ColorHelper.FromArgb(255, 0, 230, 118));
     }
 
     private void OpenSettingsWindow()

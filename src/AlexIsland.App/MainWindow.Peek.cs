@@ -184,6 +184,7 @@ public sealed partial class MainWindow : UserControl
         PeekRightIcon.Foreground = new SolidColorBrush(color);
         PeekRippleInner.Stroke = new SolidColorBrush(color) { Opacity = 0.4 };
         PeekRippleOuter.Stroke = new SolidColorBrush(color) { Opacity = 0.2 };
+        PeekGlow.Fill = CreateGlowBrush(color);
 
         UpdatePeekProgress(percent01, color);
         if (!isUpdate)
@@ -206,9 +207,35 @@ public sealed partial class MainWindow : UserControl
         _peekTimer.Start();
     }
 
+    /// <summary>Halo radial: color del aviso en el centro que se desvanece hacia el borde.</summary>
+    private static RadialGradientBrush CreateGlowBrush(Windows.UI.Color color)
+    {
+        Windows.UI.Color WithAlpha(byte alpha) => Windows.UI.Color.FromArgb(alpha, color.R, color.G, color.B);
+
+        var brush = new RadialGradientBrush();
+        brush.GradientStops.Add(new GradientStop { Color = WithAlpha(110), Offset = 0.0 });
+        brush.GradientStops.Add(new GradientStop { Color = WithAlpha(55), Offset = 0.45 });
+        brush.GradientStops.Add(new GradientStop { Color = WithAlpha(0), Offset = 1.0 });
+        return brush;
+    }
+
     private void TriggerPeekRippleAnimation()
     {
         var sb = new Storyboard();
+
+        // El halo respira junto con las ondas.
+        var glow = new DoubleAnimation
+        {
+            From = 0.55,
+            To = 1.0,
+            Duration = TimeSpan.FromMilliseconds(650),
+            AutoReverse = true,
+            RepeatBehavior = new RepeatBehavior(3),
+            EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+        };
+        Storyboard.SetTarget(glow, PeekGlow);
+        Storyboard.SetTargetProperty(glow, "Opacity");
+        sb.Children.Add(glow);
         var rippleAnim = new DoubleAnimation
         {
             From = 0.85,

@@ -75,6 +75,9 @@ public sealed partial class MainWindow : UserControl
     private const int ExpandedPomodoroHeight = 188;
     private const int ExpandedSystemHeight = 150;
     private const double EarRadius = 12.0;
+
+    /// <summary>Espacio transparente a los lados y debajo del notch para su sombra difuminada.</summary>
+    private const double ShadowMargin = 16.0;
     private const int MinimalWidth = 120;
     private const int MinimalHeight = 8;
 
@@ -166,6 +169,10 @@ public sealed partial class MainWindow : UserControl
         _hwnd = _host.Hwnd;
         _host.Closed += (_, _) => OnHostClosed();
         NativeMethods.ConfigureIslandWindow(_hwnd);
+
+        // El notch queda pegado arriba y centrado; alrededor queda espacio para la sombra.
+        IslandContainer.Margin = new Thickness(ShadowMargin, 0, ShadowMargin, ShadowMargin);
+        InitializeNotchShadow();
 
         _collapseTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
         _collapseTimer.Interval = TimeSpan.FromMilliseconds(280);
@@ -386,7 +393,7 @@ public sealed partial class MainWindow : UserControl
         _collapseTimer.Stop();
         if (_isPinned) return;
 
-        _isPointerInside = NativeMethods.IsCursorWithinWindow(_hwnd);
+        _isPointerInside = IsCursorOverNotch();
         if (!_isPointerInside) ApplyIslandState();
     }
 
@@ -405,7 +412,7 @@ public sealed partial class MainWindow : UserControl
 
         _collapseTimer.Stop();
         _isPinned = !_isPinned;
-        if (!_isPinned) _isPointerInside = NativeMethods.IsCursorWithinWindow(_hwnd);
+        if (!_isPinned) _isPointerInside = IsCursorOverNotch();
         ApplyIslandState();
     }
 
@@ -607,6 +614,8 @@ public sealed partial class MainWindow : UserControl
         pathGeo.Figures.Add(figure);
         NotchBackground.Data = pathGeo;
 
+        UpdateNotchShadowSize(width, height);
+
     }
 
     private void AnimateIsland(bool expanding, NotchDisplayMode mode = NotchDisplayMode.Expanded)
@@ -746,8 +755,8 @@ public sealed partial class MainWindow : UserControl
             // La ventana trabaja en píxeles físicos; XAML, en unidades independientes del DPI.
             var scale = PixelScale;
             _host.Resize(
-                (int)Math.Ceiling(width * scale),
-                (int)Math.Ceiling(height * scale));
+                (int)Math.Ceiling((width + 2 * ShadowMargin) * scale),
+                (int)Math.Ceiling((height + ShadowMargin) * scale));
         }
         catch
         {
@@ -771,7 +780,7 @@ public sealed partial class MainWindow : UserControl
             if (display is null) return;
 
             var bounds = display.OuterBounds;
-            var width = (int)Math.Ceiling(IslandContainer.Width * PixelScale);
+            var width = (int)Math.Ceiling((IslandContainer.Width + 2 * ShadowMargin) * PixelScale);
             var x = bounds.X + ((bounds.Width - width) / 2);
             _host.Move(x, bounds.Y);
         }

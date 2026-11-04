@@ -7,11 +7,15 @@ namespace AlexIsland.App.Native;
 /// función, así que se usa Shell_NotifyIcon con una ventana de solo mensajes
 /// propia (no se intercepta ni se modifica la ventana de la isla).
 /// </summary>
+/// <summary>Opción del menú de la bandeja. Un separador no tiene texto ni acción.</summary>
+internal sealed record TrayMenuItem(int Id, string Text, bool Checked = false)
+{
+    public static TrayMenuItem Separator { get; } = new(0, string.Empty);
+    public bool IsSeparator => Id == 0;
+}
+
 internal sealed class TrayIcon : IDisposable
 {
-    public const int CommandSettings = 1;
-    public const int CommandToggleVisibility = 2;
-    public const int CommandExit = 3;
 
     private const uint WmApp = 0x8000;
     private const uint WmTrayCallback = WmApp + 1;
@@ -27,6 +31,7 @@ internal sealed class TrayIcon : IDisposable
     private const uint NifTip = 0x4;
 
     private const uint MfString = 0x0;
+    private const uint MfChecked = 0x8;
     private const uint MfSeparator = 0x800;
     private const uint TpmRightButton = 0x2;
     private const uint TpmReturnCmd = 0x100;
@@ -47,11 +52,14 @@ internal sealed class TrayIcon : IDisposable
     /// <summary>Clic izquierdo sobre el ícono.</summary>
     public event Action? Activated;
 
-    /// <summary>Opción elegida en el menú (una de las constantes Command*).</summary>
+    /// <summary>Id de la opción elegida en el menú.</summary>
     public event Action<int>? CommandInvoked;
 
-    /// <summary>Texto de la opción para mostrar u ocultar la isla, según su estado.</summary>
-    public Func<string> ToggleVisibilityText { get; set; } = () => "Ocultar isla";
+    /// <summary>
+    /// Arma el menú cada vez que se abre, para que las marcas (✓) reflejen el
+    /// estado actual de los ajustes.
+    /// </summary>
+    public Func<IReadOnlyList<TrayMenuItem>> MenuItems { get; set; } = () => [];
 
     public TrayIcon(string iconPath, string tooltip)
     {
@@ -145,10 +153,17 @@ internal sealed class TrayIcon : IDisposable
 
         try
         {
-            AppendMenuW(menu, MfString, CommandSettings, "Ajustes…");
-            AppendMenuW(menu, MfString, CommandToggleVisibility, ToggleVisibilityText());
-            AppendMenuW(menu, MfSeparator, 0, null);
-            AppendMenuW(menu, MfString, CommandExit, "Salir de Alex Island");
+            foreach (var item in MenuItems())
+            {
+                if (item.IsSeparator)
+                {
+                    AppendMenuW(menu, MfSeparator, 0, null);
+                }
+                else
+                {
+                    AppendMenuW(menu, MfString | (item.Checked ? MfChecked : 0), item.Id, item.Text);
+                }
+            }
 
             GetCursorPos(out var point);
 

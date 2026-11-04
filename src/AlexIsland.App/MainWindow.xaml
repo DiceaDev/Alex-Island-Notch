@@ -6,7 +6,7 @@
     <!-- Fondo transparente: la ventana de la isla (IslandHostWindow) se compone
          con transparencia por píxel, así que alrededor del notch se ve el escritorio
          y sus curvas quedan suavizadas. -->
-    <Grid x:Name="RootGrid" Background="Transparent">
+    <Grid x:Name="RootGrid">
         <!-- Escala elegida por el usuario en Ajustes; la ventana se ajusta al mismo factor. -->
         <Grid.RenderTransform>
             <ScaleTransform x:Name="NotchUserScale" ScaleX="1" ScaleY="1" CenterX="0" CenterY="0"/>
@@ -27,6 +27,9 @@
             <Grid.RenderTransform>
                 <ScaleTransform x:Name="IslandScale" ScaleX="1" ScaleY="1"/>
             </Grid.RenderTransform>
+
+            <!-- Sombra difuminada (DropShadow de composición con la silueta del notch como máscara) -->
+            <Canvas x:Name="NotchShadowHost" IsHitTestVisible="False" HorizontalAlignment="Left" VerticalAlignment="Top"/>
 
             <!-- Fondo negro absoluto con silueta exacta del Notch de Mac (con orejas cóncavas y esquinas redondeadas) -->
             <Path x:Name="NotchBackground"
@@ -220,6 +223,9 @@
 
                 <!-- Derecha: Icono de periférico con ondas concéntricas de sonido -->
                 <Grid Grid.Column="2" Width="28" Height="28" VerticalAlignment="Center" Margin="10,0,0,0">
+                    <!-- Halo difuminado con el color del aviso (se asigna en código) -->
+                    <Ellipse x:Name="PeekGlow" Width="44" Height="44" Margin="-8" IsHitTestVisible="False"
+                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     <Ellipse x:Name="PeekRippleOuter" Width="28" Height="28" Stroke="#2242A5F5" StrokeThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5"/>
                     <Ellipse x:Name="PeekRippleInner" Width="21" Height="21" Stroke="#4442A5F5" StrokeThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5"/>
                     <Ellipse Width="17" Height="17" Fill="#1E42A5F5" HorizontalAlignment="Center" VerticalAlignment="Center"/>
