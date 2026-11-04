@@ -13,7 +13,8 @@ public sealed partial class MainWindow : UserControl
     // SECCIÓN LETRAS SINCRONIZADAS (LRCLIB)
     // ==============================================================
 
-    private const int ExpandedMediaLyricsHeight = 200;
+    // La letra va en la columna derecha de Inicio: la isla ya no crece al haber letra.
+    private const int ExpandedMediaLyricsHeight = ExpandedHeight;
 
     private readonly LyricsService _lyricsService = new();
     private DispatcherQueueTimer? _lyricsTimer;
@@ -74,7 +75,10 @@ public sealed partial class MainWindow : UserControl
         _lyricsTrackKey = key;
         ClearLyrics();
 
-        if (!_settings.ShowLyrics || _currentTrackTitle.Length == 0 || _currentTrackArtist.Length == 0) return;
+        // Sin artista solo se intenta si el título trae "Artista - Canción" (videos de YouTube).
+        var hasArtist = _currentTrackArtist.Length > 0
+            || AlexIsland.Core.Lyrics.VideoTrackInfo.TryParse(_currentTrackTitle, null) is not null;
+        if (!_settings.ShowLyrics || _currentTrackTitle.Length == 0 || !hasArtist) return;
 
         _lyricsRequestTimer?.Stop();
         _lyricsRequestTimer?.Start();
@@ -109,7 +113,7 @@ public sealed partial class MainWindow : UserControl
     /// <summary>Muestra u oculta el panel de letras y arranca el temporizador solo si hace falta.</summary>
     private void ApplyLyricsState()
     {
-        LyricsPanel.Visibility = HasLyrics ? Visibility.Visible : Visibility.Collapsed;
+        UpdateHomeRightColumn();
 
         var visibleSomewhere = _currentDisplayMode == NotchDisplayMode.Closed
             || (_isExpanded && _activeTab == IslandTab.Media);

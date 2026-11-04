@@ -117,7 +117,6 @@ public sealed partial class MainWindow : UserControl
     private readonly DispatcherQueueTimer _collapseTimer;
     private readonly DispatcherQueueTimer _clockTimer;
     private readonly DispatcherQueueTimer _timelineTimer;
-    private readonly DispatcherQueueTimer _waveformTimer;
     private readonly DispatcherQueueTimer _reminderTimer;
     private readonly DispatcherQueueTimer _pomodoroTimer;
     private readonly DispatcherQueueTimer _blinkTimer;
@@ -208,10 +207,6 @@ public sealed partial class MainWindow : UserControl
         _timelineTimer.IsRepeating = true;
         _timelineTimer.Tick += (_, _) => UpdateTimeline();
 
-        _waveformTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
-        _waveformTimer.Interval = TimeSpan.FromMilliseconds(130);
-        _waveformTimer.IsRepeating = true;
-        _waveformTimer.Tick += (_, _) => AnimateWaveform();
 
         // Temporizador de recordatorios de reuniones (cada 30s)
         _reminderTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
@@ -341,7 +336,7 @@ public sealed partial class MainWindow : UserControl
         _collapseTimer.Stop();
         _clockTimer.Stop();
         _timelineTimer.Stop();
-        _waveformTimer.Stop();
+        StopWaveform();
         _reminderTimer.Stop();
         _pomodoroTimer.Stop();
         _blinkTimer.Stop();
@@ -566,6 +561,7 @@ public sealed partial class MainWindow : UserControl
 
         UpdateSystemSampling();
         ApplyLyricsState();
+        UpdateWaveformAnimation();
 
         if (wasExpanded != _isExpanded || previousMode != _currentDisplayMode)
         {
@@ -823,21 +819,9 @@ public sealed partial class MainWindow : UserControl
         }
     }
 
-    private void AnimateWaveform()
-    {
-        if (!_isPlaying) return;
-        WaveBar1.Height = _random.Next(4, 9);
-        WaveBar2.Height = _random.Next(8, 15);
-        WaveBar3.Height = _random.Next(10, 18);
-        WaveBar4.Height = _random.Next(5, 12);
-    }
-
     private void ResetWaveform()
     {
-        WaveBar1.Height = 5;
-        WaveBar2.Height = 11;
-        WaveBar3.Height = 14;
-        WaveBar4.Height = 7;
+        UpdateWaveformAnimation();
         // Siempre en el naranja de la marca: intenso con música, más tenue en pausa.
         var brush = new SolidColorBrush(_isPlaying ? AccentColor : Accent(150));
         WaveBar1.Background = brush;

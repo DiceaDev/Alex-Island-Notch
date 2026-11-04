@@ -14,6 +14,20 @@ public sealed partial class MainWindow : UserControl
 
     private string? _homeMeetingUrl;
 
+    /// <summary>Hay una reunión en curso o a punto de empezar: le gana a la letra en la columna derecha.</summary>
+    private bool _homeMeetingNeedsAttention;
+
+    /// <summary>
+    /// La columna derecha de Inicio muestra la letra mientras suena una canción
+    /// que la tiene; si toca unirse a una reunión, la reunión tiene prioridad.
+    /// </summary>
+    private void UpdateHomeRightColumn()
+    {
+        var showLyrics = HasLyrics && !_homeMeetingNeedsAttention;
+        LyricsPanel.Visibility = showLyrics ? Visibility.Visible : Visibility.Collapsed;
+        HomeInfoPanel.Visibility = showLyrics ? Visibility.Collapsed : Visibility.Visible;
+    }
+
     /// <summary>
     /// Muestra la reunión en curso o la próxima de hoy. "Unirse" se pinta naranja
     /// solo cuando toca entrar (en curso o a 10 minutos o menos); antes es una
@@ -34,11 +48,15 @@ public sealed partial class MainWindow : UserControl
             HomeMeetingWhen.Foreground = MutedTextBrush;
             HomeJoinButton.Visibility = Visibility.Collapsed;
             _homeMeetingUrl = null;
+            _homeMeetingNeedsAttention = false;
+            UpdateHomeRightColumn();
             return;
         }
 
         var isLive = now >= meeting.StartTime;
         var isJoinTime = isLive || meeting.StartTime - now <= JoinHighlightLead;
+        _homeMeetingNeedsAttention = isJoinTime;
+        UpdateHomeRightColumn();
 
         HomeMeetingTitle.Text = meeting.Title;
         HomeMeetingWhen.Text = isLive
