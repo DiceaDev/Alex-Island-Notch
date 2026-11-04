@@ -1,0 +1,25 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Pruebas de Core
+        run: dotnet test tests/AlexIsland.Core.Tests/AlexIsland.Core.Tests.csproj -c Release
+
+      - name: Compilar app (x64)
+        run: dotnet build src/AlexIsland.App/AlexIsland.App.csproj -c Release -p:Platform=x64

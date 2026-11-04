@@ -1,11 +1,21 @@
 using System.Globalization;
 using System.Text;
 using AlexIsland.Core.Models;
+using AlexIsland.Core.Security;
 
 namespace AlexIsland.Core.Services;
 
 public static class IcsCalendarHelper
 {
+    /// <summary>Tamaño máximo (en caracteres) de un calendario que se acepta importar.</summary>
+    public const int MaxIcsLength = 2 * 1024 * 1024;
+
+    /// <summary>Cantidad máxima de eventos que se importan de un solo calendario.</summary>
+    public const int MaxEvents = 5000;
+
+    private const int MaxTitleLength = 300;
+    private const int MaxTextLength = 4000;
+
     public static string ToIcs(IEnumerable<CalendarEvent> events, string calendarName = "Alex Island Dev Calendar")
     {
         var sb = new StringBuilder();
@@ -45,9 +55,10 @@ public static class IcsCalendarHelper
                 sb.AppendLine($"LOCATION:{EscapeIcs(ev.Location)}");
             }
 
-            if (!string.IsNullOrWhiteSpace(ev.MeetingUrl))
+            var safeUrl = MeetingUrlPolicy.Sanitize(ev.MeetingUrl);
+            if (safeUrl is not null)
             {
-                sb.AppendLine($"URL:{ev.MeetingUrl}");
+                sb.AppendLine($"URL:{safeUrl}");
             }
 
             if (!string.IsNullOrWhiteSpace(ev.Category))
@@ -66,6 +77,11 @@ public static class IcsCalendarHelper
     {
         var results = new List<CalendarEvent>();
         if (string.IsNullOrWhiteSpace(icsContent)) return results;
+        if (icsContent.Length > MaxIcsLength)
+        {
+            throw new InvalidDataException(
+                $"El calendario supera el tamaño máximo permitido ({MaxIcsLength / (1024 * 1024)} MB).");
+        }
 
         var lines = UnfoldIcsLines(icsContent);
         CalendarEvent? current = null;
@@ -86,6 +102,7 @@ public static class IcsCalendarHelper
                     current.MeetingUrl ??= CalendarEvent.TryExtractMeetingUrl(current.Description)
                                            ?? CalendarEvent.TryExtractMeetingUrl(current.Location);
                     results.Add(current);
+                    if (results.Count >= MaxEvents) break;
                 }
                 current = null;
                 continue;
@@ -108,19 +125,21 @@ public static class IcsCalendarHelper
                     if (!string.IsNullOrWhiteSpace(valuePart)) current.Id = valuePart.Replace("@alexisland.local", "");
                     break;
                 case "SUMMARY":
-                    current.Title = UnescapeIcs(valuePart);
+                    current.Title = Truncate(UnescapeIcs(valuePart), MaxTitleLength);
                     break;
                 case "DESCRIPTION":
-                    current.Description = UnescapeIcs(valuePart);
+                    current.Description = Truncate(UnescapeIcs(valuePart), MaxTextLength);
                     break;
                 case "LOCATION":
-                    current.Location = UnescapeIcs(valuePart);
+                    current.Location = Truncate(UnescapeIcs(valuePart), MaxTitleLength);
                     break;
                 case "URL":
-                    current.MeetingUrl = valuePart.Trim();
+                    // Un URL no permitido se descarta; al cerrar el evento se intenta
+                    // extraer uno válido de la descripción o la ubicación.
+                    current.MeetingUrl = MeetingUrlPolicy.Sanitize(valuePart);
                     break;
                 case "CATEGORIES":
-                    current.Category = valuePart.Split(',')[0].Trim().ToUpperInvariant();
+                    current.Category = Truncate(valuePart.Split(',')[0].Trim().ToUpperInvariant(), 32);
                     break;
                 case "DTSTART":
                     current.StartTime = ParseIcsDateTime(valuePart, out var isAllDay);
@@ -207,15 +226,41 @@ public static class IcsCalendarHelper
             .Replace("\r", "");
     }
 
+    // Recorre el texto una sola vez: con Replace encadenados, una secuencia
+    // como "\\n" (barra escapada seguida de "n") se convertía por error en salto de línea.
     private static string UnescapeIcs(string text)
     {
-        return text
-            .Replace(@"\N", "\n")
-            .Replace(@"\n", "\n")
-            .Replace(@"\r", "")
-            .Replace(@"\,", ",")
-            .Replace(@"\;", ";")
-            .Replace(@"\\", @"\");
+        if (text.IndexOf('\\') < 0) return text;
+
+        var sb = new StringBuilder(text.Length);
+        for (var i = 0; i < text.Length; i++)
+        {
+            var c = text[i];
+            if (c != '\\' || i == text.Length - 1)
+            {
+                sb.Append(c);
+                continue;
+            }
+
+            var next = text[++i];
+            switch (next)
+            {
+                case 'n' or 'N':
+                    sb.Append('\n');
+                    break;
+                case ',' or ';' or '\\':
+                    sb.Append(next);
+                    break;
+                default:
+                    sb.Append('\\').Append(next);
+                    break;
+            }
+        }
+
+        return sb.ToString();
     }
+
+    private static string Truncate(string text, int maxLength)
+        => text.Length <= maxLength ? text : text[..maxLength];
 }
 
