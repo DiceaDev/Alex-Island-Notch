@@ -30,7 +30,8 @@ public sealed partial class MainWindow : UserControl
         Calendar,
         Pomodoro,
         System,
-        Shelf
+        Shelf,
+        Habits
     }
 
     private enum CalendarSubMode
@@ -319,6 +320,7 @@ public sealed partial class MainWindow : UserControl
         _ = LoadCalendarEventsAsync();
         _ = LoadPomodoroAsync();
         _ = LoadShelfAsync();
+        _ = LoadHabitsAsync();
     }
 
     /// <summary>Muestra la isla en pantalla (sin quitarle el foco a la app activa).</summary>
@@ -492,6 +494,7 @@ public sealed partial class MainWindow : UserControl
                     IslandTab.Pomodoro => ExpandedPomodoroHeight,
                     IslandTab.System => ExpandedSystemHeight,
                     IslandTab.Shelf => ExpandedShelfHeight,
+                    IslandTab.Habits => ExpandedHabitsHeight,
                     IslandTab.Media when HasLyrics => ExpandedMediaLyricsHeight,
                     _ => ExpandedHeight
                 }),
@@ -904,6 +907,12 @@ public sealed partial class MainWindow : UserControl
             case IslandTab.Shelf:
                 AnimateViewEntrance(ShelfView);
                 break;
+
+            case IslandTab.Habits:
+                AnimateViewEntrance(HabitsView);
+                RenderHabits();
+                NewHabitInput.Focus(FocusState.Programmatic);
+                break;
         }
 
         AnimateTabPillPulse();
@@ -918,6 +927,7 @@ public sealed partial class MainWindow : UserControl
         (IslandTab.Pomodoro, TabPomodoroButton, TabPomodoroLabel, PomodoroView),
         (IslandTab.System, TabSystemButton, TabSystemLabel, SystemView),
         (IslandTab.Shelf, TabShelfButton, TabShelfLabel, ShelfView),
+        (IslandTab.Habits, TabHabitsButton, TabHabitsLabel, HabitsView),
     ];
 
     /// <summary>

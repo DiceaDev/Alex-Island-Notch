@@ -386,6 +386,21 @@
                                     </Border>
                                 </StackPanel>
                             </Button>
+
+                            <!-- Pestaña Hábitos: seguimiento diario -->
+                            <Button x:Name="TabHabitsButton"
+                                    Click="TabHabitsButton_Click"
+                                    CornerRadius="8"
+                                    Padding="5,2"
+                                    Height="21"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    ToolTipService.ToolTip="Hábitos">
+                                <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                    <FontIcon Glyph="&#xE73E;" FontSize="8.5" Foreground="#FFA0A5B2"/>
+                                    <TextBlock x:Name="TabHabitsLabel" Visibility="Collapsed" Text="Hábitos" FontSize="8.5" Foreground="#FFA0A5B2" FontWeight="Medium"/>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -1148,6 +1163,63 @@
                                    FontSize="9.5" Foreground="#FF6F7480" TextAlignment="Center" HorizontalAlignment="Center"
                                    VerticalAlignment="Center" TextWrapping="Wrap"/>
                     </Grid>
+                </Grid>
+
+                <!-- ================= VISTA 7: HÁBITOS ================= -->
+                <Grid x:Name="HabitsView" Grid.Row="2" Visibility="Collapsed" RowSpacing="5">
+                    <Grid.RenderTransform>
+                        <TranslateTransform/>
+                    </Grid.RenderTransform>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Margin="0,1,0,1" ColumnSpacing="6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="NewHabitInput"
+                                 Height="26"
+                                 FontSize="11"
+                                 MaxLength="48"
+                                 PlaceholderText="Nuevo hábito (ej: Leer, o Agua x8)"
+                                 Background="#FF171920"
+                                 Foreground="#FFF0F2F5"
+                                 BorderBrush="#FF2F3342"
+                                 BorderThickness="1"
+                                 CornerRadius="5"
+                                 Padding="7,2"
+                                 KeyDown="NewHabitInput_KeyDown"/>
+                        <Button x:Name="AddHabitButton"
+                                Grid.Column="1"
+                                Click="AddHabitButton_Click"
+                                Height="26"
+                                Width="26"
+                                Padding="0"
+                                CornerRadius="5"
+                                Background="#FFFF5A00"
+                                Foreground="White"
+                                BorderThickness="0"
+                                ToolTipService.ToolTip="Agregar hábito">
+                            <Button.Resources>
+                                <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#FFFF7A33"/>
+                                <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#FFD94D00"/>
+                                <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="White"/>
+                                <SolidColorBrush x:Key="ButtonForegroundPressed" Color="White"/>
+                            </Button.Resources>
+                            <FontIcon Glyph="&#xE710;" FontSize="11" FontWeight="Bold"/>
+                        </Button>
+                    </Grid>
+
+                    <ScrollViewer Grid.Row="1" Height="96" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel x:Name="HabitsItemsPanel" Spacing="3"/>
+                    </ScrollViewer>
+
+                    <TextBlock x:Name="HabitsSummary" Grid.Row="2" Text="" FontSize="9" Foreground="#FF858A96"
+                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxLines="1"/>
                 </Grid>
             </Grid>
         </Grid>

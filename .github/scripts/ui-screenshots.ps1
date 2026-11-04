@@ -144,6 +144,14 @@ New-Item -ItemType Directory -Force -Path $dataDir | Out-Null
     ShowLyrics       = $false
 } | ConvertTo-Json | Set-Content -Path (Join-Path $dataDir 'settings.json') -Encoding UTF8
 
+# Hábitos de ejemplo para la captura de la pestaña Hábitos (fechas relativas a hoy).
+function Day-Key([int] $back) { (Get-Date).AddDays(-$back).ToString('yyyy-MM-dd') }
+@(
+    @{ id = 'h1'; name = 'Leer';      target = 1; log = @{ (Day-Key 0) = 1; (Day-Key 1) = 1; (Day-Key 2) = 1; (Day-Key 3) = 1; (Day-Key 5) = 1 } },
+    @{ id = 'h2'; name = 'Agua';      target = 8; log = @{ (Day-Key 0) = 5; (Day-Key 1) = 8; (Day-Key 2) = 8 } },
+    @{ id = 'h3'; name = 'Ejercicio'; target = 1; log = @{ (Day-Key 1) = 1; (Day-Key 3) = 1 } }
+) | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $dataDir 'habits.json') -Encoding UTF8
+
 # Cursor lejos de la isla antes de abrirla.
 Move-To ($cx) ($screen.Height - 50)
 
@@ -188,7 +196,7 @@ $tabsX = $cx + (440 / 2 - 18 - 45) * $s
 Move-To $tabsX $headerY
 Start-Sleep -Milliseconds 400
 
-$tabs = @('04-backlog', '05-agenda', '06-focus', '07-sistema', '08-shelf')
+$tabs = @('04-backlog', '05-agenda', '06-focus', '07-sistema', '08-shelf', '09-habitos')
 foreach ($tab in $tabs) {
     Wheel-Next
     Start-Sleep -Milliseconds 1800 # la pestaña Sistema necesita una lectura completa
@@ -203,7 +211,7 @@ Click-At ($cx - (440 / 2 - 60) * $s) $headerY
 Move-To $cx ($screen.Height - 50)
 Start-Sleep -Seconds 2
 Assert-Running $proc
-Save-Shot '09-cerrada-de-nuevo'
+Save-Shot '10-cerrada-de-nuevo'
 
 Stop-Process -Id $proc.Id -Force
 Write-Host "Listo: capturas en $OutDir"
