@@ -76,7 +76,6 @@ public sealed partial class MainWindow : UserControl
     private const int ExpandedCalendarHeight = 234;
     private const int ExpandedPomodoroHeight = 214;
     private const int ExpandedSystemHeight = 158;
-    private const double EarRadius = 12.0;
 
     /// <summary>Naranja de Alex Island (#FF5A00), color de acento de toda la isla.</summary>
     private static readonly Windows.UI.Color AccentColor = ColorHelper.FromArgb(255, 255, 90, 0);
@@ -199,7 +198,11 @@ public sealed partial class MainWindow : UserControl
         _clockTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
         _clockTimer.Interval = TimeSpan.FromSeconds(1);
         _clockTimer.IsRepeating = true;
-        _clockTimer.Tick += (_, _) => UpdateClock();
+        _clockTimer.Tick += (_, _) =>
+        {
+            UpdateClock();
+            SyncSatellites(); // título, línea de la letra o tiempo de Enfoque
+        };
 
         // Intervalo de 500ms para actualización suave y en tiempo real del progreso
         _timelineTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
@@ -244,6 +247,7 @@ public sealed partial class MainWindow : UserControl
         {
             CheckCapsLockState();
             CheckKeyboardLayout();
+            CheckCursorMonitor();
         };
         _capsLockTimer.Start();
 
@@ -301,6 +305,7 @@ public sealed partial class MainWindow : UserControl
         InitializeShellIntegration();
         InitializeOverlays();
         InitializeNotifications();
+        InitializeMonitors();
         InitializeLyrics();
 
         // Si cambia el DPI (por ejemplo, al mover la isla a otro monitor), se recalcula el tamaño real.
@@ -354,6 +359,7 @@ public sealed partial class MainWindow : UserControl
         StopOverlays();
         StopNotifications();
         StopOutlookSync();
+        CloseSatellites();
         StopLyrics();
     }
 
@@ -377,6 +383,7 @@ public sealed partial class MainWindow : UserControl
         ApplyShellSettings();
         ApplyNotificationSettings();
         ApplyOutlookSyncSettings();
+        ApplyMonitorSettings();
 
         // Si se activaron las letras con una canción sonando, se piden ahora.
         if (_settings.ShowLyrics && _lyrics is null && _lyricsTrackKey is not null)
@@ -562,6 +569,7 @@ public sealed partial class MainWindow : UserControl
         UpdateSystemSampling();
         ApplyLyricsState();
         UpdateWaveformAnimation();
+        SyncSatellites();
 
         if (wasExpanded != _isExpanded || previousMode != _currentDisplayMode)
         {
@@ -575,74 +583,8 @@ public sealed partial class MainWindow : UserControl
     {
         if (width <= 0 || height <= 0) return;
 
-        // En el notch mínimo la altura es muy baja: los radios se limitan para
-        // que la silueta no se cruce consigo misma.
-        var earRadius = Math.Min(EarRadius, height / 2.0);
         var bottomRadius = _isExpanded ? 18.0 : (_currentDisplayMode == NotchDisplayMode.Resting ? 13.0 : 16.0);
-        bottomRadius = Math.Min(bottomRadius, height / 2.0);
-        var bodyWidth = width - 2 * earRadius;
-        if (bodyWidth <= 0) bodyWidth = width;
-
-        var figure = new PathFigure
-        {
-            StartPoint = new Windows.Foundation.Point(0, 0),
-            IsClosed = true,
-            IsFilled = true
-        };
-
-        // 1. Oreja cóncava izquierda (fillet fluido hacia el marco superior)
-        figure.Segments.Add(new BezierSegment
-        {
-            Point1 = new Windows.Foundation.Point(earRadius * 0.552, 0),
-            Point2 = new Windows.Foundation.Point(earRadius, earRadius * 0.448),
-            Point3 = new Windows.Foundation.Point(earRadius, earRadius)
-        });
-
-        // 2. Borde vertical izquierdo
-        figure.Segments.Add(new LineSegment
-        {
-            Point = new Windows.Foundation.Point(earRadius, height - bottomRadius)
-        });
-
-        // 3. Esquina inferior izquierda convexa
-        figure.Segments.Add(new BezierSegment
-        {
-            Point1 = new Windows.Foundation.Point(earRadius, height - bottomRadius * 0.448),
-            Point2 = new Windows.Foundation.Point(earRadius + bottomRadius * 0.448, height),
-            Point3 = new Windows.Foundation.Point(earRadius + bottomRadius, height)
-        });
-
-        // 4. Borde inferior horizontal
-        figure.Segments.Add(new LineSegment
-        {
-            Point = new Windows.Foundation.Point(earRadius + bodyWidth - bottomRadius, height)
-        });
-
-        // 5. Esquina inferior derecha convexa
-        figure.Segments.Add(new BezierSegment
-        {
-            Point1 = new Windows.Foundation.Point(earRadius + bodyWidth - bottomRadius * 0.448, height),
-            Point2 = new Windows.Foundation.Point(earRadius + bodyWidth, height - bottomRadius * 0.448),
-            Point3 = new Windows.Foundation.Point(earRadius + bodyWidth, height - bottomRadius)
-        });
-
-        // 6. Borde vertical derecho
-        figure.Segments.Add(new LineSegment
-        {
-            Point = new Windows.Foundation.Point(earRadius + bodyWidth, earRadius)
-        });
-
-        // 7. Oreja cóncava derecha (fillet fluido hacia el marco superior)
-        figure.Segments.Add(new BezierSegment
-        {
-            Point1 = new Windows.Foundation.Point(earRadius + bodyWidth, earRadius * 0.448),
-            Point2 = new Windows.Foundation.Point(earRadius + bodyWidth + earRadius * 0.448, 0),
-            Point3 = new Windows.Foundation.Point(earRadius + bodyWidth + earRadius, 0)
-        });
-
-        var pathGeo = new PathGeometry();
-        pathGeo.Figures.Add(figure);
-        NotchBackground.Data = pathGeo;
+        NotchBackground.Data = NotchGeometry.Create(width, height, bottomRadius);
 
         UpdateNotchShadowSize(width, height);
 

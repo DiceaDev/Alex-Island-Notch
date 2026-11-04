@@ -31,6 +31,7 @@ El desarrollo está organizado en etapas. Actualmente, el repositorio contiene l
 - **Shelf:** arrastra archivos, carpetas o texto al notch para tenerlos a mano y sacarlos arrastrando.
 - **Productividad:** backlog de tareas, agenda con importación `.ics` y temporizador Pomodoro.
 - **Agenda desde Outlook:** importa las reuniones del calendario de Outlook (solo lectura, Outlook → isla), incluidas las recurrentes y su enlace de Teams. Se actualiza cada 15 minutos; las reuniones canceladas o borradas desaparecen de la isla.
+- **Varios monitores:** un notch en cada pantalla. La isla completa va al monitor donde esté el cursor; los demás reflejan la música, Enfoque o los ojos del zorro. Se puede desactivar en Ajustes.
 - **Bandeja y ajustes:** iniciar con Windows, ocultar en pantalla completa, mascota, notch mínimo, tamaño y cada tipo de aviso.
 
 Navegación: pasa el cursor para abrir, clic para fijar y rueda del mouse sobre las pestañas para cambiar de página.

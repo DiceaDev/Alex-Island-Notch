@@ -20,6 +20,7 @@
                     <TextBlock x:Name="StartupError" Visibility="Collapsed" FontSize="11" Foreground="#FFFFA726" TextWrapping="Wrap"
                                Text="No se pudo actualizar el inicio automático. Revisa que la app esté instalada en una carpeta a la que tengas acceso."/>
                     <ToggleSwitch x:Name="HideInFullscreenToggle" Header="Ocultar en pantalla completa (juegos, videos, presentaciones)" Foreground="White" Toggled="OnToggled"/>
+                    <ToggleSwitch x:Name="ShowOnAllMonitorsToggle" Header="Mostrar la isla en todos los monitores" Foreground="White" Toggled="OnToggled"/>
                     <ToggleSwitch x:Name="ShowMascotToggle" Header="Mostrar la mascota cuando el equipo está inactivo" Foreground="White" Toggled="OnToggled"/>
                     <ToggleSwitch x:Name="MinimalNotchToggle" Header="Notch mínimo (una línea fina en reposo)" Foreground="White" Toggled="OnToggled"/>
                     <StackPanel Spacing="2">

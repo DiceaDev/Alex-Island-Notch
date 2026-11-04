@@ -48,6 +48,7 @@ public sealed partial class SettingsWindow : Window
 
         StartWithWindowsToggle.IsOn = _settings.StartWithWindows;
         HideInFullscreenToggle.IsOn = _settings.HideInFullscreen;
+        ShowOnAllMonitorsToggle.IsOn = _settings.ShowOnAllMonitors;
         ShowMascotToggle.IsOn = _settings.ShowMascot;
         MinimalNotchToggle.IsOn = _settings.MinimalNotch;
         NotchScaleSlider.Value = Math.Round(_settings.NotchScale * 100);
@@ -104,6 +105,7 @@ public sealed partial class SettingsWindow : Window
         if (_loading) return;
 
         _settings.HideInFullscreen = HideInFullscreenToggle.IsOn;
+        _settings.ShowOnAllMonitors = ShowOnAllMonitorsToggle.IsOn;
         _settings.ShowMascot = ShowMascotToggle.IsOn;
         _settings.MinimalNotch = MinimalNotchToggle.IsOn;
         _settings.ShowNetworkPeeks = NetworkPeeksToggle.IsOn;

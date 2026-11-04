@@ -12,6 +12,8 @@ public sealed class IslandSettings
     public bool ShowMascot { get; set; } = true;
     public bool MinimalNotch { get; set; }
     public double NotchScale { get; set; } = 1.0;
+    /// <summary>Un notch en cada monitor; la isla completa va al monitor del cursor.</summary>
+    public bool ShowOnAllMonitors { get; set; } = true;
 
     // Avisos (peeks)
     public bool ShowNetworkPeeks { get; set; } = true;

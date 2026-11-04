@@ -132,6 +132,48 @@ internal static class NativeMethods
     [DllImport("shell32.dll")]
     private static extern int SHQueryUserNotificationState(out int state);
 
+    // ------------------------------------------------------------ Monitores
+
+    private delegate bool MonitorEnumProc(nint monitor, nint hdc, nint rect, nint data);
+
+    [DllImport("user32.dll")]
+    private static extern bool EnumDisplayMonitors(nint hdc, nint clip, MonitorEnumProc callback, nint data);
+
+    [DllImport("user32.dll")]
+    private static extern nint MonitorFromPoint(NativePoint point, uint flags);
+
+    /// <summary>Monitores conectados, en píxeles físicos.</summary>
+    internal static IReadOnlyList<AlexIsland.Core.Display.MonitorArea> GetMonitors()
+    {
+        const uint MonitorInfoPrimary = 1;
+        var monitors = new List<AlexIsland.Core.Display.MonitorArea>();
+
+        EnumDisplayMonitors(0, 0, (monitor, _, _, _) =>
+        {
+            var info = new MonitorInfo { Size = (uint)Marshal.SizeOf<MonitorInfo>() };
+            if (GetMonitorInfoW(monitor, ref info))
+            {
+                monitors.Add(new AlexIsland.Core.Display.MonitorArea(
+                    monitor,
+                    info.Monitor.Left,
+                    info.Monitor.Top,
+                    info.Monitor.Right - info.Monitor.Left,
+                    info.Monitor.Bottom - info.Monitor.Top,
+                    (info.Flags & MonitorInfoPrimary) != 0));
+            }
+            return true;
+        }, 0);
+
+        return monitors;
+    }
+
+    /// <summary>Monitor donde está la ventana.</summary>
+    internal static nint GetWindowMonitor(nint hwnd) => MonitorFromWindow(hwnd, 2 /* el más cercano */);
+
+    /// <summary>Monitor bajo el cursor, o 0 si no se puede saber.</summary>
+    internal static nint GetCursorMonitor() =>
+        GetCursorPos(out var point) ? MonitorFromPoint(point, 2 /* el más cercano */) : 0;
+
     [DllImport("user32.dll")]
     private static extern nint GetForegroundWindow();
 
