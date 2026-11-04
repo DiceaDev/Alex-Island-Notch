@@ -82,6 +82,18 @@ public sealed partial class MainWindow : UserControl
     /// <summary>El color de acento con otra opacidad (fondos suaves, bordes).</summary>
     private static Windows.UI.Color Accent(byte alpha) => ColorHelper.FromArgb(alpha, 255, 90, 0);
 
+    /// <summary>
+    /// Botón naranja creado en código: texto blanco y se mantiene naranja (más
+    /// claro u oscuro) al pasar el cursor o presionarlo, en vez del gris del tema.
+    /// </summary>
+    private static void ApplyAccentButtonStates(Button button)
+    {
+        button.Resources["ButtonBackgroundPointerOver"] = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 122, 51));
+        button.Resources["ButtonBackgroundPressed"] = new SolidColorBrush(ColorHelper.FromArgb(255, 217, 77, 0));
+        button.Resources["ButtonForegroundPointerOver"] = new SolidColorBrush(Colors.White);
+        button.Resources["ButtonForegroundPressed"] = new SolidColorBrush(Colors.White);
+    }
+
     /// <summary>Espacio transparente a los lados y debajo del notch para su sombra difuminada.</summary>
     private const double ShadowMargin = 16.0;
     private const int MinimalWidth = 120;

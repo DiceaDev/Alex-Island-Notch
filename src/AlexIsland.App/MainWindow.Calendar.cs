@@ -383,7 +383,7 @@ public sealed partial class MainWindow : UserControl
                     Padding = new Thickness(5, 0, 5, 0),
                     CornerRadius = new CornerRadius(4),
                     Background = new SolidColorBrush(AccentColor),
-                    Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 10, 11, 14)),
+                    Foreground = new SolidColorBrush(Colors.White),
                     BorderThickness = new Thickness(0),
                     Content = new StackPanel
                     {
@@ -396,6 +396,7 @@ public sealed partial class MainWindow : UserControl
                         }
                     }
                 };
+                ApplyAccentButtonStates(joinBtn);
                 joinBtn.Click += async (_, _) => await LaunchMeetingAsync(ev.MeetingUrl);
                 actionsStack.Children.Add(joinBtn);
             }
