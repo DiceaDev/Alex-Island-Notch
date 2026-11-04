@@ -131,7 +131,7 @@ public sealed partial class MainWindow : UserControl
     private void UpdateCompactProgress(double progress01, Windows.UI.Color? color = null)
     {
         progress01 = Math.Clamp(progress01, 0.0, 1.0);
-        var strokeColor = color ?? ColorHelper.FromArgb(255, 0, 230, 118);
+        var strokeColor = color ?? AccentColor;
         CompactProgressArc.Stroke = new SolidColorBrush(strokeColor);
         CompactCenterDot.Fill = new SolidColorBrush(strokeColor);
 
@@ -448,8 +448,8 @@ public sealed partial class MainWindow : UserControl
             var isBreak = _pomodoroMode != PomodoroMode.Work;
             CompactFocusTitle.Text = isBreak ? "Pausa de Descanso" : "Enfoque Activo";
             CompactFocusTitle.Foreground = new SolidColorBrush(isBreak
-                ? ColorHelper.FromArgb(255, 0, 230, 118)
-                : ColorHelper.FromArgb(255, 239, 83, 80));
+                ? ColorHelper.FromArgb(255, 0, 230, 118) // verde: pausa (semántico)
+                : AccentColor);
             CompactFocusTime.Text = $"{_pomodoroRemaining:mm\\:ss}";
             return;
         }

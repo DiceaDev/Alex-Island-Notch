@@ -179,7 +179,7 @@ public sealed partial class MainWindow : UserControl
             $"Versión {version?.ToString(3) ?? "1.0.0"} · github.com/DiceaDev",
             percent01: 1.0,
             rightGlyph: "\uE946",
-            accentColor: Microsoft.UI.ColorHelper.FromArgb(255, 0, 230, 118));
+            accentColor: AccentColor);
     }
 
     private void OpenSettingsWindow()

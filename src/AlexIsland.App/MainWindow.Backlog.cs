@@ -107,13 +107,13 @@ public sealed partial class MainWindow : UserControl
 
             if (task.IsCompleted)
             {
-                checkBtn.Background = new SolidColorBrush(ColorHelper.FromArgb(50, 0, 230, 118));
-                checkBtn.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 0, 230, 118));
+                checkBtn.Background = new SolidColorBrush(Accent(50));
+                checkBtn.BorderBrush = new SolidColorBrush(AccentColor);
                 checkBtn.Content = new FontIcon
                 {
                     Glyph = "\uE73E",
                     FontSize = 10,
-                    Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0, 230, 118))
+                    Foreground = new SolidColorBrush(AccentColor)
                 };
             }
             else

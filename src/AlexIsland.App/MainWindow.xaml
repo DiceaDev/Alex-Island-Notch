@@ -94,37 +94,37 @@
                     <Grid Width="16" Height="16" VerticalAlignment="Center" Margin="1,0,3,0">
                         <Ellipse Width="14" Height="14" Stroke="#26FFFFFF" StrokeThickness="1.8" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         <Path x:Name="CompactProgressArc" Width="16" Height="16" HorizontalAlignment="Left" VerticalAlignment="Top" Stretch="None"
-                              Stroke="#FF00E676" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                        <Ellipse x:Name="CompactCenterDot" Width="4" Height="4" Fill="#FF00E676" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                              Stroke="#FFFF5A00" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                        <Ellipse x:Name="CompactCenterDot" Width="4" Height="4" Fill="#FFFF5A00" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Grid>
 
                     <!-- Badge de Pomodoro / Focus activo en modo compacto -->
                     <Border x:Name="CompactPomodoroBadge"
                             Visibility="Collapsed"
                             Background="#FF2A1B1D"
-                            BorderBrush="#FFEF5350"
+                            BorderBrush="#FFFF5A00"
                             BorderThickness="1"
                             CornerRadius="4"
                             Padding="3,1"
                             VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
                             <TextBlock x:Name="CompactPomodoroIcon" Text="🍅" FontSize="7.5" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="CompactPomodoroText" Text="25:00" Foreground="#FFEF5350" FontSize="8" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="CompactPomodoroText" Text="25:00" Foreground="#FFFF5A00" FontSize="8" FontWeight="SemiBold" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
 
                     <!-- Badge sutil de reunión próxima en modo compacto -->
                     <Border x:Name="CompactMeetingBadge"
                             Visibility="Collapsed"
-                            Background="#FF133322"
-                            BorderBrush="#FF00E676"
+                            Background="#FF2A1405"
+                            BorderBrush="#FFFF5A00"
                             BorderThickness="1"
                             CornerRadius="4"
                             Padding="3,1"
                             VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
-                            <FontIcon Glyph="&#xE717;" FontSize="7.5" Foreground="#FF00E676"/>
-                            <TextBlock x:Name="CompactMeetingText" Text="10:00" Foreground="#FF00E676" FontSize="8" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <FontIcon Glyph="&#xE717;" FontSize="7.5" Foreground="#FFFF5A00"/>
+                            <TextBlock x:Name="CompactMeetingText" Text="10:00" Foreground="#FFFF5A00" FontSize="8" FontWeight="SemiBold" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
 
@@ -201,7 +201,7 @@
                                    Text="Enfoque Activo"
                                    FontSize="10"
                                    FontWeight="SemiBold"
-                                   Foreground="#FFEF5350"
+                                   Foreground="#FFFF5A00"
                                    HorizontalAlignment="Center"
                                    TextAlignment="Center"
                                    TextTrimming="CharacterEllipsis"
@@ -217,10 +217,10 @@
                 </Grid>
 
                 <StackPanel x:Name="WaveformPanel" Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center" Margin="0,0,2,0">
-                    <Border x:Name="WaveBar1" Width="2" Height="5" Background="#FF00E676" CornerRadius="1"/>
-                    <Border x:Name="WaveBar2" Width="2" Height="11" Background="#FF00E676" CornerRadius="1"/>
-                    <Border x:Name="WaveBar3" Width="2" Height="14" Background="#FF00E676" CornerRadius="1"/>
-                    <Border x:Name="WaveBar4" Width="2" Height="7" Background="#FF00E676" CornerRadius="1"/>
+                    <Border x:Name="WaveBar1" Width="2" Height="5" Background="#FFFF5A00" CornerRadius="1"/>
+                    <Border x:Name="WaveBar2" Width="2" Height="11" Background="#FFFF5A00" CornerRadius="1"/>
+                    <Border x:Name="WaveBar3" Width="2" Height="14" Background="#FFFF5A00" CornerRadius="1"/>
+                    <Border x:Name="WaveBar4" Width="2" Height="7" Background="#FFFF5A00" CornerRadius="1"/>
                 </StackPanel>
             </Grid>
 
@@ -275,7 +275,7 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
-                        <Ellipse Width="6" Height="6" Fill="#FF00E676"/>
+                        <Ellipse Width="6" Height="6" Fill="#FFFF5A00"/>
                         <TextBlock x:Name="HeaderClock" Text="mar 3 nov · 09:14"
                                    Foreground="#FFA0A5B2" FontSize="10.5" FontWeight="Medium"/>
                         <!-- Botón de vista previa de Peek de Hardware (AirBuds Pro / Auriculares) -->
@@ -394,8 +394,8 @@
                 <Border x:Name="UpcomingMeetingBanner"
                         Grid.Row="1"
                         Visibility="Collapsed"
-                        Background="#FF133322"
-                        BorderBrush="#FF00E676"
+                        Background="#FF2A1405"
+                        BorderBrush="#FFFF5A00"
                         BorderThickness="1"
                         CornerRadius="5"
                         Padding="6,3"
@@ -406,9 +406,9 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <FontIcon Glyph="&#xE717;" FontSize="9.5" Foreground="#FF00E676" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <FontIcon Glyph="&#xE717;" FontSize="9.5" Foreground="#FFFF5A00" VerticalAlignment="Center" Margin="0,0,5,0"/>
                         <TextBlock x:Name="UpcomingBannerTitle" Grid.Column="1" Text="Reunión en 5 min" FontSize="9.5" FontWeight="SemiBold" Foreground="White" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-                        <Button x:Name="UpcomingBannerJoinBtn" Grid.Column="2" Click="UpcomingBannerJoinBtn_Click" Height="19" Padding="6,0" CornerRadius="4" Background="#FF00E676" Foreground="#FF0A0B0E" BorderThickness="0">
+                        <Button x:Name="UpcomingBannerJoinBtn" Grid.Column="2" Click="UpcomingBannerJoinBtn_Click" Height="19" Padding="6,0" CornerRadius="4" Background="#FFFF5A00" Foreground="#FF0A0B0E" BorderThickness="0">
                             <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
                                 <FontIcon Glyph="&#xE717;" FontSize="8.5" FontWeight="Bold"/>
                                 <TextBlock Text="Unirse" FontSize="8.5" FontWeight="Bold"/>
@@ -561,7 +561,7 @@
                                 Width="26"
                                 Padding="0"
                                 CornerRadius="5"
-                                Background="#FF00E676"
+                                Background="#FFFF5A00"
                                 Foreground="#FF0A0B0E"
                                 BorderThickness="0"
                                 HorizontalAlignment="Center"
@@ -668,7 +668,7 @@
 
                         <!-- Botones de Acción: Nuevo Evento y Sincronización -->
                         <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
-                            <Button x:Name="CalNewEventBtn" Click="CalNewEventBtn_Click" Height="21" Padding="6,0" CornerRadius="5" Background="#FF00E676" Foreground="#FF0A0B0E" BorderThickness="0">
+                            <Button x:Name="CalNewEventBtn" Click="CalNewEventBtn_Click" Height="21" Padding="6,0" CornerRadius="5" Background="#FFFF5A00" Foreground="#FF0A0B0E" BorderThickness="0">
                                 <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
                                     <FontIcon Glyph="&#xE710;" FontSize="8.5" FontWeight="Bold"/>
                                     <TextBlock Text="Evento" FontSize="8.5" FontWeight="Bold"/>
@@ -772,7 +772,7 @@
                                     <Button x:Name="FormCancelBtn" Click="FormCancelBtn_Click" Height="21" Padding="7,0" CornerRadius="4" Background="#FF282B36" Foreground="#FFA0A5B2" FontSize="9" BorderThickness="0">
                                         <TextBlock Text="Cancelar"/>
                                     </Button>
-                                    <Button x:Name="FormSaveBtn" Click="FormSaveBtn_Click" Height="21" Padding="7,0" CornerRadius="4" Background="#FF00E676" Foreground="#FF0A0B0E" FontSize="9" FontWeight="Bold" BorderThickness="0">
+                                    <Button x:Name="FormSaveBtn" Click="FormSaveBtn_Click" Height="21" Padding="7,0" CornerRadius="4" Background="#FFFF5A00" Foreground="#FF0A0B0E" FontSize="9" FontWeight="Bold" BorderThickness="0">
                                         <TextBlock Text="Guardar"/>
                                     </Button>
                                 </StackPanel>
@@ -799,7 +799,7 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                    <FontIcon Glyph="&#xE8C8;" FontSize="10" Foreground="#FF00E676"/>
+                                    <FontIcon Glyph="&#xE8C8;" FontSize="10" Foreground="#FFFF5A00"/>
                                     <TextBlock Text="Sincronización de Calendario" FontSize="9.5" FontWeight="SemiBold" Foreground="White"/>
                                 </StackPanel>
                                 <Button x:Name="CloseSyncBtn" Grid.Column="1" Click="CloseSyncBtn_Click" Height="19" Width="19" Padding="0" CornerRadius="3" Background="#FF282B36" BorderThickness="0">
@@ -824,7 +824,7 @@
                                 </Button>
                                 <Button x:Name="ImportClipboardBtn" Grid.Column="1" Click="ImportClipboardBtn_Click" Height="24" HorizontalAlignment="Stretch" CornerRadius="4" Background="#FF1B2B24" BorderThickness="1" BorderBrush="#FF254C39">
                                     <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                        <FontIcon Glyph="&#xE77F;" FontSize="8.5" Foreground="#FF00E676"/>
+                                        <FontIcon Glyph="&#xE77F;" FontSize="8.5" Foreground="#FFFF5A00"/>
                                         <TextBlock x:Name="ImportClipboardLabel" Text="Pegar de Portapapeles" FontSize="8.5" Foreground="White" FontWeight="Medium"/>
                                     </StackPanel>
                                 </Button>
@@ -844,7 +844,7 @@
                                 </Button>
                                 <Button x:Name="CopyIcsBtn" Grid.Column="1" Click="CopyIcsBtn_Click" Height="24" HorizontalAlignment="Stretch" CornerRadius="4" Background="#FF222530" BorderThickness="1" BorderBrush="#FF3A3F52">
                                     <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                        <FontIcon Glyph="&#xE8C8;" FontSize="8.5" Foreground="#FF00E676"/>
+                                        <FontIcon Glyph="&#xE8C8;" FontSize="8.5" Foreground="#FFFF5A00"/>
                                         <TextBlock x:Name="CopyIcsLabel" Text="Copiar .ics (Google)" FontSize="8.5" Foreground="White"/>
                                     </StackPanel>
                                 </Button>
@@ -898,10 +898,10 @@
                         </Border>
 
                         <!-- Contador de pomodoros completados hoy -->
-                        <Border Grid.Column="1" Background="#20EF5350" CornerRadius="6" Padding="6,2" VerticalAlignment="Center">
+                        <Border Grid.Column="1" Background="#20FF5A00" CornerRadius="6" Padding="6,2" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
                                 <TextBlock Text="🍅" FontSize="8.5"/>
-                                <TextBlock x:Name="PomodoroCompletedCountLabel" Text="0 hoy" FontSize="8.5" FontWeight="Bold" Foreground="#FFEF5350"/>
+                                <TextBlock x:Name="PomodoroCompletedCountLabel" Text="0 hoy" FontSize="8.5" FontWeight="Bold" Foreground="#FFFF5A00"/>
                             </StackPanel>
                         </Border>
                     </Grid>
@@ -923,7 +923,7 @@
                         <!-- Barra de progreso sutil del intervalo -->
                         <Grid x:Name="PomodoroTrackGrid" Grid.Row="1" Height="4" Margin="24,2,24,4" SizeChanged="PomodoroTrackGrid_SizeChanged">
                             <Border Background="#FF252833" CornerRadius="2"/>
-                            <Border x:Name="PomodoroProgressBar" Background="#FFEF5350" CornerRadius="2" HorizontalAlignment="Left" Width="0"/>
+                            <Border x:Name="PomodoroProgressBar" Background="#FFFF5A00" CornerRadius="2" HorizontalAlignment="Left" Width="0"/>
                         </Grid>
 
                         <!-- Vínculo a tarea de Backlog -->
@@ -954,7 +954,7 @@
                         </Button>
 
                         <!-- Botón Principal Play / Pause -->
-                        <Button x:Name="PomoPlayPauseBtn" Grid.Column="1" Click="PomoPlayPauseBtn_Click" Width="34" Height="34" CornerRadius="17" Background="#FFEF5350" Foreground="White" BorderThickness="0" HorizontalAlignment="Center">
+                        <Button x:Name="PomoPlayPauseBtn" Grid.Column="1" Click="PomoPlayPauseBtn_Click" Width="34" Height="34" CornerRadius="17" Background="#FFFF5A00" Foreground="White" BorderThickness="0" HorizontalAlignment="Center">
                             <FontIcon x:Name="PomoPlayPauseIcon" Glyph="&#xE768;" FontSize="12" FontWeight="Bold"/>
                         </Button>
 
@@ -1022,7 +1022,7 @@
                                 <TextBlock x:Name="SysUptimeValue" Text="--" FontSize="13" FontWeight="SemiBold" Foreground="White"/>
                                 <TextBlock x:Name="SysUptimeDetail" Text=" " FontSize="7.5" Foreground="#FF858A96" TextTrimming="CharacterEllipsis" MaxLines="1"/>
                                 <Grid x:Name="SysUptimeTrack" Height="3" Background="#FF2A2D37" CornerRadius="1.5" Margin="0,2,0,0">
-                                    <Border x:Name="SysUptimeBar" Background="#FF00E676" CornerRadius="1.5" HorizontalAlignment="Left" Width="0"/>
+                                    <Border x:Name="SysUptimeBar" Background="#FFFF5A00" CornerRadius="1.5" HorizontalAlignment="Left" Width="0"/>
                                 </Grid>
                             </StackPanel>
                         </Border>

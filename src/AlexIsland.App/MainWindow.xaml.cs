@@ -76,6 +76,12 @@ public sealed partial class MainWindow : UserControl
     private const int ExpandedSystemHeight = 150;
     private const double EarRadius = 12.0;
 
+    /// <summary>Naranja de Alex Island (#FF5A00), color de acento de toda la isla.</summary>
+    private static readonly Windows.UI.Color AccentColor = ColorHelper.FromArgb(255, 255, 90, 0);
+
+    /// <summary>El color de acento con otra opacidad (fondos suaves, bordes).</summary>
+    private static Windows.UI.Color Accent(byte alpha) => ColorHelper.FromArgb(alpha, 255, 90, 0);
+
     /// <summary>Espacio transparente a los lados y debajo del notch para su sombra difuminada.</summary>
     private const double ShadowMargin = 16.0;
     private const int MinimalWidth = 120;
@@ -807,7 +813,7 @@ public sealed partial class MainWindow : UserControl
         WaveBar3.Height = 14;
         WaveBar4.Height = 7;
         var brush = new SolidColorBrush(_isPlaying
-            ? ColorHelper.FromArgb(255, 0, 230, 118)
+            ? AccentColor
             : ColorHelper.FromArgb(180, 245, 245, 247));
         WaveBar1.Background = brush;
         WaveBar2.Background = brush;

@@ -74,8 +74,8 @@ public sealed partial class MainWindow : UserControl
         PomoModeLongLabel.Foreground = new SolidColorBrush(_pomodoroMode == PomodoroMode.LongBreak ? Colors.White : ColorHelper.FromArgb(255, 160, 165, 178));
 
         var accentColor = _pomodoroMode == PomodoroMode.Work
-            ? ColorHelper.FromArgb(255, 239, 83, 80) // Coral Red
-            : ColorHelper.FromArgb(255, 0, 230, 118); // Emerald Green
+            ? AccentColor // trabajo: naranja de la marca
+            : ColorHelper.FromArgb(255, 0, 230, 118); // pausa: verde (semántico)
 
         PomoPlayPauseBtn.Background = new SolidColorBrush(accentColor);
         PomodoroProgressBar.Background = new SolidColorBrush(accentColor);
@@ -112,7 +112,7 @@ public sealed partial class MainWindow : UserControl
             CompactPomodoroText.Text = $"{_pomodoroRemaining:mm\\:ss}";
 
             var color = _pomodoroMode == PomodoroMode.Work
-                ? ColorHelper.FromArgb(255, 239, 83, 80)
+                ? AccentColor
                 : ColorHelper.FromArgb(255, 0, 230, 118);
             CompactPomodoroText.Foreground = new SolidColorBrush(color);
             CompactPomodoroBadge.BorderBrush = new SolidColorBrush(color);
