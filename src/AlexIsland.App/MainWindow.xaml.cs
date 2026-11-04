@@ -58,6 +58,7 @@ public sealed partial class MainWindow : UserControl
         Volume,
         Brightness,
         KeyboardLayout,
+        Notification,
         Custom
     }
 
@@ -295,6 +296,7 @@ public sealed partial class MainWindow : UserControl
         InitializeSystemModule();
         InitializeShellIntegration();
         InitializeOverlays();
+        InitializeNotifications();
         InitializeLyrics();
 
         // Si cambia el DPI (por ejemplo, al mover la isla a otro monitor), se recalcula el tamaño real.
@@ -346,6 +348,7 @@ public sealed partial class MainWindow : UserControl
         StopSystemModule();
         StopShellIntegration();
         StopOverlays();
+        StopNotifications();
         StopLyrics();
     }
 
@@ -367,6 +370,7 @@ public sealed partial class MainWindow : UserControl
     private void ApplySettings()
     {
         ApplyShellSettings();
+        ApplyNotificationSettings();
 
         // Si se activaron las letras con una canción sonando, se piden ahora.
         if (_settings.ShowLyrics && _lyrics is null && _lyricsTrackKey is not null)

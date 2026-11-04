@@ -32,7 +32,7 @@
 - [x] Implementar controles de anterior, reproducir/pausar y siguiente
 - [x] Letras sincronizadas desde LRCLIB
 - [x] Avisos de volumen (Core Audio), brillo e idioma del teclado
-- [ ] Integración con notificaciones de Windows
+- [x] Integración con notificaciones de Windows (UserNotificationListener por sondeo: el evento solo existe en apps MSIX)
 - [x] Batería, red, VPN, latencia y estado básico del sistema (pestaña Sistema)
 - [x] Shelf de archivos y textos
 - [ ] Limpieza de suscripciones a eventos y recuperación de conexiones

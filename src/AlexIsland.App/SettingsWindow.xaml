@@ -46,6 +46,20 @@
                     <ToggleSwitch x:Name="CapsLockPeeksToggle" Header="Bloq Mayús" Foreground="White" Toggled="OnToggled"/>
                 </StackPanel>
 
+                <!-- Notificaciones de Windows -->
+                <StackPanel Spacing="6">
+                    <TextBlock Text="NOTIFICACIONES DE WINDOWS" FontSize="11" FontWeight="Bold" Foreground="#FFFF5A00" CharacterSpacing="80"/>
+                    <ToggleSwitch x:Name="NotificationPeeksToggle" Header="Mostrar notificaciones en la isla" Foreground="White" Toggled="NotificationPeeksToggle_Toggled"/>
+                    <TextBlock x:Name="NotificationAccessText" FontSize="11" Foreground="#FF9AA3B2" TextWrapping="Wrap"/>
+                    <HyperlinkButton x:Name="NotificationPrivacyLink" Content="Abrir los permisos de notificaciones de Windows" Padding="0"
+                                     Foreground="#FFFF5A00" Click="NotificationPrivacyLink_Click" Visibility="Collapsed"/>
+                    <ToggleSwitch x:Name="NotificationContentToggle" Header="Mostrar el texto del mensaje (si no, solo el nombre de la app)" Foreground="White" Toggled="OnToggled"/>
+                    <TextBox x:Name="MutedAppsBox" Header="Apps silenciadas (separadas por comas)" PlaceholderText="Teams, Outlook"
+                             LostFocus="MutedAppsBox_LostFocus" KeyDown="MutedAppsBox_KeyDown"/>
+                    <TextBlock FontSize="11" Foreground="#FF9AA3B2" TextWrapping="Wrap"
+                               Text="Las notificaciones se leen solo en este equipo: no se guardan ni se envían a ningún sitio. Usa el nombre de la app tal como aparece en la notificación."/>
+                </StackPanel>
+
                 <!-- Música -->
                 <StackPanel Spacing="6">
                     <TextBlock Text="MÚSICA" FontSize="11" FontWeight="Bold" Foreground="#FFFF5A00" CharacterSpacing="80"/>

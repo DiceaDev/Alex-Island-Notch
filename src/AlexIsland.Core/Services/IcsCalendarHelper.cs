@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using AlexIsland.Core.Models;
 using AlexIsland.Core.Security;
@@ -501,7 +501,7 @@ public static class IcsCalendarHelper
             text.Trim().ToUpperInvariant(),
             @"^([+-])?P(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$",
             System.Text.RegularExpressions.RegexOptions.None,
-            TimeSpan.FromMilliseconds(100));
+            TimeSpan.FromSeconds(1));
         if (!match.Success) return false;
 
         static int Part(System.Text.RegularExpressions.Group g)

@@ -20,6 +20,12 @@ public sealed class IslandSettings
     public bool ShowKeyboardLayoutPeeks { get; set; } = true;
     public bool ShowCapsLockPeeks { get; set; } = true;
 
+    // Notificaciones de Windows (desactivadas por defecto: requieren permiso del usuario)
+    public bool ShowNotificationPeeks { get; set; }
+    public bool ShowNotificationContent { get; set; } = true;
+    /// <summary>Apps silenciadas, separadas por comas (por ejemplo, "Teams, Outlook").</summary>
+    public string MutedNotificationApps { get; set; } = string.Empty;
+
     // Música
     public bool ShowLyrics { get; set; } = true;
 
@@ -41,6 +47,8 @@ public sealed class IslandSettings
         {
             LatencyHost = DefaultLatencyHost;
         }
+
+        MutedNotificationApps = Notifications.NotificationPresenter.NormalizeMutedApps(MutedNotificationApps);
 
         return this;
     }

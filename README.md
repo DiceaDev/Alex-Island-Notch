@@ -27,6 +27,7 @@ El desarrollo está organizado en etapas. Actualmente, el repositorio contiene l
 - **Música:** controles, carátula, progreso y **letras sincronizadas** (LRCLIB). En el notch cerrado, la línea actual reemplaza al artista.
 - **Sistema (IT):** CPU, memoria, disco, tiempo encendido y batería; conexión principal, IP, puerta de enlace, **VPN** y **latencia**. Botón para copiar los datos del equipo a un ticket.
 - **Avisos (peeks):** red caída o recuperada, VPN, volumen, brillo, idioma del teclado, Bloq Mayús, cargador y auriculares.
+- **Notificaciones de Windows:** las nuevas notificaciones (Teams, Outlook, etc.) aparecen en la isla. Se activan en Ajustes, piden permiso a Windows y permiten ocultar el texto del mensaje o silenciar apps.
 - **Shelf:** arrastra archivos, carpetas o texto al notch para tenerlos a mano y sacarlos arrastrando.
 - **Productividad:** backlog de tareas, agenda con importación `.ics` y temporizador Pomodoro.
 - **Bandeja y ajustes:** iniciar con Windows, ocultar en pantalla completa, mascota, notch mínimo, tamaño y cada tipo de aviso.
@@ -101,6 +102,8 @@ La app funciona sin conexión. Solo se conecta a Internet en estos casos:
 | Letras sincronizadas | `lrclib.net` (HTTPS) | Título, artista y duración de la canción | Ajustes → Música |
 | Latencia | Host configurado (por defecto `1.1.1.1`) | Un ping ICMP cada 4 s, solo con la pestaña Sistema abierta | Ajustes → Sistema y red (puedes usar un host interno) |
 | Importar calendario por enlace | La URL `https://` o `webcal://` que pegues | Una descarga de hasta 2 MB | Solo ocurre si lo pides |
+
+Las notificaciones de Windows (si las activas) se leen del centro de notificaciones local cada 2 s; no se guardan ni salen del equipo.
 
 Todo lo demás (tareas, agenda, shelf, ajustes) se guarda solo en `%LocalAppData%\AlexIsland`. El shelf guarda rutas, no copias de archivos. El inicio automático usa la clave `Run` del usuario actual (HKCU).
 

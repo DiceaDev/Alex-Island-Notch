@@ -222,7 +222,8 @@ public sealed partial class MainWindow : UserControl
         string subtitle,
         double percent01 = 1.0,
         string? rightGlyph = null,
-        Windows.UI.Color? accentColor = null)
+        Windows.UI.Color? accentColor = null,
+        TimeSpan? duration = null)
     {
         _isPinned = false;
         _isPointerInside = false;
@@ -230,7 +231,8 @@ public sealed partial class MainWindow : UserControl
 
         // Si ya se está mostrando un aviso del mismo tipo (por ejemplo, al subir
         // el volumen varias veces seguidas), solo se actualiza sin repetir la animación.
-        var isUpdate = _isPeekActive && _activePeekType == type;
+        // Cada notificación nueva, en cambio, sí vuelve a llamar la atención.
+        var isUpdate = _isPeekActive && _activePeekType == type && type != HardwarePeekType.Notification;
         _activePeekType = type;
 
         _isPeekActive = true;
@@ -245,6 +247,7 @@ public sealed partial class MainWindow : UserControl
             HardwarePeekType.Charging => ("\uE945", "\uE83E", ColorHelper.FromArgb(255, 0, 230, 118)),
             HardwarePeekType.Battery => ("\uE850", "\uE7BA", ColorHelper.FromArgb(255, 255, 167, 38)),
             HardwarePeekType.CapsLock => ("\uE765", "\uE72E", ColorHelper.FromArgb(255, 171, 71, 188)),
+            HardwarePeekType.Notification => ("\uEA8F", "\uE8BD", AccentColor),
             HardwarePeekType.Network => ("\uE774", "\uE701", ColorHelper.FromArgb(255, 0, 230, 118)),
             HardwarePeekType.Volume => ("\uE767", "\uE995", ColorHelper.FromArgb(255, 66, 165, 245)),
             HardwarePeekType.Brightness => ("\uE706", "\uE706", ColorHelper.FromArgb(255, 255, 202, 40)),
@@ -270,7 +273,7 @@ public sealed partial class MainWindow : UserControl
 
         _peekTimer?.Stop();
         _peekTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
-        _peekTimer.Interval = TimeSpan.FromSeconds(3.5);
+        _peekTimer.Interval = duration ?? TimeSpan.FromSeconds(3.5);
         _peekTimer.IsRepeating = false;
         _peekTimer.Tick += (_, _) =>
         {
