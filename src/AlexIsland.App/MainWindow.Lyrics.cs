@@ -13,7 +13,8 @@ public sealed partial class MainWindow : UserControl
     // SECCIÓN LETRAS SINCRONIZADAS (LRCLIB)
     // ==============================================================
 
-    private const int ExpandedMediaLyricsHeight = 200;
+    // La letra va en la columna derecha de Inicio: la isla ya no crece al haber letra.
+    private const int ExpandedMediaLyricsHeight = ExpandedHeight;
 
     private readonly LyricsService _lyricsService = new();
     private DispatcherQueueTimer? _lyricsTimer;
@@ -112,7 +113,7 @@ public sealed partial class MainWindow : UserControl
     /// <summary>Muestra u oculta el panel de letras y arranca el temporizador solo si hace falta.</summary>
     private void ApplyLyricsState()
     {
-        LyricsPanel.Visibility = HasLyrics ? Visibility.Visible : Visibility.Collapsed;
+        UpdateHomeRightColumn();
 
         var visibleSomewhere = _currentDisplayMode == NotchDisplayMode.Closed
             || (_isExpanded && _activeTab == IslandTab.Media);

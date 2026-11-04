@@ -405,7 +405,7 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="1"/>
-                        <ColumnDefinition Width="176"/>
+                        <ColumnDefinition Width="214"/>
                     </Grid.ColumnDefinitions>
 
                     <!-- Columna izquierda: música -->
@@ -475,45 +475,49 @@
                             <TextBlock x:Name="RemainingText" Grid.Column="2" Text="--:--" Foreground="#FF6F7480" FontSize="10" VerticalAlignment="Center"/>
                         </Grid>
 
-                        <!-- Letras sincronizadas (LRCLIB): línea actual y siguiente. Clic para saltar a esa línea. -->
-                        <StackPanel x:Name="LyricsPanel" Grid.Row="2" Visibility="Collapsed" Spacing="1" Margin="0,6,0,0">
-                            <TextBlock x:Name="LyricsCurrentLine" Text=" " FontSize="11.5" FontWeight="SemiBold" Foreground="White"
-                                       TextTrimming="CharacterEllipsis" MaxLines="1" HorizontalAlignment="Center"
-                                       Tapped="LyricsLine_Tapped"/>
-                            <TextBlock x:Name="LyricsNextLine" Text=" " FontSize="10.5" Foreground="#FF6F7480"
-                                       TextTrimming="CharacterEllipsis" MaxLines="1" HorizontalAlignment="Center"
-                                       Tapped="LyricsLine_Tapped"/>
-                        </StackPanel>
                     </Grid>
 
                     <!-- Separador -->
                     <Rectangle Grid.Column="1" Width="1" Fill="#1FFFFFFF" Margin="0,4"/>
 
-                    <!-- Columna derecha: próxima reunión y accesos rápidos -->
-                    <StackPanel Grid.Column="2" Spacing="6" VerticalAlignment="Top">
-                        <StackPanel Spacing="1" Margin="2,0,0,2">
-                            <TextBlock x:Name="HomeMeetingTitle" Text="No tienes más reuniones hoy" FontSize="12" FontWeight="SemiBold"
-                                       Foreground="White" TextTrimming="CharacterEllipsis" MaxLines="1"/>
-                            <TextBlock x:Name="HomeMeetingWhen" Text="Agenda libre" FontSize="10.5" Foreground="#FF8E929C"
-                                       TextTrimming="CharacterEllipsis" MaxLines="1"/>
+                    <!-- Columna derecha: la letra de la canción mientras suena; si una reunión
+                         está por empezar o en curso, la reunión tiene prioridad. -->
+                    <Grid Grid.Column="2">
+                        <StackPanel x:Name="HomeInfoPanel" Spacing="6" VerticalAlignment="Top">
+                            <StackPanel Spacing="1" Margin="2,0,0,2">
+                                <TextBlock x:Name="HomeMeetingTitle" Text="No tienes más reuniones hoy" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="White" TextTrimming="CharacterEllipsis" MaxLines="1"/>
+                                <TextBlock x:Name="HomeMeetingWhen" Text="Agenda libre" FontSize="10.5" Foreground="#FF8E929C"
+                                           TextTrimming="CharacterEllipsis" MaxLines="1"/>
+                            </StackPanel>
+                            <Button x:Name="HomeJoinButton" Click="HomeJoinButton_Click" Visibility="Collapsed"
+                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Height="32" CornerRadius="16"
+                                    Padding="14,0" Background="#FF1E1F24" Foreground="White" BorderThickness="0">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon Glyph="&#xE714;" FontSize="12"/>
+                                    <TextBlock Text="Unirse a la reunión" FontSize="11.5" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Button>
+                            <Button x:Name="HomeCopyInfoButton" Click="HomeCopyInfoButton_Click"
+                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Height="32" CornerRadius="16"
+                                    Padding="14,0" Background="#FF1E1F24" Foreground="White" BorderThickness="0">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon Glyph="&#xE8C8;" FontSize="12" Foreground="#FFFF5A00"/>
+                                    <TextBlock x:Name="HomeCopyInfoLabel" Text="Copiar datos del equipo" FontSize="11.5" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
-                        <Button x:Name="HomeJoinButton" Click="HomeJoinButton_Click" Visibility="Collapsed"
-                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Height="32" CornerRadius="16"
-                                Padding="14,0" Background="#FF1E1F24" Foreground="White" BorderThickness="0">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <FontIcon Glyph="&#xE714;" FontSize="12"/>
-                                <TextBlock Text="Unirse a la reunión" FontSize="11.5" FontWeight="SemiBold"/>
-                            </StackPanel>
-                        </Button>
-                        <Button x:Name="HomeCopyInfoButton" Click="HomeCopyInfoButton_Click"
-                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Height="32" CornerRadius="16"
-                                Padding="14,0" Background="#FF1E1F24" Foreground="White" BorderThickness="0">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <FontIcon Glyph="&#xE8C8;" FontSize="12" Foreground="#FFFF5A00"/>
-                                <TextBlock x:Name="HomeCopyInfoLabel" Text="Copiar datos del equipo" FontSize="11.5" FontWeight="SemiBold"/>
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
+
+                        <!-- Letras sincronizadas (LRCLIB): línea actual y siguiente. Clic para saltar a esa línea. -->
+                        <StackPanel x:Name="LyricsPanel" Visibility="Collapsed" Spacing="6" VerticalAlignment="Center" Margin="2,0,0,0">
+                            <TextBlock x:Name="LyricsCurrentLine" Text=" " FontSize="14" FontWeight="SemiBold" Foreground="White"
+                                       TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxLines="3" LineHeight="18"
+                                       Tapped="LyricsLine_Tapped"/>
+                            <TextBlock x:Name="LyricsNextLine" Text=" " FontSize="11.5" Foreground="#FF6F7480"
+                                       TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxLines="2"
+                                       Tapped="LyricsLine_Tapped"/>
+                        </StackPanel>
+                    </Grid>
                 </Grid>
 
                 <!-- ================= VISTA 2: DEV BACKLOG / TO-DO ================= -->
