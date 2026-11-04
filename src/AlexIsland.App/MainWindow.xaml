@@ -14,6 +14,11 @@
               Height="36"
               HorizontalAlignment="Left"
               VerticalAlignment="Top"
+              AllowDrop="True"
+              DragEnter="IslandContainer_DragEnter"
+              DragOver="IslandContainer_DragOver"
+              DragLeave="IslandContainer_DragLeave"
+              Drop="IslandContainer_Drop"
               PointerEntered="IslandContainer_PointerEntered"
               PointerExited="IslandContainer_PointerExited"
               Tapped="IslandContainer_Tapped">
@@ -327,6 +332,24 @@
                                 <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
                                     <FontIcon x:Name="TabSystemIcon" Glyph="&#xE9D9;" FontSize="8.5" Foreground="#FFA0A5B2"/>
                                     <TextBlock x:Name="TabSystemLabel" Visibility="Collapsed" Text="Sistema" FontSize="8.5" Foreground="#FFA0A5B2" FontWeight="Medium"/>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Pestaña Shelf: archivos y textos a mano -->
+                            <Button x:Name="TabShelfButton"
+                                    Click="TabShelfButton_Click"
+                                    CornerRadius="8"
+                                    Padding="5,2"
+                                    Height="21"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    ToolTipService.ToolTip="Shelf: arrastra archivos o texto">
+                                <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                    <FontIcon Glyph="&#xE7B8;" FontSize="8.5" Foreground="#FFA0A5B2"/>
+                                    <TextBlock x:Name="TabShelfLabel" Visibility="Collapsed" Text="Shelf" FontSize="8.5" Foreground="#FFA0A5B2" FontWeight="Medium"/>
+                                    <Border x:Name="HeaderShelfBadge" Visibility="Collapsed" Background="#FF3E4251" CornerRadius="5" Padding="3,0" Margin="1,0,0,0">
+                                        <TextBlock x:Name="HeaderShelfCount" Text="0" FontSize="7.5" Foreground="White" FontWeight="Bold"/>
+                                    </Border>
                                 </StackPanel>
                             </Button>
                         </StackPanel>
@@ -1006,6 +1029,54 @@
                             </StackPanel>
                         </Grid>
                     </Border>
+                </Grid>
+
+                <!-- ================= VISTA 6: SHELF DE ARCHIVOS Y TEXTOS ================= -->
+                <Grid x:Name="ShelfView" Grid.Row="2" Visibility="Collapsed" RowSpacing="5">
+                    <Grid.RenderTransform>
+                        <TranslateTransform/>
+                    </Grid.RenderTransform>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid ColumnSpacing="5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="ShelfSummary" Text="Arrastra archivos o texto a la isla" FontSize="9" Foreground="#FF858A96"
+                                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxLines="1"/>
+                        <Button x:Name="ShelfPasteBtn" Grid.Column="1" Click="ShelfPasteBtn_Click" Height="20" Padding="6,0" CornerRadius="4"
+                                Background="#FF222530" BorderThickness="1" BorderBrush="#FF323645" ToolTipService.ToolTip="Agregar lo copiado (archivos o texto)">
+                            <StackPanel Orientation="Horizontal" Spacing="3">
+                                <FontIcon Glyph="&#xE77F;" FontSize="8" Foreground="#FFA5AAB8"/>
+                                <TextBlock Text="Pegar" FontSize="8.5" Foreground="#FFA5AAB8"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="ShelfClearBtn" Grid.Column="2" Click="ShelfClearBtn_Click" Height="20" Padding="6,0" CornerRadius="4"
+                                Background="#FF222530" BorderThickness="1" BorderBrush="#FF323645" ToolTipService.ToolTip="Quitar los seleccionados (o todos si no hay selección)">
+                            <StackPanel Orientation="Horizontal" Spacing="3">
+                                <FontIcon Glyph="&#xE74D;" FontSize="8" Foreground="#FFA5AAB8"/>
+                                <TextBlock x:Name="ShelfClearLabel" Text="Limpiar" FontSize="8.5" Foreground="#FFA5AAB8"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <Grid Grid.Row="1">
+                        <GridView x:Name="ShelfGrid"
+                                  SelectionMode="Extended"
+                                  CanDragItems="True"
+                                  DragItemsStarting="ShelfGrid_DragItemsStarting"
+                                  SelectionChanged="ShelfGrid_SelectionChanged"
+                                  Padding="0"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+                        <TextBlock x:Name="ShelfEmptyHint" Text="Suelta aquí archivos, carpetas o texto.&#x0a;Solo se guarda su ubicación, no una copia."
+                                   FontSize="9.5" Foreground="#FF6F7480" TextAlignment="Center" HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" TextWrapping="Wrap"/>
+                    </Grid>
                 </Grid>
             </Grid>
         </Grid>

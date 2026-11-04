@@ -29,7 +29,8 @@ public sealed partial class MainWindow : Window
         Backlog,
         Calendar,
         Pomodoro,
-        System
+        System,
+        Shelf
     }
 
     private enum CalendarSubMode
@@ -300,6 +301,7 @@ public sealed partial class MainWindow : Window
         _ = LoadTasksAsync();
         _ = LoadCalendarEventsAsync();
         _ = LoadPomodoroAsync();
+        _ = LoadShelfAsync();
     }
 
     private void MainWindow_Activated(object sender, WindowActivatedEventArgs args)
@@ -481,6 +483,7 @@ public sealed partial class MainWindow : Window
                     IslandTab.Backlog => ExpandedBacklogHeight,
                     IslandTab.Pomodoro => ExpandedPomodoroHeight,
                     IslandTab.System => ExpandedSystemHeight,
+                    IslandTab.Shelf => ExpandedShelfHeight,
                     IslandTab.Media when HasLyrics => ExpandedMediaLyricsHeight,
                     _ => ExpandedHeight
                 }),
@@ -966,6 +969,10 @@ public sealed partial class MainWindow : Window
                 AnimateViewEntrance(SystemView);
                 if (_lastNetwork is { } network) RenderNetwork(network);
                 break;
+
+            case IslandTab.Shelf:
+                AnimateViewEntrance(ShelfView);
+                break;
         }
 
         AnimateTabPillPulse();
@@ -979,6 +986,7 @@ public sealed partial class MainWindow : Window
         (IslandTab.Calendar, TabCalendarButton, TabCalendarLabel, CalendarView),
         (IslandTab.Pomodoro, TabPomodoroButton, TabPomodoroLabel, PomodoroView),
         (IslandTab.System, TabSystemButton, TabSystemLabel, SystemView),
+        (IslandTab.Shelf, TabShelfButton, TabShelfLabel, ShelfView),
     ];
 
     /// <summary>
