@@ -39,17 +39,8 @@ jobs:
           if (-not $exe) { throw 'No se encontró AlexIsland.exe' }
           "APP_EXE=$($exe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      # Windows Server trae desactivados los efectos de transparencia; en un
-      # Windows 10/11 de escritorio vienen activados por defecto.
-      - name: Activar efectos de transparencia
-        shell: pwsh
-        run: |
-          $key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize'
-          New-Item -Path $key -Force | Out-Null
-          Set-ItemProperty -Path $key -Name EnableTransparency -Value 1 -Type DWord
-          Get-ItemProperty -Path $key | Select-Object EnableTransparency
-          (Get-CimInstance Win32_OperatingSystem).Caption
-
+      # El runner (Windows Server en una VM sin GPU) no compone la transparencia
+      # por píxel, así que las capturas validan el modo de bordes recortados.
       - name: Capturas
         shell: pwsh
         run: >
