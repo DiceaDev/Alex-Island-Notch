@@ -66,9 +66,17 @@ function Wheel-Next {
     [UiInput]::mouse_event(0x0800, 0, 0, -120, [UIntPtr]::Zero)
 }
 
+$startupLog = Join-Path $env:LOCALAPPDATA 'AlexIsland\logs\startup.log'
+if (Test-Path $startupLog) { Remove-Item $startupLog -Force }
+
 function Assert-Running($proc) {
     if ($proc.HasExited) {
         throw "Alex Island se cerró inesperadamente (código $($proc.ExitCode))."
+    }
+    # Si falla el arranque, la app sigue abierta mostrando un mensaje de error.
+    if ((Test-Path $startupLog) -and (Select-String -Path $startupLog -Pattern 'ERROR|Excepción no controlada' -Quiet)) {
+        Save-Shot 'error'
+        throw "Alex Island registró un error: revisa startup.log."
     }
 }
 

@@ -28,18 +28,22 @@ jobs:
           global-json-file: global.json
 
       # Autocontenida: el runner no tiene instalado el runtime de Windows App SDK.
-      - name: Publicar app
-        run: >
-          dotnet publish src/AlexIsland.App/AlexIsland.App.csproj
-          -c Release -r win-x64 -p:Platform=x64
-          -p:SelfContained=true -p:WindowsAppSDKSelfContained=true
-          -o publish
+      # Se usa la salida de "build" y no de "publish": en apps WinUI sin empaquetar,
+      # publish no copia AlexIsland.pri (el XAML compilado) y la ventana no carga.
+      - name: Compilar app
+        shell: pwsh
+        run: |
+          dotnet build src/AlexIsland.App/AlexIsland.App.csproj -c Release -r win-x64 -p:Platform=x64 `
+            -p:SelfContained=true -p:WindowsAppSDKSelfContained=true
+          $exe = Get-ChildItem src/AlexIsland.App/bin -Recurse -Filter AlexIsland.exe | Select-Object -First 1
+          if (-not $exe) { throw 'No se encontró AlexIsland.exe' }
+          "APP_EXE=$($exe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Capturas
         shell: pwsh
         run: >
           ./.github/scripts/ui-screenshots.ps1
-          -AppPath "$PWD/publish/AlexIsland.exe"
+          -AppPath "$env:APP_EXE"
           -OutDir "$PWD/screenshots"
           -NotchScale ${{ matrix.notch_scale }}
 
