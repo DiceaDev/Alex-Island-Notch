@@ -60,6 +60,14 @@
                                Text="Las notificaciones se leen solo en este equipo: no se guardan ni se envían a ningún sitio. Usa el nombre de la app tal como aparece en la notificación."/>
                 </StackPanel>
 
+                <!-- Agenda -->
+                <StackPanel Spacing="6">
+                    <TextBlock Text="AGENDA" FontSize="11" FontWeight="Bold" Foreground="#FFFF5A00" CharacterSpacing="80"/>
+                    <ToggleSwitch x:Name="SyncOutlookToggle" Header="Importar el calendario de Outlook automáticamente" Foreground="White" Toggled="OnToggled"/>
+                    <TextBlock x:Name="SyncOutlookInfo" FontSize="11" Foreground="#FF9AA3B2" TextWrapping="Wrap"
+                               Text="Lee tus reuniones de los próximos 45 días del Outlook clásico cada 15 minutos, solo en este equipo. Es solo lectura: la isla nunca crea ni cambia nada en Outlook. Si Outlook clásico está cerrado, se abre sin ventana un momento y se vuelve a cerrar."/>
+                </StackPanel>
+
                 <!-- Música -->
                 <StackPanel Spacing="6">
                     <TextBlock Text="MÚSICA" FontSize="11" FontWeight="Bold" Foreground="#FFFF5A00" CharacterSpacing="80"/>

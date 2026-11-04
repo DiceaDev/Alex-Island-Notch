@@ -30,6 +30,7 @@ El desarrollo está organizado en etapas. Actualmente, el repositorio contiene l
 - **Notificaciones de Windows:** las nuevas notificaciones (Teams, Outlook, etc.) aparecen en la isla. Se activan en Ajustes, piden permiso a Windows y permiten ocultar el texto del mensaje o silenciar apps.
 - **Shelf:** arrastra archivos, carpetas o texto al notch para tenerlos a mano y sacarlos arrastrando.
 - **Productividad:** backlog de tareas, agenda con importación `.ics` y temporizador Pomodoro.
+- **Agenda desde Outlook:** importa las reuniones del calendario de Outlook (solo lectura, Outlook → isla), incluidas las recurrentes y su enlace de Teams. Se actualiza cada 15 minutos; las reuniones canceladas o borradas desaparecen de la isla.
 - **Bandeja y ajustes:** iniciar con Windows, ocultar en pantalla completa, mascota, notch mínimo, tamaño y cada tipo de aviso.
 
 Navegación: pasa el cursor para abrir, clic para fijar y rueda del mouse sobre las pestañas para cambiar de página.
@@ -102,6 +103,8 @@ La app funciona sin conexión. Solo se conecta a Internet en estos casos:
 | Letras sincronizadas | `lrclib.net` (HTTPS) | Título, artista y duración de la canción | Ajustes → Música |
 | Latencia | Host configurado (por defecto `1.1.1.1`) | Un ping ICMP cada 4 s, solo con la pestaña Sistema abierta | Ajustes → Sistema y red (puedes usar un host interno) |
 | Importar calendario por enlace | La URL `https://` o `webcal://` que pegues | Una descarga de hasta 2 MB | Solo ocurre si lo pides |
+
+La importación de Outlook usa el Outlook clásico instalado (COM, en este equipo): no se conecta a Internet por su cuenta ni escribe en Outlook. Del cuerpo de cada reunión solo se extrae el enlace de Teams/Zoom/Meet; el texto no se guarda.
 
 Las notificaciones de Windows (si las activas) se leen del centro de notificaciones local cada 2 s; no se guardan ni salen del equipo.
 

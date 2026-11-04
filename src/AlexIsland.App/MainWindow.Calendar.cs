@@ -1071,39 +1071,6 @@ public sealed partial class MainWindow : UserControl
         _syncStatusTimer.Start();
     }
 
-    private async void ExportIcsFileBtn_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            var ics = IcsCalendarHelper.ToIcs(_events);
-            var folder = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AlexIsland");
-            Directory.CreateDirectory(folder);
-            var filePath = System.IO.Path.Combine(folder, "alex_island_calendar.ics");
-
-            await File.WriteAllTextAsync(filePath, ics);
-
-            ExportIcsLabel.Text = "¡Exportado!";
-            ShowSyncStatus("✓ Calendario exportado y abierto en Outlook", isError: false);
-
-            var timer = DispatcherQueue.GetForCurrentThread().CreateTimer();
-            timer.Interval = TimeSpan.FromSeconds(2);
-            timer.IsRepeating = false;
-            timer.Tick += (_, _) =>
-            {
-                ExportIcsLabel.Text = "Abrir en Outlook";
-                timer.Stop();
-            };
-            timer.Start();
-
-            // Abrir archivo .ics con el cliente predeterminado (Outlook / Calendario de Windows)
-            await Windows.System.Launcher.LaunchUriAsync(new Uri(filePath));
-        }
-        catch (Exception ex)
-        {
-            ShowSyncStatus($"Error al exportar: {ex.Message}", isError: true);
-        }
-    }
-
     private void CopyIcsBtn_Click(object sender, RoutedEventArgs e)
     {
         try

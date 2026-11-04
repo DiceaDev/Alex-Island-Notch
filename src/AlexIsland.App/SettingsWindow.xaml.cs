@@ -60,6 +60,12 @@ public sealed partial class SettingsWindow : Window
         CapsLockPeeksToggle.IsOn = _settings.ShowCapsLockPeeks;
         ShowLyricsToggle.IsOn = _settings.ShowLyrics;
         LatencyHostBox.Text = _settings.LatencyHost;
+        SyncOutlookToggle.IsOn = _settings.SyncOutlookCalendar;
+        if (!OutlookCalendarReader.IsAvailable)
+        {
+            SyncOutlookToggle.IsEnabled = false;
+            SyncOutlookInfo.Text = "No se encontró Outlook clásico en este equipo. Puedes importar un archivo .ics desde la agenda.";
+        }
         NotificationPeeksToggle.IsOn = _settings.ShowNotificationPeeks;
         NotificationContentToggle.IsOn = _settings.ShowNotificationContent;
         MutedAppsBox.Text = _settings.MutedNotificationApps;
@@ -88,6 +94,8 @@ public sealed partial class SettingsWindow : Window
         StartWithWindowsToggle.IsOn = current.StartWithWindows;
         ShowMascotToggle.IsOn = current.ShowMascot;
         MinimalNotchToggle.IsOn = current.MinimalNotch;
+        _settings.SyncOutlookCalendar = current.SyncOutlookCalendar;
+        SyncOutlookToggle.IsOn = current.SyncOutlookCalendar;
         _loading = false;
     }
 
@@ -105,6 +113,7 @@ public sealed partial class SettingsWindow : Window
         _settings.ShowCapsLockPeeks = CapsLockPeeksToggle.IsOn;
         _settings.ShowLyrics = ShowLyricsToggle.IsOn;
         _settings.ShowNotificationContent = NotificationContentToggle.IsOn;
+        _settings.SyncOutlookCalendar = SyncOutlookToggle.IsOn;
 
         if (ReferenceEquals(sender, StartWithWindowsToggle))
         {

@@ -318,7 +318,7 @@ public sealed partial class MainWindow : UserControl
         _ = LoadSettingsAsync();
         _ = InitializeMediaAsync();
         _ = LoadTasksAsync();
-        _ = LoadCalendarEventsAsync();
+        _calendarLoadTask = LoadCalendarEventsAsync();
         _ = LoadPomodoroAsync();
         _ = LoadShelfAsync();
     }
@@ -349,6 +349,7 @@ public sealed partial class MainWindow : UserControl
         StopShellIntegration();
         StopOverlays();
         StopNotifications();
+        StopOutlookSync();
         StopLyrics();
     }
 
@@ -371,6 +372,7 @@ public sealed partial class MainWindow : UserControl
     {
         ApplyShellSettings();
         ApplyNotificationSettings();
+        ApplyOutlookSyncSettings();
 
         // Si se activaron las letras con una canción sonando, se piden ahora.
         if (_settings.ShowLyrics && _lyrics is null && _lyricsTrackKey is not null)

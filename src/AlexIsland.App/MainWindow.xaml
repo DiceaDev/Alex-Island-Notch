@@ -845,7 +845,7 @@
                             </Grid>
 
                             <!-- Fila 1: Subtítulo (bien separado, sin sobreponerse) -->
-                            <TextBlock Grid.Row="1" Text="Importa o exporta reuniones con Google Calendar u Outlook (.ics):" FontSize="8" Foreground="#FFA0A5B2" TextWrapping="Wrap" Margin="0,0,0,5"/>
+                            <TextBlock Grid.Row="1" Text="Trae tus reuniones de Outlook a la isla (solo lectura: no se cambia nada en Outlook) o importa un .ics:" FontSize="8" Foreground="#FFA0A5B2" TextWrapping="Wrap" Margin="0,0,0,5"/>
 
                             <!-- Fila 2: Acciones de IMPORTACIÓN de reuniones -->
                             <Grid Grid.Row="2" ColumnSpacing="5" Margin="0,0,0,4">
@@ -867,16 +867,16 @@
                                 </Button>
                             </Grid>
 
-                            <!-- Fila 3: Acciones de EXPORTACIÓN -->
+                            <!-- Fila 3: Importar de Outlook (solo lectura) y copiar .ics para Google -->
                             <Grid Grid.Row="3" ColumnSpacing="5" Margin="0,0,0,2">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <Button x:Name="ExportIcsFileBtn" Click="ExportIcsFileBtn_Click" Height="24" HorizontalAlignment="Stretch" CornerRadius="4" Background="#FF222530" BorderThickness="1" BorderBrush="#FF3A3F52">
+                                <Button x:Name="OutlookImportBtn" Click="OutlookImportBtn_Click" Height="24" HorizontalAlignment="Stretch" CornerRadius="4" Background="#FF1C2633" BorderThickness="1" BorderBrush="#FF283E54">
                                     <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                                         <FontIcon Glyph="&#xE896;" FontSize="8.5" Foreground="#FF42A5F5"/>
-                                        <TextBlock x:Name="ExportIcsLabel" Text="Abrir en Outlook" FontSize="8.5" Foreground="White"/>
+                                        <TextBlock x:Name="OutlookImportLabel" Text="Importar de Outlook" FontSize="8.5" Foreground="White" FontWeight="Medium"/>
                                     </StackPanel>
                                 </Button>
                                 <Button x:Name="CopyIcsBtn" Grid.Column="1" Click="CopyIcsBtn_Click" Height="24" HorizontalAlignment="Stretch" CornerRadius="4" Background="#FF222530" BorderThickness="1" BorderBrush="#FF3A3F52">

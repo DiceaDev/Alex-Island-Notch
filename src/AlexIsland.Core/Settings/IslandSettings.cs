@@ -26,6 +26,9 @@ public sealed class IslandSettings
     /// <summary>Apps silenciadas, separadas por comas (por ejemplo, "Teams, Outlook").</summary>
     public string MutedNotificationApps { get; set; } = string.Empty;
 
+    // Agenda: importar el calendario de Outlook clásico (solo lectura, Outlook → isla)
+    public bool SyncOutlookCalendar { get; set; }
+
     // Música
     public bool ShowLyrics { get; set; } = true;
 
