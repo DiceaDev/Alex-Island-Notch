@@ -790,7 +790,7 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBox x:Name="FormMeetingUrl" PlaceholderText="Link Meet / Teams / Zoom..." Height="23" FontSize="10.5" Background="#FF1C1F28" Foreground="White" BorderBrush="#FF323645" CornerRadius="4" Padding="5,1"/>
-                                <ComboBox x:Name="FormTaskLinkCombo" Grid.Column="1" PlaceholderText="Vincular con backlog..." Height="23" FontSize="10" Background="#FF1C1F28" BorderBrush="#FF323645" CornerRadius="4" HorizontalAlignment="Stretch"/>
+                                <ComboBox x:Name="FormTaskLinkCombo" Grid.Column="1" PlaceholderText="Vincular con una tarea" Height="30" MinHeight="0" Padding="10,0,0,0" VerticalContentAlignment="Center" FontSize="10.5" Background="#FF1C1F28" BorderBrush="#FF323645" CornerRadius="4" HorizontalAlignment="Stretch"/>
                             </Grid>
 
                             <!-- Advertencia de Conflicto en vivo + Botones Guardar / Cancelar -->
@@ -972,7 +972,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="🎯 Tarea:" FontSize="9.5" Foreground="#FFA0A5B2" VerticalAlignment="Center"/>
-                            <ComboBox x:Name="PomoTaskLinkCombo" Grid.Column="1" Height="22" FontSize="9.5" PlaceholderText="Seleccionar tarea del backlog..." Background="#FF1A1C23" BorderBrush="#FF2F3342" CornerRadius="4" HorizontalAlignment="Stretch" SelectionChanged="PomoTaskLinkCombo_SelectionChanged"/>
+                            <ComboBox x:Name="PomoTaskLinkCombo" Grid.Column="1" Height="30" MinHeight="0" Padding="10,0,0,0" VerticalContentAlignment="Center" FontSize="10.5" PlaceholderText="Elegir una tarea" Background="#FF1A1C23" BorderBrush="#FF2F3342" CornerRadius="4" HorizontalAlignment="Stretch" SelectionChanged="PomoTaskLinkCombo_SelectionChanged"/>
                         </Grid>
                     </Grid>
 

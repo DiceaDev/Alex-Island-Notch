@@ -468,7 +468,7 @@ public sealed partial class MainWindow : UserControl
     private void PopulateTaskLinkCombo(string? selectedTaskId = null)
     {
         FormTaskLinkCombo.Items.Clear();
-        FormTaskLinkCombo.Items.Add(new ComboBoxItem { Content = "Sin vincular a backlog", Tag = null });
+        FormTaskLinkCombo.Items.Add(new ComboBoxItem { Content = "Sin tarea", Tag = null });
 
         var selectIndex = 0;
         var idx = 1;
