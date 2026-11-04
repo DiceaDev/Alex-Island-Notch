@@ -637,24 +637,98 @@ public sealed partial class MainWindow : Window
     {
         if (_hwnd == 0) return;
 
-        // Con transparencia por píxel no se recorta la ventana: una región de
-        // Windows anula el canal alfa y vuelve a dejar los bordes en escalera.
+        // Bordes suavizados: la ventana no se recorta. Una región de Windows no
+        // tiene antialiasing y volvería a dejar las curvas en escalera.
         if (_useSmoothEdges)
         {
             NativeMethods.ClearWindowRegion(_hwnd);
             return;
         }
 
-        // Medidas de XAML convertidas a píxeles físicos. El margen deja el borde
-        // de la región (sin suavizado) en la zona transparente alrededor del notch.
+        // Bordes recortados: región que sigue exactamente la silueta, orejas incluidas.
+        ApplyExactNotchRegion(width, height, earRadius, bottomRadius);
+    }
+
+    private void ApplyExactNotchRegion(int width, int height, double earRadius, double bottomRadius)
+    {
+        var bodyWidth = width - 2 * earRadius;
+        if (bodyWidth <= 0) bodyWidth = width;
+
+        var points = new List<NativeMethods.NativePoint>
+        {
+            new() { X = 0, Y = 0 }
+        };
+
+        // Oreja izquierda (cóncava)
+        SampleBezier(
+            0, 0,
+            (int)(earRadius * 0.552), 0,
+            (int)earRadius, (int)(earRadius * 0.448),
+            (int)earRadius, (int)earRadius,
+            points, 5);
+
+        // Borde izquierdo
+        points.Add(new() { X = (int)earRadius, Y = (int)(height - bottomRadius) });
+
+        // Esquina inferior izquierda (convexa)
+        SampleBezier(
+            (int)earRadius, (int)(height - bottomRadius),
+            (int)earRadius, (int)(height - bottomRadius * 0.448),
+            (int)(earRadius + bottomRadius * 0.448), height,
+            (int)(earRadius + bottomRadius), height,
+            points, 5);
+
+        // Borde inferior
+        points.Add(new() { X = (int)(earRadius + bodyWidth - bottomRadius), Y = height });
+
+        // Esquina inferior derecha (convexa)
+        SampleBezier(
+            (int)(earRadius + bodyWidth - bottomRadius), height,
+            (int)(earRadius + bodyWidth - bottomRadius * 0.448), height,
+            (int)(earRadius + bodyWidth), (int)(height - bottomRadius * 0.448),
+            (int)(earRadius + bodyWidth), (int)(height - bottomRadius),
+            points, 5);
+
+        // Borde derecho
+        points.Add(new() { X = (int)(earRadius + bodyWidth), Y = (int)earRadius });
+
+        // Oreja derecha (cóncava)
+        SampleBezier(
+            (int)(earRadius + bodyWidth), (int)earRadius,
+            (int)(earRadius + bodyWidth), (int)(earRadius * 0.448),
+            (int)(earRadius + bodyWidth + earRadius * 0.448), 0,
+            (int)(earRadius + bodyWidth + earRadius), 0,
+            points, 5);
+
+        // Los puntos están en unidades de XAML; la región de la ventana va en píxeles físicos.
         var scale = PixelScale;
-        NativeMethods.SetWindowNotchRegion(
-            _hwnd,
-            (int)Math.Ceiling(width * scale),
-            (int)Math.Ceiling(height * scale),
-            (int)Math.Round(earRadius * scale),
-            (int)Math.Round(bottomRadius * scale),
-            margin: (int)Math.Ceiling(2 * scale));
+        var scaled = points
+            .Select(p => new NativeMethods.NativePoint
+            {
+                X = (int)Math.Round(p.X * scale),
+                Y = (int)Math.Round(p.Y * scale),
+            })
+            .ToArray();
+        NativeMethods.SetWindowPolygonRegion(_hwnd, scaled);
+    }
+
+    private static void SampleBezier(
+        int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3,
+        List<NativeMethods.NativePoint> points, int steps)
+    {
+        for (int i = 1; i <= steps; i++)
+        {
+            double t = (double)i / steps;
+            double u = 1.0 - t;
+            double tt = t * t;
+            double uu = u * u;
+            double uuu = uu * u;
+            double ttt = tt * t;
+
+            int x = (int)Math.Round(uuu * x0 + 3 * uu * t * x1 + 3 * u * tt * x2 + ttt * x3);
+            int y = (int)Math.Round(uuu * y0 + 3 * uu * t * y1 + 3 * u * tt * y2 + ttt * y3);
+            points.Add(new() { X = x, Y = y });
+        }
     }
 
     private void AnimateIsland(bool expanding, NotchDisplayMode mode = NotchDisplayMode.Expanded)
