@@ -13,7 +13,7 @@ public sealed partial class MainWindow : UserControl
     // SECCIÓN LETRAS SINCRONIZADAS (LRCLIB)
     // ==============================================================
 
-    private const int ExpandedMediaLyricsHeight = 156;
+    private const int ExpandedMediaLyricsHeight = 200;
 
     private readonly LyricsService _lyricsService = new();
     private DispatcherQueueTimer? _lyricsTimer;

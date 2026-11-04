@@ -46,6 +46,7 @@ public sealed partial class MainWindow : UserControl
 
         // Actualizar badges
         HeaderBacklogCount.Text = pendingCount.ToString();
+        RefreshTabBadges();
         CompactTaskCount.Text = pendingCount.ToString();
         CompactTaskBadge.Visibility = pendingCount > 0 ? Visibility.Visible : Visibility.Collapsed;
 
@@ -143,7 +144,7 @@ public sealed partial class MainWindow : UserControl
                 Child = new TextBlock
                 {
                     Text = task.Category,
-                    FontSize = 8,
+                    FontSize = 9,
                     FontWeight = Microsoft.UI.Text.FontWeights.Bold,
                     Foreground = tagFg
                 }
@@ -185,7 +186,7 @@ public sealed partial class MainWindow : UserControl
                 Content = new FontIcon
                 {
                     Glyph = "\uE711",
-                    FontSize = 9,
+                    FontSize = 10,
                     Foreground = new SolidColorBrush(ColorHelper.FromArgb(140, 133, 138, 150))
                 }
             };

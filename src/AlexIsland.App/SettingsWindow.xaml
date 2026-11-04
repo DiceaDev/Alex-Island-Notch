@@ -15,7 +15,7 @@
 
                 <!-- General -->
                 <StackPanel Spacing="6">
-                    <TextBlock Text="GENERAL" FontSize="11" FontWeight="Bold" Foreground="#FFFF5A00" CharacterSpacing="80"/>
+                    <TextBlock Text="General" FontSize="15" FontWeight="SemiBold" Foreground="White" Margin="0,6,0,0"/>
                     <ToggleSwitch x:Name="StartWithWindowsToggle" Header="Iniciar con Windows" Foreground="White" Toggled="OnToggled"/>
                     <TextBlock x:Name="StartupError" Visibility="Collapsed" FontSize="11" Foreground="#FFFFA726" TextWrapping="Wrap"
                                Text="No se pudo actualizar el inicio automático. Revisa que la app esté instalada en una carpeta a la que tengas acceso."/>
@@ -38,7 +38,7 @@
 
                 <!-- Avisos -->
                 <StackPanel Spacing="6">
-                    <TextBlock Text="AVISOS EN LA ISLA" FontSize="11" FontWeight="Bold" Foreground="#FFFF5A00" CharacterSpacing="80"/>
+                    <TextBlock Text="Avisos en la isla" FontSize="15" FontWeight="SemiBold" Foreground="White" Margin="0,6,0,0"/>
                     <ToggleSwitch x:Name="NetworkPeeksToggle" Header="Cambios de red y VPN" Foreground="White" Toggled="OnToggled"/>
                     <ToggleSwitch x:Name="VolumePeeksToggle" Header="Volumen" Foreground="White" Toggled="OnToggled"/>
                     <ToggleSwitch x:Name="BrightnessPeeksToggle" Header="Brillo de pantalla" Foreground="White" Toggled="OnToggled"/>
@@ -48,7 +48,7 @@
 
                 <!-- Notificaciones de Windows -->
                 <StackPanel Spacing="6">
-                    <TextBlock Text="NOTIFICACIONES DE WINDOWS" FontSize="11" FontWeight="Bold" Foreground="#FFFF5A00" CharacterSpacing="80"/>
+                    <TextBlock Text="Notificaciones de Windows" FontSize="15" FontWeight="SemiBold" Foreground="White" Margin="0,6,0,0"/>
                     <ToggleSwitch x:Name="NotificationPeeksToggle" Header="Mostrar notificaciones en la isla" Foreground="White" Toggled="NotificationPeeksToggle_Toggled"/>
                     <TextBlock x:Name="NotificationAccessText" FontSize="11" Foreground="#FF9AA3B2" TextWrapping="Wrap"/>
                     <HyperlinkButton x:Name="NotificationPrivacyLink" Content="Abrir los permisos de notificaciones de Windows" Padding="0"
@@ -62,7 +62,7 @@
 
                 <!-- Agenda -->
                 <StackPanel Spacing="6">
-                    <TextBlock Text="AGENDA" FontSize="11" FontWeight="Bold" Foreground="#FFFF5A00" CharacterSpacing="80"/>
+                    <TextBlock Text="Agenda" FontSize="15" FontWeight="SemiBold" Foreground="White" Margin="0,6,0,0"/>
                     <ToggleSwitch x:Name="SyncOutlookToggle" Header="Importar el calendario de Outlook automáticamente" Foreground="White" Toggled="OnToggled"/>
                     <TextBlock x:Name="SyncOutlookInfo" FontSize="11" Foreground="#FF9AA3B2" TextWrapping="Wrap"
                                Text="Lee tus reuniones de los próximos 45 días del Outlook clásico cada 15 minutos, solo en este equipo. Es solo lectura: la isla nunca crea ni cambia nada en Outlook. Si Outlook clásico está cerrado, se abre sin ventana un momento y se vuelve a cerrar."/>
@@ -70,7 +70,7 @@
 
                 <!-- Música -->
                 <StackPanel Spacing="6">
-                    <TextBlock Text="MÚSICA" FontSize="11" FontWeight="Bold" Foreground="#FFFF5A00" CharacterSpacing="80"/>
+                    <TextBlock Text="Música" FontSize="15" FontWeight="SemiBold" Foreground="White" Margin="0,6,0,0"/>
                     <ToggleSwitch x:Name="ShowLyricsToggle" Header="Letras sincronizadas" Foreground="White" Toggled="OnToggled"/>
                     <TextBlock FontSize="11" Foreground="#FF9AA3B2" TextWrapping="Wrap"
                                Text="Las letras se piden a LRCLIB (lrclib.net) enviando solo el título, el artista y la duración de la canción. Desactívalo si no quieres que la app se conecte a ese servicio."/>
@@ -78,7 +78,7 @@
 
                 <!-- Sistema y red -->
                 <StackPanel Spacing="6">
-                    <TextBlock Text="SISTEMA Y RED" FontSize="11" FontWeight="Bold" Foreground="#FFFF5A00" CharacterSpacing="80"/>
+                    <TextBlock Text="Sistema y red" FontSize="15" FontWeight="SemiBold" Foreground="White" Margin="0,6,0,0"/>
                     <TextBox x:Name="LatencyHostBox" Header="Host para medir la latencia (ping)" PlaceholderText="1.1.1.1"
                              LostFocus="LatencyHostBox_LostFocus" KeyDown="LatencyHostBox_KeyDown"/>
                     <TextBlock x:Name="LatencyHostError" Visibility="Collapsed" FontSize="11" Foreground="#FFFFA726"

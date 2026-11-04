@@ -69,12 +69,13 @@ public sealed partial class MainWindow : UserControl
     private const int RestingHeight = 32;
     private const int PeekWidth = 300;
     private const int PeekHeight = 42;
-    private const int ExpandedWidth = 440;
-    private const int ExpandedHeight = 118;
-    private const int ExpandedBacklogHeight = 188;
-    private const int ExpandedCalendarHeight = 226;
-    private const int ExpandedPomodoroHeight = 188;
-    private const int ExpandedSystemHeight = 150;
+    // Más ancha para que las seis pestañas muestren su nombre y Inicio tenga dos columnas.
+    private const int ExpandedWidth = 540;
+    private const int ExpandedHeight = 162;
+    private const int ExpandedBacklogHeight = 196;
+    private const int ExpandedCalendarHeight = 234;
+    private const int ExpandedPomodoroHeight = 196;
+    private const int ExpandedSystemHeight = 158;
     private const double EarRadius = 12.0;
 
     /// <summary>Naranja de Alex Island (#FF5A00), color de acento de toda la isla.</summary>
@@ -107,7 +108,6 @@ public sealed partial class MainWindow : UserControl
     private static extern short GetKeyState(int nVirtKey);
     private const int VK_CAPITAL = 0x14;
     private bool _showClockInCompactCenter;
-    private int _demoPeekIndex = 0;
 
     private static readonly string[] AvailableTags = ["TODO", "FEAT", "FIX", "REFACTOR", "DOCS"];
     private static readonly string[] EventCategories = ["MEETING", "DEV", "REVIEW", "PLANNING", "GENERAL"];
@@ -217,7 +217,16 @@ public sealed partial class MainWindow : UserControl
         _reminderTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
         _reminderTimer.Interval = TimeSpan.FromSeconds(30);
         _reminderTimer.IsRepeating = true;
-        _reminderTimer.Tick += (_, _) => CheckUpcomingMeetings();
+        _reminderTimer.Tick += (_, _) =>
+        {
+            CheckUpcomingMeetings();
+            // Mantiene al día la cuenta regresiva y la línea de "ahora" si la agenda está a la vista.
+            if (_isExpanded && _activeTab == IslandTab.Calendar && _calendarSubMode == CalendarSubMode.Agenda
+                && CalEventFormOverlay.Visibility != Visibility.Visible)
+            {
+                RenderCalendarView();
+            }
+        };
         _reminderTimer.Start();
 
         // Temporizador de Pomodoro (cada 1s)
@@ -493,7 +502,7 @@ public sealed partial class MainWindow : UserControl
                 ExpandedWidth,
                 _activeTab switch
                 {
-                    IslandTab.Calendar => ExpandedCalendarHeight,
+                    IslandTab.Calendar => CalendarExpandedHeight,
                     IslandTab.Backlog => ExpandedBacklogHeight,
                     IslandTab.Pomodoro => ExpandedPomodoroHeight,
                     IslandTab.System => ExpandedSystemHeight,
@@ -866,19 +875,26 @@ public sealed partial class MainWindow : UserControl
     {
         _activeTab = tab;
 
-        var inactiveBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 160, 165, 178));
-        var activeBackground = new SolidColorBrush(ColorHelper.FromArgb(255, 42, 45, 55));
+        var inactiveBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 142, 146, 156));
+        var activeBackground = new SolidColorBrush(ColorHelper.FromArgb(255, 44, 45, 51));
 
-        // Las pestañas inactivas muestran solo su ícono, como la barra de Nusa;
-        // así caben todas sin ensanchar la isla.
+        // Todas las pestañas muestran ícono y nombre; la activa va en una píldora
+        // gris y en blanco. El naranja queda para lo que pide atención.
         foreach (var (id, button, label, view) in GetTabs())
         {
             var isActive = id == tab;
             button.Background = isActive ? activeBackground : new SolidColorBrush(Colors.Transparent);
             label.Foreground = isActive ? new SolidColorBrush(Colors.White) : inactiveBrush;
-            label.Visibility = isActive ? Visibility.Visible : Visibility.Collapsed;
             view.Visibility = isActive ? Visibility.Visible : Visibility.Collapsed;
         }
+
+        foreach (var (id, icon) in GetTabIcons())
+        {
+            icon.Foreground = id == tab ? new SolidColorBrush(Colors.White) : inactiveBrush;
+        }
+
+        RefreshTabBadges();
+        CheckUpcomingMeetings();
 
         switch (_activeTab)
         {
@@ -919,12 +935,41 @@ public sealed partial class MainWindow : UserControl
     private (IslandTab Id, Button Button, TextBlock Label, FrameworkElement View)[] GetTabs() =>
     [
         (IslandTab.Media, TabMediaButton, TabMediaLabel, MediaView),
-        (IslandTab.Backlog, TabBacklogButton, TabBacklogLabel, BacklogView),
         (IslandTab.Calendar, TabCalendarButton, TabCalendarLabel, CalendarView),
+        (IslandTab.Backlog, TabBacklogButton, TabBacklogLabel, BacklogView),
         (IslandTab.Pomodoro, TabPomodoroButton, TabPomodoroLabel, PomodoroView),
         (IslandTab.System, TabSystemButton, TabSystemLabel, SystemView),
         (IslandTab.Shelf, TabShelfButton, TabShelfLabel, ShelfView),
     ];
+
+    private (IslandTab Id, FontIcon Icon)[] GetTabIcons() =>
+    [
+        (IslandTab.Media, TabMediaIcon),
+        (IslandTab.Calendar, TabCalendarIcon),
+        (IslandTab.Backlog, TabBacklogIcon),
+        (IslandTab.Pomodoro, TabPomodoroIcon),
+        (IslandTab.System, TabSystemIcon),
+        (IslandTab.Shelf, TabShelfIcon),
+    ];
+
+    /// <summary>
+    /// Contadores y puntos de las pestañas. El número solo se ve en la pestaña
+    /// activa (y si es mayor que cero); en las inactivas, un punto naranja marca
+    /// únicamente lo que pide atención: una reunión que empieza pronto o está en
+    /// curso, o un Pomodoro corriendo.
+    /// </summary>
+    private void RefreshTabBadges()
+    {
+        static bool HasCount(TextBlock count) => int.TryParse(count.Text, out var value) && value > 0;
+
+        HeaderBacklogBadge.Visibility = _activeTab == IslandTab.Backlog && HasCount(HeaderBacklogCount) ? Visibility.Visible : Visibility.Collapsed;
+        HeaderCalendarBadge.Visibility = _activeTab == IslandTab.Calendar && HasCount(HeaderCalendarCount) ? Visibility.Visible : Visibility.Collapsed;
+        HeaderPomodoroBadge.Visibility = _activeTab == IslandTab.Pomodoro && HasCount(HeaderPomodoroCount) ? Visibility.Visible : Visibility.Collapsed;
+        HeaderShelfBadge.Visibility = _activeTab == IslandTab.Shelf && HasCount(HeaderShelfCount) ? Visibility.Visible : Visibility.Collapsed;
+
+        TabCalendarDot.Visibility = _activeTab != IslandTab.Calendar && _upcomingMeetingSoon ? Visibility.Visible : Visibility.Collapsed;
+        TabPomodoroDot.Visibility = _activeTab != IslandTab.Pomodoro && _pomodoroState == PomodoroState.Running ? Visibility.Visible : Visibility.Collapsed;
+    }
 
     /// <summary>
     /// Con la rueda del mouse sobre la barra de pestañas se pasa a la siguiente

@@ -47,6 +47,7 @@ public sealed partial class MainWindow : UserControl
     {
         var todayCount = _events.Count(e => e.StartTime.Date == DateTime.Today);
         HeaderCalendarCount.Text = todayCount.ToString();
+        RefreshTabBadges();
     }
 
     private void CheckUpcomingMeetings()
@@ -57,6 +58,10 @@ public sealed partial class MainWindow : UserControl
             .OrderBy(e => e.StartTime)
             .FirstOrDefault();
 
+        _upcomingMeetingSoon = upcoming is not null;
+        RefreshTabBadges();
+        UpdateHomeMeeting();
+
         if (upcoming is not null)
         {
             _upcomingMeetingUrl = MeetingUrlPolicy.Sanitize(upcoming.MeetingUrl);
@@ -64,7 +69,7 @@ public sealed partial class MainWindow : UserControl
             if (now >= upcoming.StartTime)
             {
                 CompactMeetingText.Text = "EN VIVO";
-                UpcomingBannerTitle.Text = $"🔴 En curso: {upcoming.Title}";
+                UpcomingBannerTitle.Text = $"En curso: {upcoming.Title}";
             }
             else
             {
@@ -74,7 +79,8 @@ public sealed partial class MainWindow : UserControl
             }
 
             CompactMeetingBadge.Visibility = Visibility.Visible;
-            UpcomingMeetingBanner.Visibility = _isExpanded ? Visibility.Visible : Visibility.Collapsed;
+            // En Inicio la reunión ya aparece en su columna; el aviso de arriba sobraría.
+            UpcomingMeetingBanner.Visibility = _isExpanded && _activeTab != IslandTab.Media ? Visibility.Visible : Visibility.Collapsed;
             UpcomingBannerJoinBtn.Visibility = !string.IsNullOrWhiteSpace(_upcomingMeetingUrl) ? Visibility.Visible : Visibility.Collapsed;
         }
         else
@@ -220,226 +226,6 @@ public sealed partial class MainWindow : UserControl
         return date.AddDays(-1 * diff).Date;
     }
 
-    private void RenderAgendaEvents(StackPanel container, DateTime targetDate)
-    {
-        container.Children.Clear();
-
-        var dayEvents = _events
-            .Where(e => e.StartTime.Date == targetDate)
-            .OrderBy(e => e.StartTime)
-            .ToList();
-
-        if (dayEvents.Count == 0)
-        {
-            container.Children.Add(new TextBlock
-            {
-                Text = "📅 Sin eventos programados para este día",
-                FontSize = 9.5,
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(160, 133, 138, 150)),
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 16, 0, 0)
-            });
-            return;
-        }
-
-        foreach (var ev in dayEvents)
-        {
-            var conflicts = CalendarEventStore.FindConflicts(ev, _events);
-            var isConflicted = conflicts.Count > 0;
-
-            var card = new Border
-            {
-                Background = new SolidColorBrush(ColorHelper.FromArgb(200, 26, 28, 35)),
-                BorderBrush = isConflicted
-                    ? new SolidColorBrush(ColorHelper.FromArgb(180, 255, 167, 38))
-                    : new SolidColorBrush(ColorHelper.FromArgb(35, 255, 255, 255)),
-                BorderThickness = new Thickness(1),
-                CornerRadius = new CornerRadius(5),
-                Padding = new Thickness(6, 4, 6, 4)
-            };
-
-            var grid = new Grid { ColumnSpacing = 6 };
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-            // Col 0: Horario
-            var timePill = new Border
-            {
-                Background = ev.IsHappeningNow()
-                    ? new SolidColorBrush(Accent(50))
-                    : new SolidColorBrush(ColorHelper.FromArgb(255, 20, 22, 28)),
-                CornerRadius = new CornerRadius(3),
-                Padding = new Thickness(4, 2, 4, 2),
-                VerticalAlignment = VerticalAlignment.Center,
-                Child = new TextBlock
-                {
-                    Text = ev.IsAllDay ? "Todo el día" : $"{ev.StartTime:HH:mm}-{ev.EndTime:HH:mm}",
-                    FontSize = 8.5,
-                    FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-                    Foreground = ev.IsHappeningNow()
-                        ? new SolidColorBrush(AccentColor)
-                        : new SolidColorBrush(ColorHelper.FromArgb(255, 180, 185, 195))
-                }
-            };
-            Grid.SetColumn(timePill, 0);
-            grid.Children.Add(timePill);
-
-            // Col 1: Categoría
-            var (bgBrush, fgBrush) = GetEventCategoryBrushes(ev.Category);
-            var catBadge = new Border
-            {
-                Background = bgBrush,
-                CornerRadius = new CornerRadius(3),
-                Padding = new Thickness(3, 1, 3, 1),
-                VerticalAlignment = VerticalAlignment.Center,
-                Child = new TextBlock
-                {
-                    Text = ev.Category,
-                    FontSize = 7.5,
-                    FontWeight = Microsoft.UI.Text.FontWeights.Bold,
-                    Foreground = fgBrush
-                }
-            };
-            Grid.SetColumn(catBadge, 1);
-            grid.Children.Add(catBadge);
-
-            // Col 2: Info (Título, Origen, Backlog Link, Conflicto)
-            var infoStack = new StackPanel { Spacing = 1, VerticalAlignment = VerticalAlignment.Center };
-            var titleBlock = new TextBlock
-            {
-                Text = ev.Title,
-                FontSize = 10,
-                FontWeight = Microsoft.UI.Text.FontWeights.Medium,
-                Foreground = new SolidColorBrush(Colors.White),
-                TextTrimming = TextTrimming.CharacterEllipsis,
-                MaxLines = 1
-            };
-            infoStack.Children.Add(titleBlock);
-
-            var metaStack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
-
-            // Badge de origen (Google, Outlook, Local)
-            var sourceText = new TextBlock
-            {
-                Text = ev.Source,
-                FontSize = 7.5,
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(180, 120, 125, 138))
-            };
-            metaStack.Children.Add(sourceText);
-
-            // Badge de Backlog vinculado
-            if (!string.IsNullOrWhiteSpace(ev.LinkedTaskTitle))
-            {
-                var linkBadge = new Border
-                {
-                    Background = new SolidColorBrush(Accent(40)),
-                    CornerRadius = new CornerRadius(2),
-                    Padding = new Thickness(3, 0, 3, 0),
-                    Child = new TextBlock
-                    {
-                        Text = $"⚡ {ev.LinkedTaskTitle}",
-                        FontSize = 7.5,
-                        Foreground = new SolidColorBrush(AccentColor),
-                        TextTrimming = TextTrimming.CharacterEllipsis,
-                        MaxWidth = 100
-                    }
-                };
-                metaStack.Children.Add(linkBadge);
-            }
-
-            // Indicador de Conflicto de horario
-            if (isConflicted)
-            {
-                var conflictBadge = new Border
-                {
-                    Background = new SolidColorBrush(ColorHelper.FromArgb(50, 255, 167, 38)),
-                    CornerRadius = new CornerRadius(2),
-                    Padding = new Thickness(3, 0, 3, 0),
-                    Child = new TextBlock
-                    {
-                        Text = "⚠️ Solapado",
-                        FontSize = 7.5,
-                        FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-                        Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 167, 38))
-                    }
-                };
-                metaStack.Children.Add(conflictBadge);
-            }
-
-            infoStack.Children.Add(metaStack);
-            Grid.SetColumn(infoStack, 2);
-            grid.Children.Add(infoStack);
-
-            // Col 3: Acciones rápidas (Unirse a videollamada, editar, borrar)
-            var actionsStack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 3, VerticalAlignment = VerticalAlignment.Center };
-
-            if (MeetingUrlPolicy.TryGetSafeUri(ev.MeetingUrl, out _))
-            {
-                var joinBtn = new Button
-                {
-                    Height = 20,
-                    Padding = new Thickness(5, 0, 5, 0),
-                    CornerRadius = new CornerRadius(4),
-                    Background = new SolidColorBrush(AccentColor),
-                    Foreground = new SolidColorBrush(Colors.White),
-                    BorderThickness = new Thickness(0),
-                    Content = new StackPanel
-                    {
-                        Orientation = Orientation.Horizontal,
-                        Spacing = 2,
-                        Children =
-                        {
-                            new FontIcon { Glyph = "\uE717", FontSize = 8, FontWeight = Microsoft.UI.Text.FontWeights.Bold },
-                            new TextBlock { Text = "Unirse", FontSize = 8.5, FontWeight = Microsoft.UI.Text.FontWeights.Bold }
-                        }
-                    }
-                };
-                ApplyAccentButtonStates(joinBtn);
-                joinBtn.Click += async (_, _) => await LaunchMeetingAsync(ev.MeetingUrl);
-                actionsStack.Children.Add(joinBtn);
-            }
-
-            var editBtn = new Button
-            {
-                Width = 18,
-                Height = 18,
-                Padding = new Thickness(0),
-                Background = new SolidColorBrush(Colors.Transparent),
-                BorderThickness = new Thickness(0),
-                Content = new FontIcon { Glyph = "\uE70F", FontSize = 8, Foreground = new SolidColorBrush(ColorHelper.FromArgb(180, 140, 145, 155)) }
-            };
-            editBtn.Click += (_, _) => OpenEditForm(ev);
-            actionsStack.Children.Add(editBtn);
-
-            var deleteBtn = new Button
-            {
-                Width = 18,
-                Height = 18,
-                Padding = new Thickness(0),
-                Background = new SolidColorBrush(Colors.Transparent),
-                BorderThickness = new Thickness(0),
-                Content = new FontIcon { Glyph = "\uE74D", FontSize = 8, Foreground = new SolidColorBrush(ColorHelper.FromArgb(180, 239, 83, 80)) }
-            };
-            deleteBtn.Click += (_, _) =>
-            {
-                _events.Remove(ev);
-                _ = _calendarStore.SaveAsync(_events);
-                UpdateCalendarBadges();
-                CheckUpcomingMeetings();
-                RenderCalendarView();
-            };
-            actionsStack.Children.Add(deleteBtn);
-
-            Grid.SetColumn(actionsStack, 3);
-            grid.Children.Add(actionsStack);
-
-            card.Child = grid;
-            container.Children.Add(card);
-        }
-    }
-
     private void RenderWeekStrip()
     {
         WeekStripGrid.Children.Clear();
@@ -476,7 +262,7 @@ public sealed partial class MainWindow : UserControl
             stack.Children.Add(new TextBlock
             {
                 Text = $"{dayLetter} {dayDate.Day}",
-                FontSize = 8.5,
+                FontSize = 9.5,
                 FontWeight = isSelected || isToday ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal,
                 Foreground = isToday
                     ? new SolidColorBrush(AccentColor)
@@ -526,7 +312,7 @@ public sealed partial class MainWindow : UserControl
             var headerBlock = new TextBlock
             {
                 Text = headers[i],
-                FontSize = 8,
+                FontSize = 9,
                 FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                 Foreground = new SolidColorBrush(ColorHelper.FromArgb(160, 140, 145, 155)),
                 HorizontalAlignment = HorizontalAlignment.Center
@@ -575,7 +361,7 @@ public sealed partial class MainWindow : UserControl
             stack.Children.Add(new TextBlock
             {
                 Text = day.ToString(),
-                FontSize = 8,
+                FontSize = 9,
                 FontWeight = isToday || isSelected ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal,
                 Foreground = isToday
                     ? new SolidColorBrush(AccentColor)
@@ -644,15 +430,14 @@ public sealed partial class MainWindow : UserControl
         FormEndTime.Text = DateTime.Now.AddHours(1).ToString("HH:00");
         FormMeetingUrl.Text = string.Empty;
         _currentCategoryIndex = 0;
-        FormCategoryLabel.Text = EventCategories[_currentCategoryIndex];
-        var (_, fg) = GetEventCategoryBrushes(FormCategoryLabel.Text);
-        FormCategoryLabel.Foreground = fg;
+        ShowFormCategory();
 
         PopulateTaskLinkCombo();
         ValidateFormConflicts();
 
         CalEventFormOverlay.Visibility = Visibility.Visible;
         CalSyncOverlay.Visibility = Visibility.Collapsed;
+        RefreshCalendarHeight();
         AnimateViewEntrance(CalEventFormOverlay);
         FormEventTitle.Focus(FocusState.Programmatic);
     }
@@ -668,15 +453,14 @@ public sealed partial class MainWindow : UserControl
 
         var catIndex = Array.IndexOf(EventCategories, ev.Category);
         _currentCategoryIndex = catIndex >= 0 ? catIndex : 0;
-        FormCategoryLabel.Text = EventCategories[_currentCategoryIndex];
-        var (_, fg) = GetEventCategoryBrushes(FormCategoryLabel.Text);
-        FormCategoryLabel.Foreground = fg;
+        ShowFormCategory();
 
         PopulateTaskLinkCombo(ev.LinkedTaskId);
         ValidateFormConflicts();
 
         CalEventFormOverlay.Visibility = Visibility.Visible;
         CalSyncOverlay.Visibility = Visibility.Collapsed;
+        RefreshCalendarHeight();
         AnimateViewEntrance(CalEventFormOverlay);
         FormEventTitle.Focus(FocusState.Programmatic);
     }
@@ -711,8 +495,15 @@ public sealed partial class MainWindow : UserControl
     private void FormCategoryBtn_Click(object sender, RoutedEventArgs e)
     {
         _currentCategoryIndex = (_currentCategoryIndex + 1) % EventCategories.Length;
-        FormCategoryLabel.Text = EventCategories[_currentCategoryIndex];
-        var (_, fg) = GetEventCategoryBrushes(FormCategoryLabel.Text);
+        ShowFormCategory();
+    }
+
+    /// <summary>El botón muestra el nombre en español; en disco se guarda el código (MEETING, DEV...).</summary>
+    private void ShowFormCategory()
+    {
+        var code = EventCategories[_currentCategoryIndex];
+        FormCategoryLabel.Text = CategoryLabel(code);
+        var (_, fg) = GetEventCategoryBrushes(code);
         FormCategoryLabel.Foreground = fg;
     }
 
@@ -814,7 +605,7 @@ public sealed partial class MainWindow : UserControl
             _editingEvent.StartTime = start;
             _editingEvent.EndTime = end;
             _editingEvent.MeetingUrl = string.IsNullOrWhiteSpace(meetingUrl) ? null : meetingUrl;
-            _editingEvent.Category = FormCategoryLabel.Text;
+            _editingEvent.Category = EventCategories[_currentCategoryIndex];
             _editingEvent.LinkedTaskId = linkedTaskId;
             _editingEvent.LinkedTaskTitle = linkedTaskTitle;
         }
@@ -826,7 +617,7 @@ public sealed partial class MainWindow : UserControl
                 StartTime = start,
                 EndTime = end,
                 MeetingUrl = string.IsNullOrWhiteSpace(meetingUrl) ? null : meetingUrl,
-                Category = FormCategoryLabel.Text,
+                Category = EventCategories[_currentCategoryIndex],
                 LinkedTaskId = linkedTaskId,
                 LinkedTaskTitle = linkedTaskTitle,
                 Source = "LOCAL"
@@ -836,6 +627,7 @@ public sealed partial class MainWindow : UserControl
 
         _ = _calendarStore.SaveAsync(_events);
         CalEventFormOverlay.Visibility = Visibility.Collapsed;
+        RefreshCalendarHeight();
 
         UpdateCalendarBadges();
         CheckUpcomingMeetings();
@@ -845,6 +637,7 @@ public sealed partial class MainWindow : UserControl
     private void FormCancelBtn_Click(object sender, RoutedEventArgs e)
     {
         CalEventFormOverlay.Visibility = Visibility.Collapsed;
+        RefreshCalendarHeight();
     }
 
     private DispatcherQueueTimer? _syncStatusTimer;
@@ -862,11 +655,13 @@ public sealed partial class MainWindow : UserControl
             SyncStatusMsg.Visibility = Visibility.Collapsed;
             AnimateViewEntrance(CalSyncOverlay);
         }
+        RefreshCalendarHeight();
     }
 
     private void CloseSyncBtn_Click(object sender, RoutedEventArgs e)
     {
         CalSyncOverlay.Visibility = Visibility.Collapsed;
+        RefreshCalendarHeight();
     }
 
     private async void ImportIcsFileBtn_Click(object sender, RoutedEventArgs e)

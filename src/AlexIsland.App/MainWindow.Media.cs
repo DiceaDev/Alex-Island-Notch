@@ -308,9 +308,8 @@ public sealed partial class MainWindow : UserControl
     private void UpdateClock()
     {
         var now = DateTime.Now;
-        var culture = CultureInfo.GetCultureInfo("es-CL");
-        var stamp = now.ToString("ddd d MMM · HH:mm", culture);
-        HeaderClock.Text = stamp;
+        // En la cabecera basta la hora: las pestañas con nombre ocupan el resto del ancho.
+        HeaderClock.Text = now.ToString("HH:mm", CultureInfo.GetCultureInfo("es-CL"));
         CompactClock.Text = now.ToString("HH:mm");
         UpdateCompactCenter();
     }

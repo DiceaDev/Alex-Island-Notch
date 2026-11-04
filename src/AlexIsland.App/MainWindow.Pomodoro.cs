@@ -100,6 +100,7 @@ public sealed partial class MainWindow : UserControl
         // Contador de hoy
         PomodoroCompletedCountLabel.Text = $"{_pomodoroSettings.CompletedToday} hoy";
         HeaderPomodoroCount.Text = _pomodoroSettings.CompletedToday.ToString();
+        RefreshTabBadges();
 
         // Barra de progreso
         UpdatePomodoroProgressBar();
