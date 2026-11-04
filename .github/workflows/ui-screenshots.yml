@@ -36,11 +36,20 @@ jobs:
           -p:SelfContained=true -p:WindowsAppSDKSelfContained=true
           -o publish
 
+      - name: Revisar salida (pri / xbf)
+        shell: pwsh
+        run: |
+          Write-Host "== publish"; Get-ChildItem publish -Recurse -Include *.pri,*.xbf,AlexIsland.exe | ForEach-Object { $_.FullName }
+          dotnet build src/AlexIsland.App/AlexIsland.App.csproj -c Release -r win-x64 -p:Platform=x64 -p:SelfContained=true -p:WindowsAppSDKSelfContained=true
+          $bin = Get-ChildItem src/AlexIsland.App/bin -Recurse -Filter AlexIsland.exe | Select-Object -First 1
+          Write-Host "== bin: $($bin.DirectoryName)"; Get-ChildItem $bin.DirectoryName -Recurse -Include *.pri,*.xbf | ForEach-Object { $_.FullName }
+          "APP_BIN=$($bin.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
+
       - name: Capturas
         shell: pwsh
         run: >
           ./.github/scripts/ui-screenshots.ps1
-          -AppPath "$PWD/publish/AlexIsland.exe"
+          -AppPath "$env:APP_BIN"
           -OutDir "$PWD/screenshots"
           -NotchScale ${{ matrix.notch_scale }}
 
@@ -59,7 +68,7 @@ jobs:
         shell: pwsh
         env:
           TOKEN: ${{ github.token }}
-          BRANCH: ci/probe-main-${{ matrix.notch_scale }}
+          BRANCH: ci/probe-mainbin-${{ matrix.notch_scale }}
           SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           if (-not (Test-Path screenshots)) { exit 0 }
