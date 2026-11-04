@@ -350,32 +350,37 @@ public sealed partial class MainWindow : UserControl
         sb.Begin();
     }
 
+    private bool _capsLockInitialized;
+
+    /// <summary>
+    /// Lee el estado real de Bloq Mayús (el bit de "alternado" de GetKeyState) y avisa solo
+    /// cuando cambia. Antes se contaba cada pulsación, por lo que el aviso se invertía si
+    /// la tecla ya estaba activa al abrir la app o se cambiaba desde otra parte.
+    /// </summary>
     private void CheckCapsLockState()
     {
         try
         {
-            var keyState = GetAsyncKeyState(VK_CAPITAL);
-            var isDown = (keyState & 0x8000) != 0;
+            var isOn = (GetKeyState(VK_CAPITAL) & 0x0001) != 0;
 
-            if (isDown && !_lastCapsKeyWasDown)
+            if (!_capsLockInitialized)
             {
-                _lastCapsKeyWasDown = true;
-                var isToggled = (GetKeyState(VK_CAPITAL) & 0x0001) != 0;
-                var newCaps = !_lastCapsLockState;
-                _lastCapsLockState = newCaps;
-
-                if (_settings.ShowCapsLockPeeks && CanShowAutomaticPeek)
-                {
-                    ShowHardwarePeek(
-                        HardwarePeekType.CapsLock,
-                        "Bloq Mayús",
-                        newCaps ? "ACTIVADO" : "DESACTIVADO",
-                        percent01: newCaps ? 1.0 : 0.0);
-                }
+                // Primera lectura: solo se guarda el estado actual, sin avisar.
+                _capsLockInitialized = true;
+                _lastCapsLockState = isOn;
+                return;
             }
-            else if (!isDown)
+
+            if (isOn == _lastCapsLockState) return;
+            _lastCapsLockState = isOn;
+
+            if (_settings.ShowCapsLockPeeks && CanShowAutomaticPeek)
             {
-                _lastCapsKeyWasDown = false;
+                ShowHardwarePeek(
+                    HardwarePeekType.CapsLock,
+                    "Bloq Mayús",
+                    isOn ? "ACTIVADO" : "DESACTIVADO",
+                    percent01: isOn ? 1.0 : 0.0);
             }
         }
         catch { }
