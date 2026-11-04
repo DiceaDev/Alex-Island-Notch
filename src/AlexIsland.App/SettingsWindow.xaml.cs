@@ -89,7 +89,7 @@ public sealed partial class SettingsWindow : Window
         _settings.ShowCapsLockPeeks = CapsLockPeeksToggle.IsOn;
         _settings.ShowLyrics = ShowLyricsToggle.IsOn;
 
-        if (sender == StartWithWindowsToggle)
+        if (ReferenceEquals(sender, StartWithWindowsToggle))
         {
             var ok = StartupRegistration.Apply(StartWithWindowsToggle.IsOn);
             StartupError.Visibility = ok ? Visibility.Collapsed : Visibility.Visible;
