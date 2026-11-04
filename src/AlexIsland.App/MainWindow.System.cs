@@ -10,7 +10,7 @@ using Microsoft.UI.Xaml.Media;
 
 namespace AlexIsland.App;
 
-public sealed partial class MainWindow : Window
+public sealed partial class MainWindow : UserControl
 {
     // ==============================================================
     // SECCIÓN SISTEMA Y RED (IT)

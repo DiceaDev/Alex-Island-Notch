@@ -72,133 +72,9 @@ internal static class NativeMethods
     private static extern int DwmSetWindowAttribute(
         nint hwnd, int attribute, ref int value, int valueSize);
 
-    [DllImport("gdi32.dll", SetLastError = true)]
-    private static extern nint CreatePolygonRgn(NativePoint[] lppt, int cPoints, int fnPolyFillMode);
 
-    [DllImport("gdi32.dll", SetLastError = true)]
-    private static extern nint CreateRectRgn(int left, int top, int right, int bottom);
 
-    [DllImport("user32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool SetWindowRgn(nint hWnd, nint hRgn, [MarshalAs(UnmanagedType.Bool)] bool bRedraw);
 
-    [DllImport("gdi32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool DeleteObject(nint hObject);
-
-    internal static void SetWindowPolygonRegion(nint hwnd, NativePoint[] points)
-    {
-        if (hwnd == 0 || points == null || points.Length < 3) return;
-        var rgn = CreatePolygonRgn(points, points.Length, 2); // 2 = WINDING
-        if (rgn != 0)
-        {
-            if (!SetWindowRgn(hwnd, rgn, true))
-            {
-                DeleteObject(rgn);
-            }
-        }
-    }
-
-    /// <summary>Quita la región: la ventana vuelve a ser un rectángulo completo.</summary>
-    internal static void ClearWindowRegion(nint hwnd)
-    {
-        if (hwnd != 0) _ = SetWindowRgn(hwnd, 0, true);
-    }
-
-    // ------------------------------------------------------------ Transparencia
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct DwmBlurBehind
-    {
-        public uint Flags;
-        public int Enable;
-        public nint BlurRegion;
-        public int TransitionOnMaximized;
-    }
-
-    [DllImport("dwmapi.dll")]
-    private static extern int DwmEnableBlurBehindWindow(nint hwnd, ref DwmBlurBehind blurBehind);
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct Margins
-    {
-        public int Left;
-        public int Right;
-        public int Top;
-        public int Bottom;
-    }
-
-    [DllImport("dwmapi.dll")]
-    private static extern int DwmExtendFrameIntoClientArea(nint hwnd, ref Margins margins);
-
-    [DllImport("user32.dll", EntryPoint = "SetClassLongPtrW")]
-    private static extern nint SetClassLongPtr(nint hwnd, int index, nint value);
-
-    [DllImport("gdi32.dll")]
-    private static extern nint GetStockObject(int index);
-
-    [DllImport("user32.dll")]
-    private static extern nint GetDC(nint hwnd);
-
-    [DllImport("user32.dll")]
-    private static extern int ReleaseDC(nint hwnd, nint hdc);
-
-    [DllImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool GetClientRect(nint hwnd, out NativeRect rect);
-
-    [DllImport("user32.dll")]
-    private static extern int FillRect(nint hdc, ref NativeRect rect, nint brush);
-
-    /// <summary>
-    /// Pide a DWM que respete el canal alfa de la ventana. Se usa "blur behind"
-    /// con una región fuera de la ventana: activa la transparencia por píxel sin
-    /// aplicar ningún desenfoque. Devuelve false si DWM no lo aceptó.
-    /// </summary>
-    internal static bool EnablePerPixelTransparency(nint hwnd)
-    {
-        if (hwnd == 0) return false;
-
-        var region = CreateRectRgn(-2, -2, -1, -1);
-        try
-        {
-            var margins = new Margins();
-            _ = DwmExtendFrameIntoClientArea(hwnd, ref margins);
-
-            var blur = new DwmBlurBehind
-            {
-                Flags = 0x1 | 0x2, // DWM_BB_ENABLE | DWM_BB_BLURREGION
-                Enable = 1,
-                BlurRegion = region,
-            };
-            var ok = DwmEnableBlurBehindWindow(hwnd, ref blur) == 0;
-
-            // Con el canal alfa activo, el negro GDI cuenta como transparente. Windows
-            // pintaba el fondo de la ventana con el pincel de su clase (blanco con el
-            // tema claro): se cambia a negro y se limpia lo ya pintado.
-            const int GclpHbrBackground = -10;
-            const int BlackBrush = 4;
-            var black = GetStockObject(BlackBrush);
-            _ = SetClassLongPtr(hwnd, GclpHbrBackground, black);
-
-            var hdc = GetDC(hwnd);
-            if (hdc != 0)
-            {
-                if (GetClientRect(hwnd, out var rect)) _ = FillRect(hdc, ref rect, black);
-                _ = ReleaseDC(hwnd, hdc);
-            }
-
-            return ok;
-        }
-        catch
-        {
-            return false;
-        }
-        finally
-        {
-            if (region != 0) DeleteObject(region);
-        }
-    }
 
     // ------------------------------------------------------------ DPI
 
@@ -389,8 +265,6 @@ internal static class NativeMethods
         var borderColor = DwmColorNone;
         _ = DwmSetWindowAttribute(
             hwnd, DwmwaBorderColor, ref borderColor, sizeof(int));
-
-        EnablePerPixelTransparency(hwnd);
 
         _ = SetWindowPos(
             hwnd,

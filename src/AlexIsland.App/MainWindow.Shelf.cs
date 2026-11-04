@@ -10,7 +10,7 @@ using Windows.Storage;
 
 namespace AlexIsland.App;
 
-public sealed partial class MainWindow : Window
+public sealed partial class MainWindow : UserControl
 {
     // ==============================================================
     // SECCIÓN SHELF: ARCHIVOS Y TEXTOS A MANO

@@ -21,7 +21,7 @@ using System.Globalization;
 
 namespace AlexIsland.App;
 
-public sealed partial class MainWindow : Window
+public sealed partial class MainWindow : UserControl
 {
     private enum IslandTab
     {
@@ -91,7 +91,7 @@ public sealed partial class MainWindow : Window
     private static readonly string[] AvailableTags = ["TODO", "FEAT", "FIX", "REFACTOR", "DOCS"];
     private static readonly string[] EventCategories = ["MEETING", "DEV", "REVIEW", "PLANNING", "GENERAL"];
 
-    private readonly AppWindow _appWindow;
+    private readonly IslandHostWindow _host;
     private readonly nint _hwnd;
     private readonly DispatcherQueueTimer _collapseTimer;
     private readonly DispatcherQueueTimer _clockTimer;
@@ -161,24 +161,11 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();
 
-        _hwnd = WindowNative.GetWindowHandle(this);
-        InitializeEdgeRendering();
-        var windowId = Win32Interop.GetWindowIdFromWindow(_hwnd);
-        _appWindow = AppWindow.GetFromWindowId(windowId);
-
-        try
-        {
-            if (AppWindowTitleBar.IsCustomizationSupported())
-            {
-                _appWindow.TitleBar.ExtendsContentIntoTitleBar = true;
-            }
-        }
-        catch
-        {
-        }
-
-        Activated += MainWindow_Activated;
-        Closed += MainWindow_Closed;
+        // Ventana propia con transparencia por píxel que aloja este control.
+        _host = new IslandHostWindow(this, NotchWidth, NotchHeight);
+        _hwnd = _host.Hwnd;
+        _host.Closed += (_, _) => OnHostClosed();
+        NativeMethods.ConfigureIslandWindow(_hwnd);
 
         _collapseTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
         _collapseTimer.Interval = TimeSpan.FromMilliseconds(280);
@@ -310,19 +297,10 @@ public sealed partial class MainWindow : Window
         _ = LoadShelfAsync();
     }
 
-    private void MainWindow_Activated(object sender, WindowActivatedEventArgs args)
-    {
-        try
-        {
-            NativeMethods.ConfigureIslandWindow(_hwnd);
-            UpdateNotchGeometry(IslandContainer.Width, IslandContainer.Height);
-        }
-        catch
-        {
-        }
-    }
+    /// <summary>Muestra la isla en pantalla (sin quitarle el foco a la app activa).</summary>
+    public void Show() => _host.Show();
 
-    private void MainWindow_Closed(object sender, WindowEventArgs args)
+    private void OnHostClosed()
     {
         _isDisposed = true;
         _collapseTimer.Stop();
@@ -365,7 +343,6 @@ public sealed partial class MainWindow : Window
     private void ApplySettings()
     {
         ApplyShellSettings();
-        UpdateEdgeRendering();
 
         // Si se activaron las letras con una canción sonando, se piden ahora.
         if (_settings.ShowLyrics && _lyrics is null && _lyricsTrackKey is not null)
@@ -630,105 +607,6 @@ public sealed partial class MainWindow : Window
         pathGeo.Figures.Add(figure);
         NotchBackground.Data = pathGeo;
 
-        UpdateWindowRegion((int)width, (int)height, earRadius, bottomRadius);
-    }
-
-    private void UpdateWindowRegion(int width, int height, double earRadius, double bottomRadius)
-    {
-        if (_hwnd == 0) return;
-
-        // Bordes suavizados: la ventana no se recorta. Una región de Windows no
-        // tiene antialiasing y volvería a dejar las curvas en escalera.
-        if (_useSmoothEdges)
-        {
-            NativeMethods.ClearWindowRegion(_hwnd);
-            return;
-        }
-
-        // Bordes recortados: región que sigue exactamente la silueta, orejas incluidas.
-        ApplyExactNotchRegion(width, height, earRadius, bottomRadius);
-    }
-
-    private void ApplyExactNotchRegion(int width, int height, double earRadius, double bottomRadius)
-    {
-        var bodyWidth = width - 2 * earRadius;
-        if (bodyWidth <= 0) bodyWidth = width;
-
-        var points = new List<NativeMethods.NativePoint>
-        {
-            new() { X = 0, Y = 0 }
-        };
-
-        // Oreja izquierda (cóncava)
-        SampleBezier(
-            0, 0,
-            (int)(earRadius * 0.552), 0,
-            (int)earRadius, (int)(earRadius * 0.448),
-            (int)earRadius, (int)earRadius,
-            points, 5);
-
-        // Borde izquierdo
-        points.Add(new() { X = (int)earRadius, Y = (int)(height - bottomRadius) });
-
-        // Esquina inferior izquierda (convexa)
-        SampleBezier(
-            (int)earRadius, (int)(height - bottomRadius),
-            (int)earRadius, (int)(height - bottomRadius * 0.448),
-            (int)(earRadius + bottomRadius * 0.448), height,
-            (int)(earRadius + bottomRadius), height,
-            points, 5);
-
-        // Borde inferior
-        points.Add(new() { X = (int)(earRadius + bodyWidth - bottomRadius), Y = height });
-
-        // Esquina inferior derecha (convexa)
-        SampleBezier(
-            (int)(earRadius + bodyWidth - bottomRadius), height,
-            (int)(earRadius + bodyWidth - bottomRadius * 0.448), height,
-            (int)(earRadius + bodyWidth), (int)(height - bottomRadius * 0.448),
-            (int)(earRadius + bodyWidth), (int)(height - bottomRadius),
-            points, 5);
-
-        // Borde derecho
-        points.Add(new() { X = (int)(earRadius + bodyWidth), Y = (int)earRadius });
-
-        // Oreja derecha (cóncava)
-        SampleBezier(
-            (int)(earRadius + bodyWidth), (int)earRadius,
-            (int)(earRadius + bodyWidth), (int)(earRadius * 0.448),
-            (int)(earRadius + bodyWidth + earRadius * 0.448), 0,
-            (int)(earRadius + bodyWidth + earRadius), 0,
-            points, 5);
-
-        // Los puntos están en unidades de XAML; la región de la ventana va en píxeles físicos.
-        var scale = PixelScale;
-        var scaled = points
-            .Select(p => new NativeMethods.NativePoint
-            {
-                X = (int)Math.Round(p.X * scale),
-                Y = (int)Math.Round(p.Y * scale),
-            })
-            .ToArray();
-        NativeMethods.SetWindowPolygonRegion(_hwnd, scaled);
-    }
-
-    private static void SampleBezier(
-        int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3,
-        List<NativeMethods.NativePoint> points, int steps)
-    {
-        for (int i = 1; i <= steps; i++)
-        {
-            double t = (double)i / steps;
-            double u = 1.0 - t;
-            double tt = t * t;
-            double uu = u * u;
-            double uuu = uu * u;
-            double ttt = tt * t;
-
-            int x = (int)Math.Round(uuu * x0 + 3 * uu * t * x1 + 3 * u * tt * x2 + ttt * x3);
-            int y = (int)Math.Round(uuu * y0 + 3 * uu * t * y1 + 3 * u * tt * y2 + ttt * y3);
-            points.Add(new() { X = x, Y = y });
-        }
     }
 
     private void AnimateIsland(bool expanding, NotchDisplayMode mode = NotchDisplayMode.Expanded)
@@ -865,11 +743,11 @@ public sealed partial class MainWindow : Window
             IslandScale.CenterX = width / 2.0;
             IslandScale.CenterY = 0; // Escala anclada al borde superior de la pantalla
 
-            // AppWindow trabaja en píxeles físicos; XAML, en unidades independientes del DPI.
+            // La ventana trabaja en píxeles físicos; XAML, en unidades independientes del DPI.
             var scale = PixelScale;
-            _appWindow.Resize(new SizeInt32(
+            _host.Resize(
                 (int)Math.Ceiling(width * scale),
-                (int)Math.Ceiling(height * scale)));
+                (int)Math.Ceiling(height * scale));
         }
         catch
         {
@@ -883,7 +761,7 @@ public sealed partial class MainWindow : Window
             DisplayArea? display = null;
             try
             {
-                display = DisplayArea.GetFromWindowId(_appWindow.Id, DisplayAreaFallback.Primary);
+                display = DisplayArea.GetFromWindowId(_host.WindowId, DisplayAreaFallback.Primary);
             }
             catch
             {
@@ -895,7 +773,7 @@ public sealed partial class MainWindow : Window
             var bounds = display.OuterBounds;
             var width = (int)Math.Ceiling(IslandContainer.Width * PixelScale);
             var x = bounds.X + ((bounds.Width - width) / 2);
-            _appWindow.Move(new PointInt32(x, bounds.Y));
+            _host.Move(x, bounds.Y);
         }
         catch
         {

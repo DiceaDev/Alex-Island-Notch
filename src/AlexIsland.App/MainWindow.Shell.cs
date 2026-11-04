@@ -3,10 +3,11 @@ using AlexIsland.App.Services;
 using AlexIsland.Core.Settings;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
 namespace AlexIsland.App;
 
-public sealed partial class MainWindow : Window
+public sealed partial class MainWindow : UserControl
 {
     // ==============================================================
     // SECCIÓN BANDEJA, AJUSTES Y PANTALLA COMPLETA
@@ -176,7 +177,7 @@ public sealed partial class MainWindow : Window
     private void ExitApplication()
     {
         StopShellIntegration();
-        Close();
+        _host.Close();
         Application.Current.Exit();
     }
 }

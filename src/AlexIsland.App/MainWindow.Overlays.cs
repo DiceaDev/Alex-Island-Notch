@@ -2,10 +2,11 @@ using AlexIsland.App.Native;
 using AlexIsland.Core.SystemInfo;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
 namespace AlexIsland.App;
 
-public sealed partial class MainWindow : Window
+public sealed partial class MainWindow : UserControl
 {
     // ==============================================================
     // SECCIÓN OVERLAYS: VOLUMEN, BRILLO E IDIOMA DEL TECLADO

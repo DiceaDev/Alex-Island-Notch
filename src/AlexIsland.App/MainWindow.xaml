@@ -1,11 +1,11 @@
-<Window
+<UserControl
     x:Class="AlexIsland.App.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="Alex Island">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- Fondo transparente para los bordes suavizados; si Windows no permite
-         transparencia, MainWindow.Edges.cs lo pone en negro y recorta la ventana. -->
+    <!-- Fondo transparente: la ventana de la isla (IslandHostWindow) se compone
+         con transparencia por píxel, así que alrededor del notch se ve el escritorio
+         y sus curvas quedan suavizadas. -->
     <Grid x:Name="RootGrid" Background="Transparent">
         <!-- Escala elegida por el usuario en Ajustes; la ventana se ajusta al mismo factor. -->
         <Grid.RenderTransform>
@@ -1083,4 +1083,4 @@
             </Grid>
         </Grid>
     </Grid>
-</Window>
+</UserControl>

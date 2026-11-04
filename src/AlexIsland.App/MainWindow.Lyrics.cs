@@ -7,7 +7,7 @@ using Microsoft.UI.Xaml.Input;
 
 namespace AlexIsland.App;
 
-public sealed partial class MainWindow : Window
+public sealed partial class MainWindow : UserControl
 {
     // ==============================================================
     // SECCIÓN LETRAS SINCRONIZADAS (LRCLIB)

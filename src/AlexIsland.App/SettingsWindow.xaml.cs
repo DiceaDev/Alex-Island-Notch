@@ -45,7 +45,6 @@ public sealed partial class SettingsWindow : Window
         HideInFullscreenToggle.IsOn = _settings.HideInFullscreen;
         ShowMascotToggle.IsOn = _settings.ShowMascot;
         MinimalNotchToggle.IsOn = _settings.MinimalNotch;
-        SmoothEdgesToggle.IsOn = _settings.SmoothEdges;
         NotchScaleSlider.Value = Math.Round(_settings.NotchScale * 100);
         NotchScaleLabel.Text = $"{NotchScaleSlider.Value:0}%";
 
@@ -70,7 +69,6 @@ public sealed partial class SettingsWindow : Window
         _settings.HideInFullscreen = HideInFullscreenToggle.IsOn;
         _settings.ShowMascot = ShowMascotToggle.IsOn;
         _settings.MinimalNotch = MinimalNotchToggle.IsOn;
-        _settings.SmoothEdges = SmoothEdgesToggle.IsOn;
         _settings.ShowNetworkPeeks = NetworkPeeksToggle.IsOn;
         _settings.ShowVolumePeeks = VolumePeeksToggle.IsOn;
         _settings.ShowBrightnessPeeks = BrightnessPeeksToggle.IsOn;

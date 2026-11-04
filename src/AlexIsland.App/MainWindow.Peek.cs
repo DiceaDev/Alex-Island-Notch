@@ -20,7 +20,7 @@ using System.Globalization;
 
 namespace AlexIsland.App;
 
-public sealed partial class MainWindow : Window
+public sealed partial class MainWindow : UserControl
 {
     private void TriggerEyeBlink()
     {
