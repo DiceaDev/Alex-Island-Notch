@@ -62,6 +62,7 @@ public sealed partial class MainWindow : UserControl
         HomeMeetingWhen.Text = isLive
             ? $"En curso, termina a las {meeting.EndTime:HH:mm}"
             : $"{meeting.StartTime:HH:mm}, empieza {FormatCountdown(meeting.StartTime - now)}";
+        if (meeting.NeedsResponse) HomeMeetingWhen.Text += ", sin responder";
         HomeMeetingWhen.Foreground = isJoinTime ? new SolidColorBrush(AccentColor) : MutedTextBrush;
 
         _homeMeetingUrl = MeetingUrlPolicy.Sanitize(meeting.MeetingUrl);

@@ -16,7 +16,7 @@ public sealed partial class MainWindow : UserControl
     private static readonly TimeSpan OutlookSyncInterval = TimeSpan.FromMinutes(15);
 
     /// <summary>Tiempo que se deja sincronizar a Outlook con el servidor cuando hubo que abrirlo.</summary>
-    private static readonly TimeSpan OutlookServerSyncWait = TimeSpan.FromSeconds(40);
+    private static readonly TimeSpan OutlookServerSyncWait = TimeSpan.FromSeconds(30);
 
     /// <summary>Primera lectura poco después de arrancar, para no competir con el inicio de Windows.</summary>
     private static readonly TimeSpan OutlookFirstSyncDelay = TimeSpan.FromSeconds(20);

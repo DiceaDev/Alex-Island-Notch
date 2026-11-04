@@ -14,6 +14,7 @@ namespace AlexIsland.Core.Calendar;
 /// <param name="Body">Cuerpo; solo se usa para buscar el enlace de la reunión y no se guarda.</param>
 /// <param name="MeetingStatus">OlMeetingStatus de Outlook (5 y 7 = cancelada).</param>
 /// <param name="ReminderMinutes">Minutos de aviso configurados en Outlook, o null si no tiene recordatorio.</param>
+/// <param name="ResponseStatus">OlResponseStatus de Outlook (5 = sin responder).</param>
 public sealed record OutlookAppointment(
     string GlobalId,
     string Subject,
@@ -23,7 +24,8 @@ public sealed record OutlookAppointment(
     string? Location,
     string? Body,
     int MeetingStatus,
-    int? ReminderMinutes);
+    int? ReminderMinutes,
+    int ResponseStatus = 0);
 
 /// <summary>Resultado de aplicar una lectura de Outlook a la agenda.</summary>
 public sealed record OutlookSyncResult(int Added, int Removed, int Updated)
@@ -42,6 +44,8 @@ public static class OutlookCalendarSync
     public const string IdPrefix = "outlook-";
     public const string SourceName = "OUTLOOK";
 
+    private const int OlMeetingReceived = 3;
+    private const int OlResponseNotResponded = 5;
     private const int OlMeetingCanceled = 5;
     private const int OlMeetingReceivedAndCanceled = 7;
 
@@ -83,6 +87,9 @@ public static class OutlookCalendarSync
             ReminderMinutes = appointment.ReminderMinutes is int m and >= 0 and <= 7 * 24 * 60 ? m : 10,
             Category = "MEETING",
             Source = SourceName,
+            // Invitación recibida que aún no se aceptó ni rechazó.
+            NeedsResponse = appointment.MeetingStatus == OlMeetingReceived
+                            && appointment.ResponseStatus == OlResponseNotResponded,
         };
     }
 
@@ -164,5 +171,6 @@ public static class OutlookCalendarSync
         && a.IsAllDay == b.IsAllDay
         && a.Location == b.Location
         && a.MeetingUrl == b.MeetingUrl
-        && a.ReminderMinutes == b.ReminderMinutes;
+        && a.ReminderMinutes == b.ReminderMinutes
+        && a.NeedsResponse == b.NeedsResponse;
 }

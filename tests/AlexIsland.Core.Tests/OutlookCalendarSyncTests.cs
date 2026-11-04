@@ -161,3 +161,34 @@ public class OutlookCalendarSyncTests
     public void Missing_subject_gets_a_placeholder()
         => Assert.Equal("(Sin asunto)", OutlookCalendarSync.ToEvent(A(subject: "  "), Zone)!.Title);
 }
+
+public class OutlookResponseTests
+{
+    private static OutlookAppointment A(int meetingStatus, int responseStatus) =>
+        new("G", "Revisión HUs",
+            new DateTime(2026, 11, 6, 13, 0, 0, DateTimeKind.Utc),
+            new DateTime(2026, 11, 6, 14, 0, 0, DateTimeKind.Utc),
+            false, null, null, meetingStatus, 10, responseStatus);
+
+    [Theory]
+    [InlineData(3, 5, true)]   // invitación recibida, sin responder
+    [InlineData(3, 3, false)]  // aceptada
+    [InlineData(3, 2, false)]  // provisional
+    [InlineData(1, 1, false)]  // reunión organizada por el usuario
+    [InlineData(0, 0, false)]  // cita sin asistentes
+    public void Marks_only_unanswered_invitations(int meetingStatus, int responseStatus, bool expected)
+        => Assert.Equal(expected, OutlookCalendarSync.ToEvent(A(meetingStatus, responseStatus))!.NeedsResponse);
+
+    [Fact]
+    public void Answering_an_invitation_updates_the_event()
+    {
+        var start = new DateTimeOffset(2026, 11, 1, 0, 0, 0, TimeSpan.Zero);
+        var events = new List<AlexIsland.Core.Models.CalendarEvent>();
+        OutlookCalendarSync.Apply(events, [A(3, 5)], start, start.AddDays(30));
+
+        var result = OutlookCalendarSync.Apply(events, [A(3, 3)], start, start.AddDays(30));
+
+        Assert.Equal(1, result.Updated);
+        Assert.False(events[0].NeedsResponse);
+    }
+}
