@@ -1,0 +1,12 @@
+[2026-11-04 00:53:50.032] OnLaunched: iniciando MainWindow.
+
+[2026-11-04 00:53:50.118] ERROR durante el arranque:
+Microsoft.UI.Xaml.Markup.XamlParseException: XAML parsing failed.
+   at WinRT.ExceptionHelpers.<ThrowExceptionForHR>g__Throw|38_0(Int32 hr)
+   at WinRT.ExceptionHelpers.ThrowExceptionForHR(Int32 hr)
+   at ABI.Microsoft.UI.Xaml.IApplicationStaticsMethods.LoadComponent(IObjectReference _obj, Object component, Uri resourceLocator, ComponentResourceLocation componentResourceLocation)
+   at Microsoft.UI.Xaml.Application.LoadComponent(Object component, Uri resourceLocator, ComponentResourceLocation componentResourceLocation)
+   at AlexIsland.App.MainWindow.InitializeComponent() in D:\a\Alex-Island-Notch\Alex-Island-Notch\src\AlexIsland.App\obj\x64\Release\net10.0-windows10.0.19041.0\win-x64\MainWindow.g.i.cs:line 317
+   at AlexIsland.App.MainWindow..ctor() in D:\a\Alex-Island-Notch\Alex-Island-Notch\src\AlexIsland.App\MainWindow.xaml.cs:line 147
+   at AlexIsland.App.App.OnLaunched(LaunchActivatedEventArgs args) in D:\a\Alex-Island-Notch\Alex-Island-Notch\src\AlexIsland.App\App.xaml.cs:line 29
+
