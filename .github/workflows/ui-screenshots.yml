@@ -12,6 +12,10 @@ permissions:
 jobs:
   screenshots:
     runs-on: windows-latest
+    # Escritura solo para publicar las capturas en su propia rama (ci/screenshots-*).
+    # En PRs desde forks GitHub entrega un token de solo lectura y ese paso se omite.
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -46,6 +50,29 @@ jobs:
           $log = Join-Path $env:LOCALAPPDATA 'AlexIsland\logs\startup.log'
           New-Item -ItemType Directory -Force -Path screenshots | Out-Null
           if (Test-Path $log) { Copy-Item $log screenshots/startup.log }
+
+      # Rama huérfana aparte: no toca main ni la rama del PR. Facilita revisar
+      # las capturas desde herramientas que no pueden descargar artefactos.
+      - name: Publicar capturas en una rama aparte
+        if: always() && (github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository)
+        shell: pwsh
+        env:
+          TOKEN: ${{ github.token }}
+          BRANCH: ci/screenshots-${{ matrix.notch_scale }}
+          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          if (-not (Test-Path screenshots)) { exit 0 }
+          $dir = Join-Path $env:RUNNER_TEMP 'shots'
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          Copy-Item screenshots/* $dir
+          Set-Location $dir
+          git init -q
+          git checkout -q -b $env:BRANCH
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -q -m "Capturas de $env:SHA"
+          git push -q -f "https://x-access-token:$($env:TOKEN)@github.com/${{ github.repository }}.git" "HEAD:refs/heads/$($env:BRANCH)"
 
       - uses: actions/upload-artifact@v4
         if: always()
