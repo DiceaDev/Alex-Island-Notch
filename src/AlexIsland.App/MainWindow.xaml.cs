@@ -176,6 +176,7 @@ public sealed partial class MainWindow : Window
         }
 
         _hwnd = WindowNative.GetWindowHandle(this);
+        NativeMethods.EnablePerPixelTransparency(_hwnd);
         var windowId = Win32Interop.GetWindowIdFromWindow(_hwnd);
         _appWindow = AppWindow.GetFromWindowId(windowId);
 
