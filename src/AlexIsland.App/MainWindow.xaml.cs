@@ -73,7 +73,7 @@ public sealed partial class MainWindow : Window
     private const int ExpandedBacklogHeight = 188;
     private const int ExpandedCalendarHeight = 226;
     private const int ExpandedPomodoroHeight = 188;
-    private const int ExpandedSystemHeight = 172;
+    private const int ExpandedSystemHeight = 150;
     private const double EarRadius = 12.0;
     private const int MinimalWidth = 120;
     private const int MinimalHeight = 8;
@@ -722,24 +722,28 @@ public sealed partial class MainWindow : Window
         var isPeek = mode == NotchDisplayMode.Peek;
         var durationMs = expanding ? 270 : (isPeek ? 240 : 180);
 
-        // Expansión y contracción elástica estilo Apple Dynamic Island (Spring / BackEase)
+        // Expansión y contracción elástica estilo Apple Dynamic Island (Spring / BackEase).
+        // Ambas terminan en escala 1: la ventana ya tiene el tamaño final, y si el
+        // dibujo quedara más chico (antes terminaba en 0,94) se verían los bordes
+        // de la ventana alrededor del notch.
+        var grow = expanding || isPeek;
         var scaleX = new DoubleAnimation
         {
-            From = (expanding || isPeek) ? 0.90 : 1.0,
-            To = (expanding || isPeek) ? 1.0 : 0.94,
+            From = grow ? 0.90 : 1.05,
+            To = 1.0,
             Duration = TimeSpan.FromMilliseconds(durationMs),
-            EasingFunction = (expanding || isPeek)
+            EasingFunction = grow
                 ? new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.22 }
-                : new CubicEase { EasingMode = EasingMode.EaseIn }
+                : new CubicEase { EasingMode = EasingMode.EaseOut }
         };
         var scaleY = new DoubleAnimation
         {
-            From = (expanding || isPeek) ? 0.85 : 1.0,
-            To = (expanding || isPeek) ? 1.0 : 0.90,
+            From = grow ? 0.85 : 1.08,
+            To = 1.0,
             Duration = TimeSpan.FromMilliseconds(durationMs),
-            EasingFunction = (expanding || isPeek)
+            EasingFunction = grow
                 ? new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.22 }
-                : new CubicEase { EasingMode = EasingMode.EaseIn }
+                : new CubicEase { EasingMode = EasingMode.EaseOut }
         };
         Storyboard.SetTarget(scaleX, IslandScale);
         Storyboard.SetTargetProperty(scaleX, "ScaleX");
