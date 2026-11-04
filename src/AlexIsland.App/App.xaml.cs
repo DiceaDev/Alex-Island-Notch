@@ -47,6 +47,9 @@ public partial class App : Application
         WriteLog("Excepción no controlada de WinUI:", e.Exception);
     }
 
+    /// <summary>Registro de diagnóstico en %LocalAppData%\AlexIsland\logs\startup.log.</summary>
+    internal static void Log(string message, Exception? exception = null) => WriteLog(message, exception);
+
     private static void WriteLog(string message, Exception? exception = null)
     {
         try

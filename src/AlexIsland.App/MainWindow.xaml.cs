@@ -176,7 +176,7 @@ public sealed partial class MainWindow : Window
         }
 
         _hwnd = WindowNative.GetWindowHandle(this);
-        NativeMethods.EnablePerPixelTransparency(_hwnd);
+        App.Log($"Transparencia: canal alfa de DWM {(NativeMethods.EnablePerPixelTransparency(_hwnd) ? "activado" : "NO activado")}.");
         var windowId = Win32Interop.GetWindowIdFromWindow(_hwnd);
         _appWindow = AppWindow.GetFromWindowId(windowId);
 

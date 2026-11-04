@@ -24,9 +24,11 @@ internal sealed class TransparentBackdrop : SystemBackdrop
         try
         {
             connectedTarget.SystemBackdrop = GetCompositor().CreateColorBrush(Windows.UI.Color.FromArgb(0, 0, 0, 0));
+            App.Log("Transparencia: fondo de sistema transparente conectado.");
         }
-        catch
+        catch (Exception ex)
         {
+            App.Log("Transparencia: no se pudo conectar el fondo transparente.", ex);
             Failed?.Invoke();
         }
     }
