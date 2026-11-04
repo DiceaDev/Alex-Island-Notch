@@ -45,6 +45,10 @@ public sealed partial class CalendarEvent
     [JsonPropertyName("source")]
     public string Source { get; set; } = "LOCAL"; // LOCAL, GOOGLE, OUTLOOK, ICAL
 
+    /// <summary>Invitación que el usuario todavía no aceptó ni rechazó (solo reuniones de Outlook).</summary>
+    [JsonPropertyName("needs_response")]
+    public bool NeedsResponse { get; set; }
+
     public bool HasConflictWith(CalendarEvent other)
     {
         if (Id == other.Id) return false;

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using AlexIsland.App.Native;
 using AlexIsland.Core.Calendar;
 
 namespace AlexIsland.App.Services;
@@ -74,20 +75,35 @@ internal static class OutlookCalendarReader
         var type = Type.GetTypeFromProgID("Outlook.Application")
                    ?? throw new InvalidOperationException("No hay un Outlook clásico instalado.");
 
-        var wasRunning = Process.GetProcessesByName("OUTLOOK").Length > 0;
+        // Se compara qué procesos de Outlook había antes y después para saber con
+        // certeza si lo abrió la isla (y solo en ese caso cerrarlo al terminar).
+        var before = Process.GetProcessesByName("OUTLOOK").Select(p => p.Id).ToHashSet();
         dynamic? app = null;
+        int? startedPid = null;
+        Timer? reminderHider = null;
         try
         {
             // Outlook es de instancia única: si ya está abierto, devuelve esa instancia.
             app = Activator.CreateInstance(type)
                   ?? throw new InvalidOperationException("No se pudo iniciar Outlook.");
 
+            startedPid = Process.GetProcessesByName("OUTLOOK").Select(p => p.Id).FirstOrDefault(id => !before.Contains(id)) is var pid && pid != 0
+                ? pid
+                : null;
+
+            if (startedPid is int ownPid)
+            {
+                // Mientras dura la lectura, su ventana de recordatorios no debe aparecer.
+                reminderHider = new Timer(_ => OutlookWindows.HideReminderWindows(ownPid), null, TimeSpan.Zero, TimeSpan.FromMilliseconds(400));
+            }
+
             onRead(ReadAppointments(app, fromLocal, toLocal));
 
-            if (!wasRunning && syncWait > TimeSpan.Zero)
+            if (startedPid is not null && syncWait > TimeSpan.Zero)
             {
-                // Recién abierto, Outlook muestra lo que tenía en caché; tras unos
-                // segundos ya bajó del servidor lo nuevo, así que se lee otra vez.
+                // Recién abierto, Outlook muestra su copia local, que puede estar vieja.
+                // Se le pide sincronizar con el servidor y se vuelve a leer después.
+                RequestSync(app);
                 cancellationToken.WaitHandle.WaitOne(syncWait);
                 cancellationToken.ThrowIfCancellationRequested();
                 onRead(ReadAppointments(app, fromLocal, toLocal));
@@ -97,7 +113,7 @@ internal static class OutlookCalendarReader
         {
             if (app is not null)
             {
-                if (!wasRunning)
+                if (startedPid is not null && !UserHasOutlookOpen(app))
                 {
                     try
                     {
@@ -105,11 +121,78 @@ internal static class OutlookCalendarReader
                     }
                     catch
                     {
-                        // Si el usuario abrió Outlook mientras tanto, Quit puede fallar; se deja como está.
+                        // Si Outlook ya se estaba cerrando, no hay nada más que hacer.
                     }
                 }
                 Release(app);
+                app = null;
+
+                // Los objetos COM "dynamic" se liberan del todo al recolectarlos; si no,
+                // Outlook ve que la isla sigue conectada y no termina de cerrarse.
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
             }
+
+            if (startedPid is int ownPid)
+            {
+                WaitForExit(ownPid, TimeSpan.FromSeconds(20));
+            }
+            reminderHider?.Dispose();
+        }
+    }
+
+    /// <summary>Pide a Outlook que sincronice todas las carpetas con el servidor (Enviar y recibir).</summary>
+    private static void RequestSync(dynamic app)
+    {
+        dynamic? session = null;
+        try
+        {
+            session = app.Session;
+            session.SendAndReceive(false);
+        }
+        catch
+        {
+            // Sin conexión o con la función desactivada por la empresa: se lee lo que haya.
+        }
+        finally
+        {
+            Release(session);
+        }
+    }
+
+    /// <summary>El usuario abrió una ventana de Outlook mientras la isla leía: entonces no se cierra.</summary>
+    private static bool UserHasOutlookOpen(dynamic app)
+    {
+        dynamic? explorers = null;
+        try
+        {
+            explorers = app.Explorers;
+            return (int)explorers.Count > 0;
+        }
+        catch
+        {
+            return true; // ante la duda, no se cierra
+        }
+        finally
+        {
+            Release(explorers);
+        }
+    }
+
+    private static void WaitForExit(int processId, TimeSpan timeout)
+    {
+        try
+        {
+            using var process = Process.GetProcessById(processId);
+            if (!process.WaitForExit(timeout))
+            {
+                App.Log($"Agenda: el Outlook que abrió la isla (PID {processId}) no se cerró a tiempo.");
+            }
+        }
+        catch (ArgumentException)
+        {
+            // Ya terminó.
         }
     }
 
@@ -173,6 +256,16 @@ internal static class OutlookCalendarReader
         bool reminderSet = item.ReminderSet;
         int reminderMinutes = item.ReminderMinutesBeforeStart;
 
+        var responseStatus = 0;
+        try
+        {
+            responseStatus = (int)item.ResponseStatus;
+        }
+        catch
+        {
+            // Citas propias sin asistentes: no aplica.
+        }
+
         string? globalId = null;
         try
         {
@@ -207,7 +300,8 @@ internal static class OutlookCalendarReader
             (string?)item.Location,
             body,
             status,
-            reminderSet ? reminderMinutes : null);
+            reminderSet ? reminderMinutes : null,
+            responseStatus);
     }
 
     private static void Release(object? comObject)

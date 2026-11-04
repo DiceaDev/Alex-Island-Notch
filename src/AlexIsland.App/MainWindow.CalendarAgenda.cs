@@ -219,6 +219,19 @@ public sealed partial class MainWindow : UserControl
             MaxLines = 1,
         });
 
+        // Invitación de Outlook que aún no se acepta ni rechaza: se marca para no olvidarla.
+        if (ev.NeedsResponse && !isPast)
+        {
+            meta.Children.Add(new Border
+            {
+                Background = new SolidColorBrush(ColorHelper.FromArgb(40, 255, 167, 38)),
+                CornerRadius = new CornerRadius(4),
+                Padding = new Thickness(5, 0, 5, 1),
+                VerticalAlignment = VerticalAlignment.Center,
+                Child = MetaText("Sin responder", ColorHelper.FromArgb(255, 255, 183, 77), bold: true),
+            });
+        }
+
         if (isConflicted && !isPast)
         {
             meta.Children.Add(new StackPanel
