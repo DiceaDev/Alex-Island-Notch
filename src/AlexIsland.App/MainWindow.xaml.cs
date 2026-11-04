@@ -3,6 +3,7 @@ using AlexIsland.App.Services;
 using AlexIsland.Core.Models;
 using AlexIsland.Core.Security;
 using AlexIsland.Core.Services;
+using AlexIsland.Core.Settings;
 using Microsoft.UI;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
@@ -27,7 +28,8 @@ public sealed partial class MainWindow : Window
         Media,
         Backlog,
         Calendar,
-        Pomodoro
+        Pomodoro,
+        System
     }
 
     private enum CalendarSubMode
@@ -51,6 +53,7 @@ public sealed partial class MainWindow : Window
         Charging,
         Battery,
         CapsLock,
+        Network,
         Custom
     }
 
@@ -66,6 +69,7 @@ public sealed partial class MainWindow : Window
     private const int ExpandedBacklogHeight = 188;
     private const int ExpandedCalendarHeight = 226;
     private const int ExpandedPomodoroHeight = 188;
+    private const int ExpandedSystemHeight = 172;
     private const double EarRadius = 12.0;
 
     [System.Runtime.InteropServices.DllImport("user32.dll")]
@@ -100,6 +104,10 @@ public sealed partial class MainWindow : Window
     private bool _isPeekActive;
     private bool _isRecentInteraction = true;
     private bool _lastCapsLockState;
+
+    // Ajustes del usuario
+    private readonly SettingsStore _settingsStore = new();
+    private IslandSettings _settings = new();
 
     // Módulo Backlog
     private readonly DevTaskStore _taskStore = new();
@@ -261,8 +269,11 @@ public sealed partial class MainWindow : Window
         }
         catch { }
 
+        InitializeSystemModule();
+
         UpdateClock();
         ApplyIslandState();
+        _ = LoadSettingsAsync();
         _ = InitializeMediaAsync();
         _ = LoadTasksAsync();
         _ = LoadCalendarEventsAsync();
@@ -300,6 +311,27 @@ public sealed partial class MainWindow : Window
             _mediaManager.CurrentSessionChanged -= MediaManager_CurrentSessionChanged;
         }
         DetachMediaSession();
+        StopSystemModule();
+    }
+
+    private async Task LoadSettingsAsync()
+    {
+        try
+        {
+            _settings = await _settingsStore.LoadAsync();
+        }
+        catch
+        {
+            _settings = new IslandSettings();
+        }
+
+        if (!_isDisposed) ApplySettings();
+    }
+
+    /// <summary>Aplica en la interfaz los ajustes que no se leen en el momento de usarse.</summary>
+    private void ApplySettings()
+    {
+        ApplyIslandState();
     }
 
     private void IslandContainer_PointerEntered(object sender, PointerRoutedEventArgs e)
@@ -405,6 +437,7 @@ public sealed partial class MainWindow : Window
                     IslandTab.Calendar => ExpandedCalendarHeight,
                     IslandTab.Backlog => ExpandedBacklogHeight,
                     IslandTab.Pomodoro => ExpandedPomodoroHeight,
+                    IslandTab.System => ExpandedSystemHeight,
                     _ => ExpandedHeight
                 }),
             _ => (NotchWidth, NotchHeight)
@@ -456,6 +489,8 @@ public sealed partial class MainWindow : Window
         {
             _timelineTimer.Stop();
         }
+
+        UpdateSystemSampling();
 
         if (wasExpanded != _isExpanded || previousMode != _currentDisplayMode)
         {
@@ -827,59 +862,74 @@ public sealed partial class MainWindow : Window
     {
         _activeTab = tab;
 
-        // Reset all tabs
-        TabMediaButton.Background = new SolidColorBrush(Colors.Transparent);
-        TabMediaLabel.Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 160, 165, 178));
-        MediaView.Visibility = Visibility.Collapsed;
+        var inactiveBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 160, 165, 178));
+        var activeBackground = new SolidColorBrush(ColorHelper.FromArgb(255, 42, 45, 55));
 
-        TabBacklogButton.Background = new SolidColorBrush(Colors.Transparent);
-        TabBacklogLabel.Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 160, 165, 178));
-        BacklogView.Visibility = Visibility.Collapsed;
-
-        TabCalendarButton.Background = new SolidColorBrush(Colors.Transparent);
-        TabCalendarLabel.Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 160, 165, 178));
-        CalendarView.Visibility = Visibility.Collapsed;
-
-        TabPomodoroButton.Background = new SolidColorBrush(Colors.Transparent);
-        TabPomodoroLabel.Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 160, 165, 178));
-        PomodoroView.Visibility = Visibility.Collapsed;
+        // Las pestañas inactivas muestran solo su ícono, como la barra de Nusa;
+        // así caben todas sin ensanchar la isla.
+        foreach (var (id, button, label, view) in GetTabs())
+        {
+            var isActive = id == tab;
+            button.Background = isActive ? activeBackground : new SolidColorBrush(Colors.Transparent);
+            label.Foreground = isActive ? new SolidColorBrush(Colors.White) : inactiveBrush;
+            label.Visibility = isActive ? Visibility.Visible : Visibility.Collapsed;
+            view.Visibility = isActive ? Visibility.Visible : Visibility.Collapsed;
+        }
 
         switch (_activeTab)
         {
             case IslandTab.Media:
-                TabMediaButton.Background = new SolidColorBrush(ColorHelper.FromArgb(255, 42, 45, 55));
-                TabMediaLabel.Foreground = new SolidColorBrush(Colors.White);
-                MediaView.Visibility = Visibility.Visible;
                 AnimateViewEntrance(MediaView);
                 break;
 
             case IslandTab.Backlog:
-                TabBacklogButton.Background = new SolidColorBrush(ColorHelper.FromArgb(255, 42, 45, 55));
-                TabBacklogLabel.Foreground = new SolidColorBrush(Colors.White);
-                BacklogView.Visibility = Visibility.Visible;
                 AnimateViewEntrance(BacklogView);
                 NewTaskInput.Focus(FocusState.Programmatic);
                 break;
 
             case IslandTab.Calendar:
-                TabCalendarButton.Background = new SolidColorBrush(ColorHelper.FromArgb(255, 42, 45, 55));
-                TabCalendarLabel.Foreground = new SolidColorBrush(Colors.White);
-                CalendarView.Visibility = Visibility.Visible;
                 AnimateViewEntrance(CalendarView);
                 RenderCalendarView();
                 break;
 
             case IslandTab.Pomodoro:
-                TabPomodoroButton.Background = new SolidColorBrush(ColorHelper.FromArgb(255, 42, 45, 55));
-                TabPomodoroLabel.Foreground = new SolidColorBrush(Colors.White);
-                PomodoroView.Visibility = Visibility.Visible;
                 AnimateViewEntrance(PomodoroView);
                 PopulatePomodoroTaskCombo();
                 UpdatePomodoroUI();
+                break;
+
+            case IslandTab.System:
+                AnimateViewEntrance(SystemView);
+                if (_lastNetwork is { } network) RenderNetwork(network);
                 break;
         }
 
         AnimateTabPillPulse();
         ApplyIslandState();
+    }
+
+    private (IslandTab Id, Button Button, TextBlock Label, FrameworkElement View)[] GetTabs() =>
+    [
+        (IslandTab.Media, TabMediaButton, TabMediaLabel, MediaView),
+        (IslandTab.Backlog, TabBacklogButton, TabBacklogLabel, BacklogView),
+        (IslandTab.Calendar, TabCalendarButton, TabCalendarLabel, CalendarView),
+        (IslandTab.Pomodoro, TabPomodoroButton, TabPomodoroLabel, PomodoroView),
+        (IslandTab.System, TabSystemButton, TabSystemLabel, SystemView),
+    ];
+
+    /// <summary>
+    /// Con la rueda del mouse sobre la barra de pestañas se pasa a la siguiente
+    /// o la anterior, como en Nusa.
+    /// </summary>
+    private void TabBar_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
+    {
+        var delta = e.GetCurrentPoint(sender as UIElement).Properties.MouseWheelDelta;
+        if (delta == 0) return;
+
+        var tabs = GetTabs();
+        var index = Array.FindIndex(tabs, t => t.Id == _activeTab);
+        var next = (index + (delta < 0 ? 1 : -1) + tabs.Length) % tabs.Length;
+        SwitchTab(tabs[next].Id);
+        e.Handled = true;
     }
 }

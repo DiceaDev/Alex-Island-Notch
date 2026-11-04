@@ -166,6 +166,7 @@ public sealed partial class MainWindow : Window
             HardwarePeekType.Charging => ("\uE945", "\uE83E", ColorHelper.FromArgb(255, 0, 230, 118)),
             HardwarePeekType.Battery => ("\uE850", "\uE7BA", ColorHelper.FromArgb(255, 255, 167, 38)),
             HardwarePeekType.CapsLock => ("\uE765", "\uE72E", ColorHelper.FromArgb(255, 171, 71, 188)),
+            HardwarePeekType.Network => ("\uE774", "\uE701", ColorHelper.FromArgb(255, 0, 230, 118)),
             _ => ("\uE702", "\uE7F6", ColorHelper.FromArgb(255, 66, 165, 245))
         };
 
