@@ -49,7 +49,7 @@ public static class PlannerWeek
 
         var saturday = monday.AddDays(5);
         var sunday = monday.AddDays(6);
-        cells.Add(new PlannerCell(KeyOf(saturday), $"Sábado y domingo {saturday.Day}-{sunday.Day}", saturday, sunday));
+        cells.Add(new PlannerCell(KeyOf(saturday), $"Sáb y dom {saturday.Day}-{sunday.Day}", saturday, sunday));
         return cells;
     }
 

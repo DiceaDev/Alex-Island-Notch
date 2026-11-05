@@ -19,7 +19,7 @@ public class PlannerWeekTests
         var cells = PlannerWeek.CellsOf(new DateOnly(2026, 11, 5));
 
         Assert.Equal(
-            ["Lunes 2", "Martes 3", "Miércoles 4", "Jueves 5", "Viernes 6", "Sábado y domingo 7-8"],
+            ["Lunes 2", "Martes 3", "Miércoles 4", "Jueves 5", "Viernes 6", "Sáb y dom 7-8"],
             cells.Select(c => c.Label));
         Assert.True(cells[5].Contains(new DateOnly(2026, 11, 7)));
         Assert.True(cells[5].Contains(new DateOnly(2026, 11, 8)));
