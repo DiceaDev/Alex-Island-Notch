@@ -308,6 +308,14 @@
                                 <Ellipse x:Name="TabCalendarDot" Visibility="Collapsed" Width="6" Height="6" Fill="#FFFF5A00" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-1,-6,0"/>
                             </Grid>
                         </Button>
+                        <Button x:Name="TabPlannerButton" Click="TabPlannerButton_Click" Style="{StaticResource IslandTabButtonStyle}">
+                            <Grid>
+                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                    <FontIcon x:Name="TabPlannerIcon" Glyph="&#xE70B;" FontSize="12" Foreground="#FF8E929C"/>
+                                    <TextBlock x:Name="TabPlannerLabel" Text="Planner" FontSize="10.5" Foreground="#FF8E929C" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Grid>
+                        </Button>
                         <Button x:Name="TabBacklogButton" Click="TabBacklogButton_Click" Style="{StaticResource IslandTabButtonStyle}">
                             <Grid>
                                 <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
@@ -1106,6 +1114,36 @@
                             </StackPanel>
                         </Grid>
                     </Border>
+                </Grid>
+
+                <!-- ================= VISTA: PLANNER SEMANAL ================= -->
+                <Grid x:Name="PlannerView" Grid.Row="2" Visibility="Collapsed" RowSpacing="6" RequestedTheme="Dark">
+                    <Grid.RenderTransform>
+                        <TranslateTransform/>
+                    </Grid.RenderTransform>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Semana visible y navegación -->
+                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                        <Button Click="PlannerPrevWeek_Click" Width="24" Height="24" Padding="0" CornerRadius="12" Background="Transparent" BorderThickness="0">
+                            <FontIcon Glyph="&#xE76B;" FontSize="10" Foreground="#FFA0A5B2"/>
+                        </Button>
+                        <TextBlock x:Name="PlannerWeekLabel" FontSize="12" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center"/>
+                        <Button Click="PlannerNextWeek_Click" Width="24" Height="24" Padding="0" CornerRadius="12" Background="Transparent" BorderThickness="0">
+                            <FontIcon Glyph="&#xE76C;" FontSize="10" Foreground="#FFA0A5B2"/>
+                        </Button>
+                        <Button x:Name="PlannerTodayButton" Click="PlannerToday_Click" Visibility="Collapsed" Height="24" Padding="10,0" Margin="4,0,0,0"
+                                CornerRadius="12" Background="#FF1E1F24" Foreground="White" BorderThickness="0">
+                            <TextBlock Text="Volver a esta semana" FontSize="10.5" FontWeight="SemiBold"/>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- Horario de lunes a viernes y "Recuerda" (filas y bloques se crean en código) -->
+                    <Grid x:Name="PlannerGrid" Grid.Row="1" Background="Transparent"
+                          PointerReleased="PlannerGrid_PointerReleased" PointerExited="PlannerGrid_PointerExited"/>
                 </Grid>
 
                 <!-- ================= VISTA 6: SHELF DE ARCHIVOS Y TEXTOS ================= -->

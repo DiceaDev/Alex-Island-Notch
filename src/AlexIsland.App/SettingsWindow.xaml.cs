@@ -61,6 +61,19 @@ public sealed partial class SettingsWindow : Window
         CapsLockPeeksToggle.IsOn = _settings.ShowCapsLockPeeks;
         ShowLyricsToggle.IsOn = _settings.ShowLyrics;
         LatencyHostBox.Text = _settings.LatencyHost;
+        for (var hour = IslandSettings.MinPlannerHour; hour <= IslandSettings.MaxPlannerHour; hour++)
+        {
+            // El inicio admite medias horas (08:30); el término, horas en punto.
+            if (hour < IslandSettings.MaxPlannerHour)
+            {
+                PlannerStartCombo.Items.Add($"{hour:00}:00");
+                PlannerStartCombo.Items.Add($"{hour:00}:30");
+            }
+            PlannerEndCombo.Items.Add($"{hour:00}:00");
+        }
+        PlannerStartCombo.SelectedIndex = ((_settings.PlannerStartHour - IslandSettings.MinPlannerHour) * 2) + (_settings.PlannerStartMinute == 30 ? 1 : 0);
+        PlannerEndCombo.SelectedIndex = _settings.PlannerEndHour - IslandSettings.MinPlannerHour;
+
         SyncOutlookToggle.IsOn = _settings.SyncOutlookCalendar;
         if (!OutlookCalendarReader.IsAvailable)
         {
@@ -130,6 +143,23 @@ public sealed partial class SettingsWindow : Window
             }
             _settings.StartWithWindows = StartWithWindowsToggle.IsOn;
         }
+
+        Publish();
+    }
+
+    private void PlannerHours_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading || PlannerStartCombo.SelectedIndex < 0 || PlannerEndCombo.SelectedIndex < 0) return;
+
+        _settings.PlannerStartHour = (PlannerStartCombo.SelectedIndex / 2) + IslandSettings.MinPlannerHour;
+        _settings.PlannerStartMinute = PlannerStartCombo.SelectedIndex % 2 == 1 ? 30 : 0;
+        _settings.PlannerEndHour = PlannerEndCombo.SelectedIndex + IslandSettings.MinPlannerHour;
+        _settings.Normalize();
+
+        // Si el término quedó antes del inicio, se corrige también a la vista.
+        _loading = true;
+        PlannerEndCombo.SelectedIndex = _settings.PlannerEndHour - IslandSettings.MinPlannerHour;
+        _loading = false;
 
         Publish();
     }

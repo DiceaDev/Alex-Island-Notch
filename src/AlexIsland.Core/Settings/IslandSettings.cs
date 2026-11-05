@@ -31,6 +31,14 @@ public sealed class IslandSettings
     // Agenda: importar el calendario de Outlook clásico (solo lectura, Outlook → isla)
     public bool SyncOutlookCalendar { get; set; }
 
+    // Planner: horario laboral (hora de inicio y de término)
+    public const int MinPlannerHour = 6;
+    public const int MaxPlannerHour = 22;
+    public int PlannerStartHour { get; set; } = 8;
+    /// <summary>Minuto de inicio: 0 o 30. Con 30, la primera fila del planner dura media hora.</summary>
+    public int PlannerStartMinute { get; set; } = 30;
+    public int PlannerEndHour { get; set; } = 18;
+
     // Música
     public bool ShowLyrics { get; set; } = true;
 
@@ -52,6 +60,11 @@ public sealed class IslandSettings
         {
             LatencyHost = DefaultLatencyHost;
         }
+
+        PlannerStartHour = Math.Clamp(PlannerStartHour, MinPlannerHour, MaxPlannerHour - 1);
+        PlannerEndHour = Math.Clamp(PlannerEndHour, MinPlannerHour + 1, MaxPlannerHour);
+        if (PlannerEndHour <= PlannerStartHour) PlannerEndHour = PlannerStartHour + 1;
+        if (PlannerStartMinute != 30) PlannerStartMinute = 0;
 
         MutedNotificationApps = Notifications.NotificationPresenter.NormalizeMutedApps(MutedNotificationApps);
 
