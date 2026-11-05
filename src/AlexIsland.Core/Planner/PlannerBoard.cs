@@ -19,10 +19,17 @@ public sealed class PlannerNote
     /// <summary>Hora del bloque (9 = de 09:00 a 10:00). Las notas sin hora van al primer bloque del día.</summary>
     [JsonPropertyName("hour")]
     public int? Hour { get; set; }
+
+    /// <summary>Cuántos bloques de una hora ocupa (más de 1 = bloques combinados).</summary>
+    [JsonPropertyName("span")]
+    public int Span { get; set; } = 1;
 }
 
 /// <summary>Un día laboral de la semana.</summary>
 public sealed record PlannerDay(string Key, string Label, DateOnly Date);
+
+/// <summary>Un bloque visible del horario: una hora o varias combinadas, con sus notas.</summary>
+public sealed record PlannerBlock(int Hour, int Span, IReadOnlyList<PlannerNote> Notes);
 
 /// <summary>Reparte las fechas en los días laborales de una semana (lunes a viernes).</summary>
 public static class PlannerWeek
@@ -84,6 +91,48 @@ public static class PlannerHours
         return Math.Clamp(note.Hour ?? startHour, startHour, Math.Max(startHour, endHour - 1));
     }
 
+    /// <summary>
+    /// Arma los bloques de un día. Si una nota combinada alcanza a otra, ambas quedan
+    /// en el mismo bloque: combinar nunca oculta ni borra nada.
+    /// </summary>
+    public static IReadOnlyList<PlannerBlock> LayoutDay(IReadOnlyList<PlannerNote> notes, int startHour, int endHour)
+    {
+        ArgumentNullException.ThrowIfNull(notes);
+
+        var blocks = new List<PlannerBlock>();
+        var hour = startHour;
+        while (hour < endHour)
+        {
+            var blockEnd = hour + 1;
+            bool grew;
+            do
+            {
+                grew = false;
+                foreach (var note in notes)
+                {
+                    var noteHour = BlockOf(note, startHour, endHour);
+                    if (noteHour < hour || noteHour >= blockEnd) continue;
+
+                    var noteEnd = Math.Min(endHour, noteHour + Math.Max(1, note.Span));
+                    if (noteEnd > blockEnd)
+                    {
+                        blockEnd = noteEnd;
+                        grew = true;
+                    }
+                }
+            }
+            while (grew);
+
+            var first = hour;
+            var last = blockEnd;
+            blocks.Add(new PlannerBlock(hour, blockEnd - hour, notes
+                .Where(n => BlockOf(n, startHour, endHour) >= first && BlockOf(n, startHour, endHour) < last)
+                .ToList()));
+            hour = blockEnd;
+        }
+        return blocks;
+    }
+
     /// <summary>Indica si una reunión ocupa parte del bloque de esa hora de ese día.</summary>
     public static bool Overlaps(DateTime meetingStart, DateTime meetingEnd, DateOnly date, int hour)
     {
@@ -108,16 +157,13 @@ public sealed class PlannerBoard
     public IReadOnlyList<PlannerNote> NotesOf(string key) =>
         Days.TryGetValue(key, out var notes) ? notes : [];
 
-    /// <summary>Notas que se ven en un bloque del horario.</summary>
-    public IReadOnlyList<PlannerNote> NotesAt(string key, int hour, int startHour, int endHour) =>
-        NotesOf(key).Where(n => PlannerHours.BlockOf(n, startHour, endHour) == hour).ToList();
-
     /// <summary>Agrega una nota al día, en el bloque indicado; devuelve null si el texto está vacío.</summary>
-    public PlannerNote? AddNote(string key, string? text, int? hour = null)
+    public PlannerNote? AddNote(string key, string? text, int? hour = null, int span = 1)
     {
         var note = Create(text);
         if (note is null) return null;
         note.Hour = hour;
+        note.Span = Math.Max(1, span);
 
         if (!Days.TryGetValue(key, out var notes))
         {
@@ -134,6 +180,15 @@ public sealed class PlannerBoard
         var note = Create(text);
         if (note is not null) Reminders.Add(note);
         return note;
+    }
+
+    /// <summary>Cambia cuántos bloques ocupa una nota (combinar o separar).</summary>
+    public bool SetSpan(string id, int span)
+    {
+        var note = AllNotes().FirstOrDefault(n => n.Id == id);
+        if (note is null) return false;
+        note.Span = Math.Max(1, span);
+        return true;
     }
 
     /// <summary>Marca o desmarca una nota, esté en un día o en "Recuerda".</summary>

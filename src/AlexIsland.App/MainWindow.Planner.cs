@@ -31,8 +31,16 @@ public sealed partial class MainWindow : UserControl
     private PlannerBoard? _planner;
     private DateOnly _plannerWeek = PlannerWeek.CurrentWorkWeek(DateOnly.FromDateTime(DateTime.Today));
 
-    /// <summary>Bloque donde se está escribiendo una nota nueva ("clave|hora"), o la lista "Recuerda".</summary>
-    private string? _plannerEditingSlot;
+    /// <summary>Día (o "Recuerda") donde se está escribiendo una nota nueva, y los bloques que ocupará.</summary>
+    private string? _plannerEditingDay;
+    private int _plannerEditingHour;
+    private int _plannerEditingSpan = 1;
+
+    /// <summary>Selección en curso al arrastrar sobre bloques libres para combinarlos.</summary>
+    private sealed record PlannerDrag(string Day, int Anchor, int Current);
+    private sealed record PlannerEmptySlot(Border Border, Brush NormalBrush);
+    private PlannerDrag? _plannerDrag;
+    private readonly Dictionary<(string Day, int Hour), PlannerEmptySlot> _plannerEmptySlots = [];
 
     /// <summary>Aumenta con cada redibujado; permite reconocer un campo de texto ya reemplazado.</summary>
     private int _plannerRenderGeneration;
@@ -74,14 +82,14 @@ public sealed partial class MainWindow : UserControl
     private void ShowPlannerWeek(DateOnly week)
     {
         _plannerWeek = week;
-        _plannerEditingSlot = null;
+        EndPlannerEditing();
         RenderPlanner();
     }
 
     /// <summary>Al cambiar la hora, el bloque resaltado debe moverse (salvo que se esté escribiendo).</summary>
     private void RefreshPlannerIfHourChanged()
     {
-        if (_isExpanded && _activeTab == IslandTab.Planner && _plannerEditingSlot is null && DateTime.Now.Hour != _plannerRenderedHour)
+        if (_isExpanded && _activeTab == IslandTab.Planner && _plannerEditingDay is null && DateTime.Now.Hour != _plannerRenderedHour)
         {
             RenderPlanner();
         }
@@ -132,26 +140,49 @@ public sealed partial class MainWindow : UserControl
             PlannerGrid.Children.Add(header);
         }
 
-        // Filas: una hora y un bloque por cada día.
+        // Filas: la etiqueta de cada hora.
         for (var h = 0; h < hours.Count; h++)
         {
-            var hour = hours[h];
             var label = new TextBlock
             {
-                Text = $"{hour:00}:00",
+                Text = $"{hours[h]:00}:00",
                 FontSize = 10,
                 Foreground = MutedTextBrush,
                 VerticalAlignment = VerticalAlignment.Center,
             };
             Grid.SetRow(label, h + 1);
             PlannerGrid.Children.Add(label);
+        }
 
-            for (var d = 0; d < days.Count; d++)
+        // Bloques de cada día: una hora, o varias si se combinaron.
+        _plannerEmptySlots.Clear();
+        _plannerDrag = null;
+        for (var d = 0; d < days.Count; d++)
+        {
+            var day = days[d];
+            var editing = _plannerEditingDay == day.Key;
+
+            foreach (var block in PlannerHours.LayoutDay(_planner.NotesOf(day.Key), start, end))
             {
-                var slot = CreatePlannerSlot(days[d], hour, days[d].Date == today && now.Hour == hour);
-                Grid.SetRow(slot, h + 1);
-                Grid.SetColumn(slot, d + 1);
-                PlannerGrid.Children.Add(slot);
+                FrameworkElement element;
+                int span;
+                if (editing && block.Hour >= _plannerEditingHour && block.Hour < _plannerEditingHour + _plannerEditingSpan)
+                {
+                    // El campo de texto ocupa toda la selección; el resto de esos bloques no se dibuja.
+                    if (block.Hour != _plannerEditingHour) continue;
+                    span = _plannerEditingSpan;
+                    element = CreatePlannerInput(day.Key, _plannerEditingHour, span);
+                }
+                else
+                {
+                    span = block.Span;
+                    element = CreatePlannerSlot(day, block, day.Date == today && now.Hour >= block.Hour && now.Hour < block.Hour + block.Span);
+                }
+
+                Grid.SetRow(element, block.Hour - start + 1);
+                Grid.SetRowSpan(element, span);
+                Grid.SetColumn(element, d + 1);
+                PlannerGrid.Children.Add(element);
             }
         }
 
@@ -167,32 +198,23 @@ public sealed partial class MainWindow : UserControl
         .OrderBy(e => e.StartTime)
         .ToList();
 
-    private FrameworkElement CreatePlannerSlot(PlannerDay day, int hour, bool isNow)
+    private FrameworkElement CreatePlannerSlot(PlannerDay day, PlannerBlock block, bool isNow)
     {
-        var slotKey = $"{day.Key}|{hour}";
-        if (_plannerEditingSlot == slotKey) return CreatePlannerInput(slotKey, day.Key, hour);
-
-        var meetings = PlannerMeetingsAt(day.Date, hour);
-        var notes = _planner!.NotesAt(day.Key, hour, _settings.PlannerStartHour, _settings.PlannerEndHour);
+        // Todas las reuniones que tocan el bloque, sin repetir las que duran varias horas.
+        var meetings = Enumerable.Range(block.Hour, block.Span)
+            .SelectMany(hour => PlannerMeetingsAt(day.Date, hour))
+            .Distinct()
+            .OrderBy(m => m.StartTime)
+            .ToList();
+        var notes = block.Notes;
 
         // Una reunión se pinta en todos sus bloques, pero el título solo donde empieza.
-        var startingHere = meetings.FirstOrDefault(m => m.StartTime.LocalDateTime.Hour == hour && DateOnly.FromDateTime(m.StartTime.LocalDateTime) == day.Date);
+        var startingHere = meetings.Where(m => StartsInBlock(m, day.Date, block)).ToList();
         var firstNote = notes.FirstOrDefault();
 
-        string text;
-        if (startingHere is not null) text = startingHere.Title;
-        else if (firstNote is not null) text = firstNote.Text;
-        else text = string.Empty;
-
-        var isDoneNote = startingHere is null && firstNote is { Done: true };
-        var visibleItems = (startingHere is not null ? 1 : 0) + notes.Count + meetings.Count(m => !ReferenceEquals(m, startingHere) && m.StartTime.LocalDateTime.Hour == hour);
-        var hidden = Math.Max(0, visibleItems - 1);
-
-        var background = meetings.Count > 0
-            ? ColorHelper.FromArgb(70, 66, 165, 245)
-            : notes.Count > 0
-                ? ColorHelper.FromArgb(255, 40, 42, 51)
-                : ColorHelper.FromArgb(255, 24, 26, 33);
+        var text = startingHere.Count > 0 ? startingHere[0].Title : firstNote?.Text ?? string.Empty;
+        var isDoneNote = startingHere.Count == 0 && firstNote is { Done: true };
+        var hidden = Math.Max(0, startingHere.Count + notes.Count - 1);
 
         var row = new Grid { ColumnSpacing = 2 };
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -203,7 +225,9 @@ public sealed partial class MainWindow : UserControl
             FontSize = 10,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
-            MaxLines = 1,
+            // Un bloque combinado tiene espacio para más renglones.
+            TextWrapping = block.Span > 1 ? TextWrapping.Wrap : TextWrapping.NoWrap,
+            MaxLines = (block.Span * 2) - 1,
             Foreground = isDoneNote ? MutedTextBrush : new SolidColorBrush(ColorHelper.FromArgb(255, 235, 237, 242)),
             TextDecorations = isDoneNote ? Windows.UI.Text.TextDecorations.Strikethrough : Windows.UI.Text.TextDecorations.None,
         });
@@ -215,9 +239,16 @@ public sealed partial class MainWindow : UserControl
             row.Children.Add(more);
         }
 
+        var isEmpty = meetings.Count == 0 && notes.Count == 0;
+        var normalBrush = new SolidColorBrush(meetings.Count > 0
+            ? ColorHelper.FromArgb(70, 66, 165, 245)
+            : notes.Count > 0
+                ? ColorHelper.FromArgb(255, 40, 42, 51)
+                : ColorHelper.FromArgb(255, 24, 26, 33));
+
         var slot = new Border
         {
-            Background = new SolidColorBrush(background),
+            Background = normalBrush,
             BorderBrush = new SolidColorBrush(isNow ? AccentColor : ColorHelper.FromArgb(18, 255, 255, 255)),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(5),
@@ -231,23 +262,111 @@ public sealed partial class MainWindow : UserControl
             // Que el clic no llegue a la isla: la fijaría o soltaría.
             e.Handled = true;
 
-            if (meetings.Count == 0 && notes.Count == 0)
+            if (isEmpty)
             {
-                BeginPlannerNote(slotKey);
+                BeginPlannerNote(day.Key, block.Hour, block.Span);
                 return;
             }
-            ShowPlannerSlotMenu(slot, slotKey, meetings, notes);
+            ShowPlannerSlotMenu(slot, day.Key, block, meetings, notes);
         };
+
+        if (isEmpty)
+        {
+            // Solo los bloques libres se pueden combinar arrastrando, como en Excel.
+            _plannerEmptySlots[(day.Key, block.Hour)] = new PlannerEmptySlot(slot, normalBrush);
+            slot.PointerPressed += (_, e) =>
+            {
+                if (e.GetCurrentPoint(slot).Properties.IsLeftButtonPressed)
+                {
+                    _plannerDrag = new PlannerDrag(day.Key, block.Hour, block.Hour);
+                }
+            };
+            slot.PointerEntered += (_, _) => ExtendPlannerDrag(day.Key, block.Hour);
+            slot.PointerReleased += (_, _) => FinishPlannerDrag();
+        }
+
         return slot;
     }
 
-    private void BeginPlannerNote(string slotKey)
+    private static bool StartsInBlock(CalendarEvent meeting, DateOnly date, PlannerBlock block)
     {
-        _plannerEditingSlot = slotKey;
+        var start = meeting.StartTime.LocalDateTime;
+        return DateOnly.FromDateTime(start) == date && start.Hour >= block.Hour && start.Hour < block.Hour + block.Span;
+    }
+
+    private void ExtendPlannerDrag(string dayKey, int hour)
+    {
+        if (_plannerDrag is not { } drag || drag.Day != dayKey) return;
+
+        // Solo hasta donde todos los bloques sigan libres, y sin cambiar de día.
+        var from = Math.Min(drag.Anchor, hour);
+        var to = Math.Max(drag.Anchor, hour);
+        for (var h = from; h <= to; h++)
+        {
+            if (!_plannerEmptySlots.ContainsKey((dayKey, h))) return;
+        }
+
+        _plannerDrag = drag with { Current = hour };
+        PaintPlannerSelection();
+    }
+
+    private void PaintPlannerSelection()
+    {
+        foreach (var ((day, hour), slot) in _plannerEmptySlots)
+        {
+            var selected = _plannerDrag is { } drag && drag.Day == day
+                && hour >= Math.Min(drag.Anchor, drag.Current) && hour <= Math.Max(drag.Anchor, drag.Current);
+            slot.Border.Background = selected ? new SolidColorBrush(Accent(70)) : slot.NormalBrush;
+        }
+    }
+
+    /// <summary>Al soltar sobre varios bloques se escribe una nota combinada; con uno solo, actúa el clic normal.</summary>
+    private void FinishPlannerDrag()
+    {
+        if (_plannerDrag is not { } drag) return;
+        _plannerDrag = null;
+
+        var first = Math.Min(drag.Anchor, drag.Current);
+        var span = Math.Abs(drag.Current - drag.Anchor) + 1;
+        if (span > 1) BeginPlannerNote(drag.Day, first, span);
+        else PaintPlannerSelection();
+    }
+
+    private void CancelPlannerDrag()
+    {
+        if (_plannerDrag is null) return;
+        _plannerDrag = null;
+        PaintPlannerSelection();
+    }
+
+    private void PlannerGrid_PointerReleased(object sender, PointerRoutedEventArgs e) => CancelPlannerDrag();
+
+    private void PlannerGrid_PointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        // Este evento también sube desde cada bloque: solo cuenta si el cursor salió de la cuadrícula.
+        var position = e.GetCurrentPoint(PlannerGrid).Position;
+        if (position.X < 0 || position.Y < 0 || position.X >= PlannerGrid.ActualWidth || position.Y >= PlannerGrid.ActualHeight)
+        {
+            CancelPlannerDrag();
+        }
+    }
+
+    private void BeginPlannerNote(string dayKey, int hour, int span)
+    {
+        _plannerEditingDay = dayKey;
+        _plannerEditingHour = hour;
+        _plannerEditingSpan = span;
         RenderPlanner();
     }
 
-    private void ShowPlannerSlotMenu(FrameworkElement anchor, string slotKey, List<CalendarEvent> meetings, IReadOnlyList<PlannerNote> notes)
+    private void EndPlannerEditing()
+    {
+        _plannerEditingDay = null;
+        _plannerEditingHour = 0;
+        _plannerEditingSpan = 1;
+    }
+
+    private void ShowPlannerSlotMenu(FrameworkElement anchor, string dayKey, PlannerBlock block, List<CalendarEvent> meetings, IReadOnlyList<PlannerNote> notes)
     {
         var menu = new MenuFlyout();
 
@@ -256,7 +375,7 @@ public sealed partial class MainWindow : UserControl
             var title = $"{meeting.StartTime.LocalDateTime:HH:mm} {ShortText(meeting.Title)}";
             if (MeetingUrlPolicy.TryGetSafeUri(meeting.MeetingUrl, out _))
             {
-                var join = new MenuFlyoutItem { Text = $"Unirse: {title}", Icon = new FontIcon { Glyph = "" } };
+                var join = new MenuFlyoutItem { Text = $"Unirse: {title}", Icon = new FontIcon { Glyph = "\uE714" } };
                 join.Click += async (_, _) => await LaunchMeetingAsync(meeting.MeetingUrl);
                 menu.Items.Add(join);
             }
@@ -273,7 +392,7 @@ public sealed partial class MainWindow : UserControl
             var toggle = new MenuFlyoutItem
             {
                 Text = $"{(note.Done ? "Desmarcar" : "Marcar como hecha")}: {ShortText(note.Text)}",
-                Icon = new FontIcon { Glyph = "" },
+                Icon = new FontIcon { Glyph = "\uE73E" },
             };
             toggle.Click += (_, _) =>
             {
@@ -283,7 +402,23 @@ public sealed partial class MainWindow : UserControl
             };
             menu.Items.Add(toggle);
 
-            var remove = new MenuFlyoutItem { Text = $"Borrar: {ShortText(note.Text)}", Icon = new FontIcon { Glyph = "" } };
+            // Combinar con el bloque de abajo, hasta el final del horario.
+            var noteHour = PlannerHours.BlockOf(note, _settings.PlannerStartHour, _settings.PlannerEndHour);
+            if (noteHour + note.Span < _settings.PlannerEndHour)
+            {
+                var merge = new MenuFlyoutItem { Text = $"Combinar con el bloque de abajo: {ShortText(note.Text)}", Icon = new FontIcon { Glyph = "\uE74B" } };
+                merge.Click += (_, _) => ChangePlannerSpan(note, note.Span + 1);
+                menu.Items.Add(merge);
+            }
+
+            if (note.Span > 1)
+            {
+                var split = new MenuFlyoutItem { Text = $"Separar bloques: {ShortText(note.Text)}", Icon = new FontIcon { Glyph = "\uE74A" } };
+                split.Click += (_, _) => ChangePlannerSpan(note, 1);
+                menu.Items.Add(split);
+            }
+
+            var remove = new MenuFlyoutItem { Text = $"Borrar: {ShortText(note.Text)}", Icon = new FontIcon { Glyph = "\uE74D" } };
             remove.Click += (_, _) =>
             {
                 if (_planner?.Remove(note.Id) != true) return;
@@ -294,11 +429,18 @@ public sealed partial class MainWindow : UserControl
         }
 
         menu.Items.Add(new MenuFlyoutSeparator());
-        var add = new MenuFlyoutItem { Text = "Agregar una nota aquí", Icon = new FontIcon { Glyph = "" } };
-        add.Click += (_, _) => BeginPlannerNote(slotKey);
+        var add = new MenuFlyoutItem { Text = "Agregar una nota aquí", Icon = new FontIcon { Glyph = "\uE710" } };
+        add.Click += (_, _) => BeginPlannerNote(dayKey, block.Hour, block.Span);
         menu.Items.Add(add);
 
         menu.ShowAt(anchor);
+    }
+
+    private void ChangePlannerSpan(PlannerNote note, int span)
+    {
+        if (_planner?.SetSpan(note.Id, span) != true) return;
+        SavePlanner();
+        RenderPlanner();
     }
 
     private static string ShortText(string text) =>
@@ -323,14 +465,14 @@ public sealed partial class MainWindow : UserControl
             VerticalAlignment = VerticalAlignment.Center,
         });
 
-        var add = IconButton("", ColorHelper.FromArgb(255, 150, 156, 170), "Agregar a Recuerda", () => BeginPlannerNote(PlannerRemindersKey));
+        var add = IconButton("", ColorHelper.FromArgb(255, 150, 156, 170), "Agregar a Recuerda", () => BeginPlannerNote(PlannerRemindersKey, 0, 1));
         Grid.SetColumn(add, 1);
         header.Children.Add(add);
         layout.Children.Add(header);
 
         var list = new StackPanel { Spacing = 2 };
         foreach (var note in _planner!.Reminders) list.Children.Add(CreatePlannerReminder(note));
-        if (_plannerEditingSlot == PlannerRemindersKey) list.Children.Add(CreatePlannerInput(PlannerRemindersKey, PlannerRemindersKey, null));
+        if (_plannerEditingDay == PlannerRemindersKey) list.Children.Add(CreatePlannerInput(PlannerRemindersKey, 0, 1));
 
         var scroll = new ScrollViewer
         {
@@ -414,13 +556,17 @@ public sealed partial class MainWindow : UserControl
         return row;
     }
 
-    private TextBox CreatePlannerInput(string slotKey, string key, int? hour)
+    private TextBox CreatePlannerInput(string key, int hour, int span)
     {
         var input = new TextBox
         {
             FontSize = 10,
             MinHeight = 0,
             MinWidth = 0,
+            // Alto explícito: el mínimo del tema es mayor que una fila y recortaba el borde.
+            Height = (PlannerRowHeight * span) - 2,
+            VerticalAlignment = VerticalAlignment.Top,
+            TextWrapping = span > 1 ? TextWrapping.Wrap : TextWrapping.NoWrap,
             Padding = new Thickness(5, 2, 3, 2),
             Margin = new Thickness(1),
             VerticalContentAlignment = VerticalAlignment.Center,
@@ -444,15 +590,15 @@ public sealed partial class MainWindow : UserControl
             if (e.Key == VirtualKey.Enter)
             {
                 e.Handled = true;
-                CommitPlannerInput(key, hour, input.Text);
+                CommitPlannerInput(key, hour, span, input.Text);
                 // En "Recuerda" se puede seguir anotando; en un bloque, ya se ve la nota.
-                if (key != PlannerRemindersKey) _plannerEditingSlot = null;
+                if (key != PlannerRemindersKey) EndPlannerEditing();
                 RenderPlanner();
             }
             else if (e.Key == VirtualKey.Escape)
             {
                 e.Handled = true;
-                _plannerEditingSlot = null;
+                EndPlannerEditing();
                 RenderPlanner();
             }
         };
@@ -460,22 +606,22 @@ public sealed partial class MainWindow : UserControl
         {
             // Si el planner ya se redibujó, este campo fue reemplazado y su texto ya
             // se guardó con Enter: volver a guardarlo crearía una nota duplicada.
-            if (generation != _plannerRenderGeneration || _plannerEditingSlot != slotKey) return;
+            if (generation != _plannerRenderGeneration || _plannerEditingDay != key) return;
 
             // Al salir del campo sin escribir, se cierra. Si había texto, no se pierde.
-            CommitPlannerInput(key, hour, input.Text);
-            _plannerEditingSlot = null;
+            CommitPlannerInput(key, hour, span, input.Text);
+            EndPlannerEditing();
             DispatcherQueue.TryEnqueue(RenderPlanner);
         };
         input.Loaded += (_, _) => input.Focus(FocusState.Programmatic);
         return input;
     }
 
-    private void CommitPlannerInput(string key, int? hour, string text)
+    private void CommitPlannerInput(string key, int hour, int span, string text)
     {
         if (_planner is null) return;
 
-        var note = key == PlannerRemindersKey ? _planner.AddReminder(text) : _planner.AddNote(key, text, hour);
+        var note = key == PlannerRemindersKey ? _planner.AddReminder(text) : _planner.AddNote(key, text, hour, span);
         if (note is not null) SavePlanner();
     }
 }

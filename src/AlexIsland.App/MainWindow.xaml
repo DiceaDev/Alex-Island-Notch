@@ -1142,7 +1142,8 @@
                     </StackPanel>
 
                     <!-- Horario de lunes a viernes y "Recuerda" (filas y bloques se crean en código) -->
-                    <Grid x:Name="PlannerGrid" Grid.Row="1"/>
+                    <Grid x:Name="PlannerGrid" Grid.Row="1" Background="Transparent"
+                          PointerReleased="PlannerGrid_PointerReleased" PointerExited="PlannerGrid_PointerExited"/>
                 </Grid>
 
                 <!-- ================= VISTA 6: SHELF DE ARCHIVOS Y TEXTOS ================= -->

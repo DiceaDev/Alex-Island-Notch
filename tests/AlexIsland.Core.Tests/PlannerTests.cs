@@ -69,6 +69,54 @@ public class PlannerHoursTests
     public void A_meeting_on_another_day_does_not_count()
         => Assert.False(PlannerHours.Overlaps(At(10), At(11), Thursday.AddDays(1), 10));
 
+    [Fact]
+    public void Merged_notes_occupy_several_blocks()
+    {
+        var note = new PlannerNote { Hour = 10, Span = 2 };
+
+        var blocks = PlannerHours.LayoutDay([note], 9, 13);
+
+        Assert.Equal([(9, 1), (10, 2), (12, 1)], blocks.Select(b => (b.Hour, b.Span)));
+        Assert.Same(note, blocks[1].Notes.Single());
+    }
+
+    [Fact]
+    public void Merging_over_another_note_keeps_both()
+    {
+        var merged = new PlannerNote { Text = "Combinada", Hour = 10, Span = 3 };
+        var inside = new PlannerNote { Text = "Dentro", Hour = 11 };
+        var chained = new PlannerNote { Text = "Sigue", Hour = 12, Span = 2 };
+
+        var block = PlannerHours.LayoutDay([merged, inside, chained], 9, 18).Single(b => b.Hour == 10);
+
+        Assert.Equal(4, block.Span); // 10 a 14: la tercera lo alarga
+        Assert.Equal(3, block.Notes.Count);
+    }
+
+    [Fact]
+    public void Merged_block_stops_at_the_end_of_the_schedule()
+    {
+        var blocks = PlannerHours.LayoutDay([new PlannerNote { Hour = 17, Span = 5 }], 9, 18);
+
+        Assert.Equal(1, blocks[^1].Span);
+        Assert.Equal(17, blocks[^1].Hour);
+        Assert.Equal(9, blocks.Sum(b => b.Span));
+    }
+
+    [Fact]
+    public void Span_can_be_changed_and_never_goes_below_one()
+    {
+        var board = new PlannerBoard();
+        var note = board.AddNote("2026-11-02", "Taller", hour: 10, span: 2)!;
+        Assert.Equal(2, note.Span);
+
+        Assert.True(board.SetSpan(note.Id, 3));
+        Assert.Equal(3, note.Span);
+        Assert.True(board.SetSpan(note.Id, 0));
+        Assert.Equal(1, note.Span);
+        Assert.False(board.SetSpan("no-existe", 2));
+    }
+
     [Theory]
     [InlineData(9, 18, 9, 18)]
     [InlineData(18, 9, 18, 19)]  // al revés: una hora como mínimo
@@ -103,8 +151,9 @@ public class PlannerBoardTests
         var note = board.AddNote(Monday, "  Llamar\n a  soporte ", hour: 11);
 
         Assert.Equal("Llamar a soporte", note!.Text);
-        Assert.Single(board.NotesAt(Monday, 11, 9, 18));
-        Assert.Empty(board.NotesAt(Monday, 12, 9, 18));
+        var blocks = PlannerHours.LayoutDay(board.NotesOf(Monday), 9, 18);
+        Assert.Single(blocks.Single(b => b.Hour == 11).Notes);
+        Assert.Empty(blocks.Single(b => b.Hour == 12).Notes);
         Assert.Empty(board.NotesOf("2026-11-03"));
     }
 
@@ -114,8 +163,9 @@ public class PlannerBoardTests
         var old = JsonSerializer.Deserialize<PlannerBoard>(
             """{"days":{"2026-11-02":[{"id":"a","text":"Nota vieja","done":true}]},"reminders":[]}""")!.Normalize();
 
-        Assert.Single(old.NotesAt(Monday, 9, 9, 18));
-        Assert.True(old.NotesAt(Monday, 9, 9, 18)[0].Done);
+        var first = PlannerHours.LayoutDay(old.NotesOf(Monday), 9, 18)[0];
+        Assert.Equal(1, first.Span);
+        Assert.True(first.Notes.Single().Done);
     }
 
     [Theory]
