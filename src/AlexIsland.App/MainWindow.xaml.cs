@@ -219,6 +219,7 @@ public sealed partial class MainWindow : UserControl
         _reminderTimer.Tick += (_, _) =>
         {
             CheckUpcomingMeetings();
+            RefreshPlannerIfHourChanged();
             // Mantiene al día la cuenta regresiva y la línea de "ahora" si la agenda está a la vista.
             if (_isExpanded && _activeTab == IslandTab.Calendar && _calendarSubMode == CalendarSubMode.Agenda
                 && CalEventFormOverlay.Visibility != Visibility.Visible)
@@ -386,6 +387,7 @@ public sealed partial class MainWindow : UserControl
         ApplyNotificationSettings();
         ApplyOutlookSyncSettings();
         ApplyMonitorSettings();
+        if (_activeTab == IslandTab.Planner && _isExpanded) RenderPlanner();
 
         // Si se activaron las letras con una canción sonando, se piden ahora.
         if (_settings.ShowLyrics && _lyrics is null && _lyricsTrackKey is not null)

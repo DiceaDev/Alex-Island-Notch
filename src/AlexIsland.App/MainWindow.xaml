@@ -1117,7 +1117,7 @@
                 </Grid>
 
                 <!-- ================= VISTA: PLANNER SEMANAL ================= -->
-                <Grid x:Name="PlannerView" Grid.Row="2" Visibility="Collapsed" RowSpacing="6">
+                <Grid x:Name="PlannerView" Grid.Row="2" Visibility="Collapsed" RowSpacing="6" RequestedTheme="Dark">
                     <Grid.RenderTransform>
                         <TranslateTransform/>
                     </Grid.RenderTransform>
@@ -1141,19 +1141,8 @@
                         </Button>
                     </StackPanel>
 
-                    <!-- Lunes a viernes, fin de semana y "Recuerda" (los casilleros se crean en código) -->
-                    <Grid x:Name="PlannerGrid" Grid.Row="1" ColumnSpacing="5" RowSpacing="5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="130"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-                    </Grid>
+                    <!-- Horario de lunes a viernes y "Recuerda" (filas y bloques se crean en código) -->
+                    <Grid x:Name="PlannerGrid" Grid.Row="1"/>
                 </Grid>
 
                 <!-- ================= VISTA 6: SHELF DE ARCHIVOS Y TEXTOS ================= -->

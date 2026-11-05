@@ -69,6 +69,15 @@
                                Text="Lee tus reuniones de los próximos 45 días del Outlook clásico cada 15 minutos, solo en este equipo. Es solo lectura: la isla nunca crea ni cambia nada en Outlook. Si Outlook clásico está cerrado, se abre sin ventana un momento y se vuelve a cerrar."/>
                 </StackPanel>
 
+                <!-- Planner -->
+                <StackPanel Spacing="6">
+                    <TextBlock Text="Planner" FontSize="15" FontWeight="SemiBold" Foreground="White" Margin="0,6,0,0"/>
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <ComboBox x:Name="PlannerStartCombo" Header="Empieza a las" MinWidth="120" SelectionChanged="PlannerHours_SelectionChanged"/>
+                        <ComboBox x:Name="PlannerEndCombo" Header="Termina a las" MinWidth="120" SelectionChanged="PlannerHours_SelectionChanged"/>
+                    </StackPanel>
+                </StackPanel>
+
                 <!-- Música -->
                 <StackPanel Spacing="6">
                     <TextBlock Text="Música" FontSize="15" FontWeight="SemiBold" Foreground="White" Margin="0,6,0,0"/>

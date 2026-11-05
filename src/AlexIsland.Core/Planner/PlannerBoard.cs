@@ -15,18 +15,19 @@ public sealed class PlannerNote
 
     [JsonPropertyName("done")]
     public bool Done { get; set; }
+
+    /// <summary>Hora del bloque (9 = de 09:00 a 10:00). Las notas sin hora van al primer bloque del día.</summary>
+    [JsonPropertyName("hour")]
+    public int? Hour { get; set; }
 }
 
-/// <summary>Un casillero de la semana. Sábado y domingo comparten uno, como en un planner de papel.</summary>
-public sealed record PlannerCell(string Key, string Label, DateOnly First, DateOnly Last)
-{
-    public bool Contains(DateOnly date) => date >= First && date <= Last;
-}
+/// <summary>Un día laboral de la semana.</summary>
+public sealed record PlannerDay(string Key, string Label, DateOnly Date);
 
-/// <summary>Reparte las fechas en los seis casilleros de una semana que empieza el lunes.</summary>
+/// <summary>Reparte las fechas en los días laborales de una semana (lunes a viernes).</summary>
 public static class PlannerWeek
 {
-    private static readonly string[] DayNames = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
+    private static readonly string[] DayNames = ["Lun", "Mar", "Mié", "Jue", "Vie"];
 
     public static DateOnly StartOf(DateOnly date)
     {
@@ -34,38 +35,68 @@ public static class PlannerWeek
         return date.AddDays(-daysFromMonday);
     }
 
+    /// <summary>Semana laboral que corresponde mostrar: en fin de semana ya interesa la que viene.</summary>
+    public static DateOnly CurrentWorkWeek(DateOnly today) =>
+        today.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday
+            ? StartOf(today).AddDays(7)
+            : StartOf(today);
+
     public static string KeyOf(DateOnly date) => date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
-    public static IReadOnlyList<PlannerCell> CellsOf(DateOnly anyDayOfWeek)
+    public static IReadOnlyList<PlannerDay> DaysOf(DateOnly anyDayOfWeek)
     {
         var monday = StartOf(anyDayOfWeek);
-        var cells = new List<PlannerCell>(6);
-
-        for (var i = 0; i < DayNames.Length; i++)
-        {
-            var day = monday.AddDays(i);
-            cells.Add(new PlannerCell(KeyOf(day), $"{DayNames[i]} {day.Day}", day, day));
-        }
-
-        var saturday = monday.AddDays(5);
-        var sunday = monday.AddDays(6);
-        cells.Add(new PlannerCell(KeyOf(saturday), $"Sáb y dom {saturday.Day}-{sunday.Day}", saturday, sunday));
-        return cells;
+        return DayNames
+            .Select((name, i) =>
+            {
+                var day = monday.AddDays(i);
+                return new PlannerDay(KeyOf(day), $"{name} {day.Day}", day);
+            })
+            .ToList();
     }
 
-    /// <summary>"2 al 8 de noviembre" o, si la semana cruza de mes, "30 de noviembre al 6 de diciembre".</summary>
+    /// <summary>"2 al 6 de noviembre" o, si la semana cruza de mes, "30 de noviembre al 4 de diciembre".</summary>
     public static string Describe(DateOnly anyDayOfWeek)
     {
         var culture = CultureInfo.GetCultureInfo("es-CL");
         var monday = StartOf(anyDayOfWeek);
-        var sunday = monday.AddDays(6);
-        return monday.Month == sunday.Month
-            ? $"{monday.Day} al {sunday.Day} de {sunday.ToString("MMMM", culture)}"
-            : $"{monday.Day} de {monday.ToString("MMMM", culture)} al {sunday.Day} de {sunday.ToString("MMMM", culture)}";
+        var friday = monday.AddDays(4);
+        return monday.Month == friday.Month
+            ? $"{monday.Day} al {friday.Day} de {friday.ToString("MMMM", culture)}"
+            : $"{monday.Day} de {monday.ToString("MMMM", culture)} al {friday.Day} de {friday.ToString("MMMM", culture)}";
     }
 }
 
-/// <summary>Notas por casillero de la semana y la lista "Recuerda", que no depende de la fecha.</summary>
+/// <summary>Bloques de una hora dentro del horario laboral.</summary>
+public static class PlannerHours
+{
+    /// <summary>Horas de inicio de cada bloque: de 9 a 18 son 9, 10, ... 17.</summary>
+    public static IReadOnlyList<int> Blocks(int startHour, int endHour) =>
+        Enumerable.Range(startHour, Math.Max(0, endHour - startHour)).ToList();
+
+    /// <summary>
+    /// Bloque donde se ve una nota: sin hora va al primero, y si quedó fuera
+    /// del horario (porque se cambió en Ajustes) va al más cercano. Nunca se oculta.
+    /// </summary>
+    public static int BlockOf(PlannerNote note, int startHour, int endHour)
+    {
+        ArgumentNullException.ThrowIfNull(note);
+        return Math.Clamp(note.Hour ?? startHour, startHour, Math.Max(startHour, endHour - 1));
+    }
+
+    /// <summary>Indica si una reunión ocupa parte del bloque de esa hora de ese día.</summary>
+    public static bool Overlaps(DateTime meetingStart, DateTime meetingEnd, DateOnly date, int hour)
+    {
+        var blockStart = date.ToDateTime(new TimeOnly(hour, 0));
+        var blockEnd = blockStart.AddHours(1);
+        // Una reunión sin duración se muestra en el bloque donde empieza.
+        return meetingEnd <= meetingStart
+            ? meetingStart >= blockStart && meetingStart < blockEnd
+            : meetingStart < blockEnd && meetingEnd > blockStart;
+    }
+}
+
+/// <summary>Notas por día y la lista "Recuerda", que no depende de la fecha.</summary>
 public sealed class PlannerBoard
 {
     [JsonPropertyName("days")]
@@ -77,11 +108,16 @@ public sealed class PlannerBoard
     public IReadOnlyList<PlannerNote> NotesOf(string key) =>
         Days.TryGetValue(key, out var notes) ? notes : [];
 
-    /// <summary>Agrega una nota al casillero; devuelve null si el texto está vacío.</summary>
-    public PlannerNote? AddNote(string key, string? text)
+    /// <summary>Notas que se ven en un bloque del horario.</summary>
+    public IReadOnlyList<PlannerNote> NotesAt(string key, int hour, int startHour, int endHour) =>
+        NotesOf(key).Where(n => PlannerHours.BlockOf(n, startHour, endHour) == hour).ToList();
+
+    /// <summary>Agrega una nota al día, en el bloque indicado; devuelve null si el texto está vacío.</summary>
+    public PlannerNote? AddNote(string key, string? text, int? hour = null)
     {
         var note = Create(text);
         if (note is null) return null;
+        note.Hour = hour;
 
         if (!Days.TryGetValue(key, out var notes))
         {
