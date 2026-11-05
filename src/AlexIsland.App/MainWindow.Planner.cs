@@ -561,32 +561,30 @@ public sealed partial class MainWindow : UserControl
         return row;
     }
 
-    private TextBox CreatePlannerInput(string key, int hour, int span)
+    private FrameworkElement CreatePlannerInput(string key, int hour, int span)
     {
         var input = new TextBox
         {
             FontSize = 10,
             MinHeight = 0,
             MinWidth = 0,
-            // Alto explícito: el mínimo del tema es mayor que una fila y recortaba el borde.
-            Height = (PlannerRowHeight * span) - 2,
-            VerticalAlignment = VerticalAlignment.Top,
             TextWrapping = span > 1 ? TextWrapping.Wrap : TextWrapping.NoWrap,
-            Padding = new Thickness(5, 2, 3, 2),
-            Margin = new Thickness(1),
+            Padding = new Thickness(5, 1, 3, 1),
+            BorderThickness = new Thickness(0),
             VerticalContentAlignment = VerticalAlignment.Center,
             MaxLength = 120,
-            CornerRadius = new CornerRadius(5),
-            Background = new SolidColorBrush(ColorHelper.FromArgb(255, 28, 29, 34)),
+            Background = new SolidColorBrush(Colors.Transparent),
             Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 240, 242, 245)),
         };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(input, "Nueva nota");
 
-        // Oscuro también al escribir: el tema por defecto lo vuelve blanco al enfocarlo.
-        input.Resources["TextControlBackgroundFocused"] = new SolidColorBrush(ColorHelper.FromArgb(255, 28, 29, 34));
-        input.Resources["TextControlBackgroundPointerOver"] = new SolidColorBrush(ColorHelper.FromArgb(255, 28, 29, 34));
+        // El borde lo dibuja el contenedor: el del TextBox cambia de grosor al enfocarlo
+        // y se recortaba en una fila tan baja. Fondo oscuro también al escribir.
+        input.Resources["TextControlBackgroundFocused"] = new SolidColorBrush(Colors.Transparent);
+        input.Resources["TextControlBackgroundPointerOver"] = new SolidColorBrush(Colors.Transparent);
         input.Resources["TextControlForegroundFocused"] = new SolidColorBrush(ColorHelper.FromArgb(255, 240, 242, 245));
-        input.Resources["TextControlBorderBrushFocused"] = new SolidColorBrush(AccentColor);
+        input.Resources["TextControlBorderBrushFocused"] = new SolidColorBrush(Colors.Transparent);
+        input.Resources["TextControlBorderThemeThicknessFocused"] = new Thickness(0);
 
         var generation = _plannerRenderGeneration;
         input.Tapped += (_, e) => e.Handled = true;
@@ -619,7 +617,18 @@ public sealed partial class MainWindow : UserControl
             DispatcherQueue.TryEnqueue(RenderPlanner);
         };
         input.Loaded += (_, _) => input.Focus(FocusState.Programmatic);
-        return input;
+
+        return new Border
+        {
+            Height = (PlannerRowHeight * span) - 2,
+            VerticalAlignment = VerticalAlignment.Top,
+            Margin = new Thickness(1),
+            CornerRadius = new CornerRadius(5),
+            BorderThickness = new Thickness(1),
+            BorderBrush = new SolidColorBrush(AccentColor),
+            Background = new SolidColorBrush(ColorHelper.FromArgb(255, 28, 29, 34)),
+            Child = input,
+        };
     }
 
     private void CommitPlannerInput(string key, int hour, int span, string text)
