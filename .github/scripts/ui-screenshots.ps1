@@ -180,15 +180,15 @@ Save-Shot '03-expandida-inicio'
 
 # Fijar la isla con un clic sobre la hora de la cabecera (a la izquierda del botón de ajustes; no es un botón).
 $headerY = 17 * $s
-Click-At ($cx + (570 / 2 - 62) * $s) $headerY
+Click-At ($cx + (610 / 2 - 62) * $s) $headerY
 Start-Sleep -Milliseconds 800
 
 # Rueda del mouse sobre la barra de pestañas para recorrer cada una.
-$tabsX = $cx - (570 / 2 - 130) * $s
+$tabsX = $cx - (610 / 2 - 150) * $s
 Move-To $tabsX $headerY
 Start-Sleep -Milliseconds 400
 
-$tabs = @('04-agenda', '05-tareas', '06-enfoque', '07-sistema', '08-archivos')
+$tabs = @('04-agenda', '04b-planner', '05-tareas', '06-enfoque', '07-sistema', '08-archivos')
 foreach ($tab in $tabs) {
     Wheel-Next
     Start-Sleep -Milliseconds 1800 # la pestaña Sistema necesita una lectura completa
@@ -199,7 +199,7 @@ foreach ($tab in $tabs) {
 # Vuelve a Inicio (la rueda da la vuelta) y suelta la isla.
 Wheel-Next
 Start-Sleep -Milliseconds 600
-Click-At ($cx + (570 / 2 - 62) * $s) $headerY
+Click-At ($cx + (610 / 2 - 62) * $s) $headerY
 Move-To $cx ($screen.Height - 50)
 Start-Sleep -Seconds 2
 Assert-Running $proc

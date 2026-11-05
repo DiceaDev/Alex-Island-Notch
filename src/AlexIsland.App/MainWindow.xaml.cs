@@ -28,6 +28,7 @@ public sealed partial class MainWindow : UserControl
         Media,
         Backlog,
         Calendar,
+        Planner,
         Pomodoro,
         System,
         Shelf
@@ -70,7 +71,7 @@ public sealed partial class MainWindow : UserControl
     private const int PeekWidth = 300;
     private const int PeekHeight = 42;
     // Más ancha para que las seis pestañas muestren su nombre y Inicio tenga dos columnas.
-    private const int ExpandedWidth = 570;
+    private const int ExpandedWidth = 610;
     private const int ExpandedHeight = 162;
     private const int ExpandedBacklogHeight = 196;
     private const int ExpandedCalendarHeight = 234;
@@ -330,6 +331,7 @@ public sealed partial class MainWindow : UserControl
         _calendarLoadTask = LoadCalendarEventsAsync();
         _ = LoadPomodoroAsync();
         _ = LoadShelfAsync();
+        _ = LoadPlannerAsync();
     }
 
     /// <summary>Muestra la isla en pantalla (sin quitarle el foco a la app activa).</summary>
@@ -505,6 +507,7 @@ public sealed partial class MainWindow : UserControl
                 _activeTab switch
                 {
                     IslandTab.Calendar => CalendarExpandedHeight,
+                    IslandTab.Planner => ExpandedPlannerHeight,
                     IslandTab.Backlog => ExpandedBacklogHeight,
                     IslandTab.Pomodoro => ExpandedPomodoroHeight,
                     IslandTab.System => ExpandedSystemHeight,
@@ -838,6 +841,11 @@ public sealed partial class MainWindow : UserControl
                 RenderCalendarView();
                 break;
 
+            case IslandTab.Planner:
+                AnimateViewEntrance(PlannerView);
+                RenderPlanner();
+                break;
+
             case IslandTab.Pomodoro:
                 AnimateViewEntrance(PomodoroView);
                 PopulatePomodoroTaskCombo();
@@ -862,6 +870,7 @@ public sealed partial class MainWindow : UserControl
     [
         (IslandTab.Media, TabMediaButton, TabMediaLabel, MediaView),
         (IslandTab.Calendar, TabCalendarButton, TabCalendarLabel, CalendarView),
+        (IslandTab.Planner, TabPlannerButton, TabPlannerLabel, PlannerView),
         (IslandTab.Backlog, TabBacklogButton, TabBacklogLabel, BacklogView),
         (IslandTab.Pomodoro, TabPomodoroButton, TabPomodoroLabel, PomodoroView),
         (IslandTab.System, TabSystemButton, TabSystemLabel, SystemView),
@@ -872,6 +881,7 @@ public sealed partial class MainWindow : UserControl
     [
         (IslandTab.Media, TabMediaIcon),
         (IslandTab.Calendar, TabCalendarIcon),
+        (IslandTab.Planner, TabPlannerIcon),
         (IslandTab.Backlog, TabBacklogIcon),
         (IslandTab.Pomodoro, TabPomodoroIcon),
         (IslandTab.System, TabSystemIcon),
