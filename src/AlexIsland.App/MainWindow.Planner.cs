@@ -145,7 +145,7 @@ public sealed partial class MainWindow : UserControl
         {
             var label = new TextBlock
             {
-                Text = $"{hours[h]:00}:00",
+                Text = PlannerHours.LabelOf(hours[h], start, _settings.PlannerStartMinute),
                 FontSize = 10,
                 Foreground = MutedTextBrush,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -176,7 +176,9 @@ public sealed partial class MainWindow : UserControl
                 else
                 {
                     span = block.Span;
-                    element = CreatePlannerSlot(day, block, day.Date == today && now.Hour >= block.Hour && now.Hour < block.Hour + block.Span);
+                    var isNow = Enumerable.Range(block.Hour, block.Span)
+                        .Any(h => PlannerHours.Overlaps(now, now, day.Date, h, PlannerFromMinute(h)));
+                    element = CreatePlannerSlot(day, block, isNow);
                 }
 
                 Grid.SetRow(element, block.Hour - start + 1);
@@ -192,9 +194,12 @@ public sealed partial class MainWindow : UserControl
         PlannerGrid.Children.Add(reminders);
     }
 
+    /// <summary>Solo la primera fila puede empezar a media hora.</summary>
+    private int PlannerFromMinute(int hour) => hour == _settings.PlannerStartHour ? _settings.PlannerStartMinute : 0;
+
     /// <summary>Reuniones que ocupan un bloque; las de todo el día no son de una hora concreta.</summary>
     private List<CalendarEvent> PlannerMeetingsAt(DateOnly date, int hour) => _events
-        .Where(e => !e.IsAllDay && PlannerHours.Overlaps(e.StartTime.LocalDateTime, e.EndTime.LocalDateTime, date, hour))
+        .Where(e => !e.IsAllDay && PlannerHours.Overlaps(e.StartTime.LocalDateTime, e.EndTime.LocalDateTime, date, hour, PlannerFromMinute(hour)))
         .OrderBy(e => e.StartTime)
         .ToList();
 

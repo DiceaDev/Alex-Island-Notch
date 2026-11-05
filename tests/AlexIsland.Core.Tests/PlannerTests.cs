@@ -130,12 +130,46 @@ public class PlannerHoursTests
     }
 
     [Fact]
-    public void Default_schedule_is_nine_to_six()
+    public void Default_schedule_is_half_past_eight_to_six()
     {
         var settings = new IslandSettings();
 
-        Assert.Equal(9, settings.PlannerStartHour);
+        Assert.Equal(8, settings.PlannerStartHour);
+        Assert.Equal(30, settings.PlannerStartMinute);
         Assert.Equal(18, settings.PlannerEndHour);
+    }
+
+    [Theory]
+    [InlineData(30, 30)]
+    [InlineData(0, 0)]
+    [InlineData(15, 0)] // solo horas en punto o medias horas
+    public void Start_minute_is_on_the_hour_or_half_hour(int minute, int expected)
+        => Assert.Equal(expected, new IslandSettings { PlannerStartMinute = minute }.Normalize().PlannerStartMinute);
+
+    [Fact]
+    public void First_row_can_start_at_half_past()
+    {
+        Assert.Equal("08:30", PlannerHours.LabelOf(8, 8, 30));
+        Assert.Equal("09:00", PlannerHours.LabelOf(9, 8, 30));
+        Assert.Equal("09:00", PlannerHours.LabelOf(9, 9, 0));
+    }
+
+    [Theory]
+    [InlineData(8, 0, 8, 30, false)] // termina justo cuando empieza el horario
+    [InlineData(8, 30, 9, 0, true)]
+    [InlineData(8, 15, 8, 45, true)]
+    [InlineData(8, 45, 9, 30, true)]
+    [InlineData(9, 0, 10, 0, false)] // ya es del bloque siguiente
+    public void Half_hour_block_only_covers_from_its_start(int sh, int sm, int eh, int em, bool expected)
+        => Assert.Equal(expected, PlannerHours.Overlaps(At(sh, sm), At(eh, em), Thursday, 8, fromMinute: 30));
+
+    [Fact]
+    public void Merged_notes_work_from_the_half_hour_row()
+    {
+        var blocks = PlannerHours.LayoutDay([new PlannerNote { Hour = 8, Span = 2 }], 8, 18);
+
+        Assert.Equal((8, 2), (blocks[0].Hour, blocks[0].Span));
+        Assert.Equal(10, blocks.Sum(b => b.Span));
     }
 }
 

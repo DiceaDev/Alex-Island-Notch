@@ -63,10 +63,15 @@ public sealed partial class SettingsWindow : Window
         LatencyHostBox.Text = _settings.LatencyHost;
         for (var hour = IslandSettings.MinPlannerHour; hour <= IslandSettings.MaxPlannerHour; hour++)
         {
-            PlannerStartCombo.Items.Add($"{hour:00}:00");
+            // El inicio admite medias horas (08:30); el término, horas en punto.
+            if (hour < IslandSettings.MaxPlannerHour)
+            {
+                PlannerStartCombo.Items.Add($"{hour:00}:00");
+                PlannerStartCombo.Items.Add($"{hour:00}:30");
+            }
             PlannerEndCombo.Items.Add($"{hour:00}:00");
         }
-        PlannerStartCombo.SelectedIndex = _settings.PlannerStartHour - IslandSettings.MinPlannerHour;
+        PlannerStartCombo.SelectedIndex = ((_settings.PlannerStartHour - IslandSettings.MinPlannerHour) * 2) + (_settings.PlannerStartMinute == 30 ? 1 : 0);
         PlannerEndCombo.SelectedIndex = _settings.PlannerEndHour - IslandSettings.MinPlannerHour;
 
         SyncOutlookToggle.IsOn = _settings.SyncOutlookCalendar;
@@ -146,7 +151,8 @@ public sealed partial class SettingsWindow : Window
     {
         if (_loading || PlannerStartCombo.SelectedIndex < 0 || PlannerEndCombo.SelectedIndex < 0) return;
 
-        _settings.PlannerStartHour = PlannerStartCombo.SelectedIndex + IslandSettings.MinPlannerHour;
+        _settings.PlannerStartHour = (PlannerStartCombo.SelectedIndex / 2) + IslandSettings.MinPlannerHour;
+        _settings.PlannerStartMinute = PlannerStartCombo.SelectedIndex % 2 == 1 ? 30 : 0;
         _settings.PlannerEndHour = PlannerEndCombo.SelectedIndex + IslandSettings.MinPlannerHour;
         _settings.Normalize();
 

@@ -133,11 +133,19 @@ public static class PlannerHours
         return blocks;
     }
 
-    /// <summary>Indica si una reunión ocupa parte del bloque de esa hora de ese día.</summary>
-    public static bool Overlaps(DateTime meetingStart, DateTime meetingEnd, DateOnly date, int hour)
+    /// <summary>Etiqueta de una fila: la primera puede empezar a media hora ("08:30").</summary>
+    public static string LabelOf(int hour, int startHour, int startMinute) =>
+        $"{hour:00}:{(hour == startHour ? startMinute : 0):00}";
+
+    /// <summary>
+    /// Indica si una reunión ocupa parte del bloque de esa hora de ese día.
+    /// <paramref name="fromMinute"/> es el minuto en que empieza el bloque (la primera fila
+    /// puede ser de 08:30 a 09:00); el bloque siempre termina a la hora en punto siguiente.
+    /// </summary>
+    public static bool Overlaps(DateTime meetingStart, DateTime meetingEnd, DateOnly date, int hour, int fromMinute = 0)
     {
-        var blockStart = date.ToDateTime(new TimeOnly(hour, 0));
-        var blockEnd = blockStart.AddHours(1);
+        var blockStart = date.ToDateTime(new TimeOnly(hour, fromMinute));
+        var blockEnd = date.ToDateTime(new TimeOnly(hour, 0)).AddHours(1);
         // Una reunión sin duración se muestra en el bloque donde empieza.
         return meetingEnd <= meetingStart
             ? meetingStart >= blockStart && meetingStart < blockEnd
