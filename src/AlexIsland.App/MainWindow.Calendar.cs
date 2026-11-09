@@ -154,6 +154,8 @@ public sealed partial class MainWindow : UserControl
         else if (_calendarSubMode == CalendarSubMode.Month) AnimateViewEntrance(CalMonthContainer);
 
         RenderCalendarView();
+        // La vista de día achica la isla según sus reuniones; Semana y Mes necesitan el alto completo.
+        RefreshCalendarHeight();
     }
 
     private void CalPrevDateBtn_Click(object sender, RoutedEventArgs e)
