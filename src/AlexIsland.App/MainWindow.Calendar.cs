@@ -303,7 +303,7 @@ public sealed partial class MainWindow : UserControl
         MonthDaysGrid.ColumnDefinitions.Clear();
         MonthDaysGrid.RowDefinitions.Clear();
 
-        string[] headers = ["D", "L", "M", "M", "J", "V", "S"];
+        string[] headers = ["L", "M", "M", "J", "V", "S", "D"];
         for (int i = 0; i < 7; i++)
         {
             MonthDayHeadersGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -328,7 +328,7 @@ public sealed partial class MainWindow : UserControl
 
         var firstDayOfMonth = new DateTime(_selectedMonth.Year, _selectedMonth.Month, 1);
         var daysInMonth = DateTime.DaysInMonth(_selectedMonth.Year, _selectedMonth.Month);
-        var startOffset = (int)firstDayOfMonth.DayOfWeek; // 0 = Domingo
+        var startOffset = AlexIsland.Core.Planner.PlannerWeek.DaysFromMonday(DateOnly.FromDateTime(firstDayOfMonth));
 
         for (int day = 1; day <= daysInMonth; day++)
         {

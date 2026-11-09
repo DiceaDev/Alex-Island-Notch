@@ -561,27 +561,37 @@
                         </Button>
 
                         <!-- Entrada de texto de la tarea -->
-                        <TextBox x:Name="NewTaskInput"
-                                 Grid.Column="1"
-                                 Height="26"
-                                 FontSize="11"
-                                 PlaceholderText="Nueva tarea (ej: fix: error al iniciar sesión)"
-                                 Background="#FF171920"
-                                 Foreground="#FFF0F2F5"
-                                 BorderBrush="#FF2F3342"
-                                 BorderThickness="1"
-                                 CornerRadius="5"
-                                 Padding="7,2"
-                                 KeyDown="NewTaskInput_KeyDown">
-                            <!-- Oscuro también al escribir: el tema por defecto lo vuelve blanco al enfocarlo -->
-                            <TextBox.Resources>
-                                <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#FF1C1D22"/>
-                                <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#FF1C1D22"/>
-                                <SolidColorBrush x:Key="TextControlForegroundFocused" Color="#FFF0F2F5"/>
-                                <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#FFFF5A00"/>
-                                <SolidColorBrush x:Key="TextControlPlaceholderForegroundFocused" Color="#FF6F7480"/>
-                            </TextBox.Resources>
-                        </TextBox>
+                        <!-- El borde lo dibuja el contenedor: el del TextBox se recortaba por el alto mínimo del tema -->
+                        <Border x:Name="NewTaskInputBorder"
+                                Grid.Column="1"
+                                Height="26"
+                                Background="#FF171920"
+                                BorderBrush="#FF2F3342"
+                                BorderThickness="1"
+                                CornerRadius="5">
+                            <TextBox x:Name="NewTaskInput"
+                                     MinHeight="0"
+                                     FontSize="11"
+                                     PlaceholderText="Nueva tarea (ej: fix: error al iniciar sesión)"
+                                     Background="Transparent"
+                                     Foreground="#FFF0F2F5"
+                                     BorderThickness="0"
+                                     Padding="7,1"
+                                     VerticalContentAlignment="Center"
+                                     GotFocus="NewTaskInput_GotFocus"
+                                     LostFocus="NewTaskInput_LostFocus"
+                                     KeyDown="NewTaskInput_KeyDown">
+                                <!-- Oscuro también al escribir: el tema por defecto lo vuelve blanco al enfocarlo -->
+                                <TextBox.Resources>
+                                    <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="Transparent"/>
+                                    <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="Transparent"/>
+                                    <SolidColorBrush x:Key="TextControlForegroundFocused" Color="#FFF0F2F5"/>
+                                    <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="Transparent"/>
+                                    <SolidColorBrush x:Key="TextControlPlaceholderForegroundFocused" Color="#FF6F7480"/>
+                                    <Thickness x:Key="TextControlBorderThemeThicknessFocused">0</Thickness>
+                                </TextBox.Resources>
+                            </TextBox>
+                        </Border>
 
                         <!-- Botón añadir tarea -->
                         <Button x:Name="AddTaskButton"

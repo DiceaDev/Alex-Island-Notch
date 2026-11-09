@@ -15,6 +15,13 @@ public class PlannerWeekTests
         => Assert.Equal(DateOnly.Parse(expected), PlannerWeek.StartOf(DateOnly.Parse(date)));
 
     [Theory]
+    [InlineData("2026-11-02", 0)] // lunes: primera columna del mes
+    [InlineData("2026-11-05", 3)]
+    [InlineData("2026-11-01", 6)] // domingo: última columna
+    public void Monday_is_the_first_day_of_the_week(string date, int expected)
+        => Assert.Equal(expected, PlannerWeek.DaysFromMonday(DateOnly.Parse(date)));
+
+    [Theory]
     [InlineData("2026-11-05", "2026-11-02")] // jueves: esta semana
     [InlineData("2026-11-07", "2026-11-09")] // sábado: ya interesa la que viene
     [InlineData("2026-11-08", "2026-11-09")] // domingo

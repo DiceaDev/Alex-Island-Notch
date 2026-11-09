@@ -236,6 +236,12 @@ public sealed partial class MainWindow : UserControl
         CurrentTagLabel.Foreground = fg;
     }
 
+    private void NewTaskInput_GotFocus(object sender, RoutedEventArgs e) =>
+        NewTaskInputBorder.BorderBrush = new SolidColorBrush(AccentColor);
+
+    private void NewTaskInput_LostFocus(object sender, RoutedEventArgs e) =>
+        NewTaskInputBorder.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 47, 51, 66));
+
     private void NewTaskInput_KeyDown(object sender, KeyRoutedEventArgs e)
     {
         if (e.Key == Windows.System.VirtualKey.Enter)

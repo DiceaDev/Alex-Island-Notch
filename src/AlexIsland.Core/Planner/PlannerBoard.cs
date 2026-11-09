@@ -36,11 +36,10 @@ public static class PlannerWeek
 {
     private static readonly string[] DayNames = ["Lun", "Mar", "Mié", "Jue", "Vie"];
 
-    public static DateOnly StartOf(DateOnly date)
-    {
-        var daysFromMonday = ((int)date.DayOfWeek + 6) % 7;
-        return date.AddDays(-daysFromMonday);
-    }
+    /// <summary>Cuántos días van desde el lunes de esa semana: lunes = 0, domingo = 6.</summary>
+    public static int DaysFromMonday(DateOnly date) => ((int)date.DayOfWeek + 6) % 7;
+
+    public static DateOnly StartOf(DateOnly date) => date.AddDays(-DaysFromMonday(date));
 
     /// <summary>Semana laboral que corresponde mostrar: en fin de semana ya interesa la que viene.</summary>
     public static DateOnly CurrentWorkWeek(DateOnly today) =>
