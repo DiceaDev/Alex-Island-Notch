@@ -11,7 +11,7 @@
         </Grid.RenderTransform>
         <Grid x:Name="NotchContainer" HorizontalAlignment="Left" VerticalAlignment="Top">
             <Border x:Name="ShadowHost" IsHitTestVisible="False"/>
-            <Path x:Name="NotchShape" Fill="#FF000000" Stroke="#1FFFFFFF" StrokeThickness="1"
+            <Path x:Name="NotchShape" Fill="#FF032539" Stroke="#1FFBF3F2" StrokeThickness="1"
                   HorizontalAlignment="Left" VerticalAlignment="Top"/>
 
             <!-- Reposo: los ojos del zorro -->
@@ -19,9 +19,9 @@
                 <Ellipse Width="46" Height="22" IsHitTestVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <Ellipse.Fill>
                         <RadialGradientBrush>
-                            <GradientStop Color="#66FF5A00" Offset="0"/>
-                            <GradientStop Color="#26FF5A00" Offset="0.55"/>
-                            <GradientStop Color="#00FF5A00" Offset="1"/>
+                            <GradientStop Color="#66FA991C" Offset="0"/>
+                            <GradientStop Color="#26FA991C" Offset="0.55"/>
+                            <GradientStop Color="#00FA991C" Offset="1"/>
                         </RadialGradientBrush>
                     </Ellipse.Fill>
                 </Ellipse>
@@ -29,18 +29,18 @@
                     <Polygon Points="0,0 4,1.2 10,8 5,6.4" Width="10" Height="8">
                         <Polygon.Fill>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#FFFFB27A" Offset="0"/>
-                                <GradientStop Color="#FFFF7A2E" Offset="0.5"/>
-                                <GradientStop Color="#FFFF5A00" Offset="1"/>
+                                <GradientStop Color="#FFFFD08F" Offset="0"/>
+                                <GradientStop Color="#FFFFB04A" Offset="0.5"/>
+                                <GradientStop Color="#FFFA991C" Offset="1"/>
                             </LinearGradientBrush>
                         </Polygon.Fill>
                     </Polygon>
                     <Polygon Points="10,0 6,1.2 0,8 5,6.4" Width="10" Height="8">
                         <Polygon.Fill>
                             <LinearGradientBrush StartPoint="1,0" EndPoint="0,1">
-                                <GradientStop Color="#FFFFB27A" Offset="0"/>
-                                <GradientStop Color="#FFFF7A2E" Offset="0.5"/>
-                                <GradientStop Color="#FFFF5A00" Offset="1"/>
+                                <GradientStop Color="#FFFFD08F" Offset="0"/>
+                                <GradientStop Color="#FFFFB04A" Offset="0.5"/>
+                                <GradientStop Color="#FFFA991C" Offset="1"/>
                             </LinearGradientBrush>
                         </Polygon.Fill>
                     </Polygon>
@@ -49,9 +49,9 @@
 
             <!-- Música o Enfoque: dos líneas de texto -->
             <StackPanel x:Name="TextContent" Visibility="Collapsed" VerticalAlignment="Center" Margin="22,0,22,0" Spacing="0">
-                <TextBlock x:Name="Line1Text" FontSize="11" FontWeight="SemiBold" Foreground="White"
+                <TextBlock x:Name="Line1Text" FontSize="11" FontWeight="SemiBold" Foreground="#FFFBF3F2"
                            HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" MaxLines="1"/>
-                <TextBlock x:Name="Line2Text" FontSize="10" Foreground="#FFA0A5B2"
+                <TextBlock x:Name="Line2Text" FontSize="10" Foreground="#FFB8CBD3"
                            HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" MaxLines="1"/>
             </StackPanel>
         </Grid>

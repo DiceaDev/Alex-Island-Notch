@@ -19,19 +19,25 @@ public sealed partial class MainWindow : UserControl
     // ==============================================================
     //
     // Una fila por cada hora del horario (Ajustes) y una columna por día, con las
-    // reuniones reales en su bloque y notas libres. "Recuerda" no depende de la
-    // fecha. Se redibuja solo cuando algo cambia o cambia la hora en curso.
+    // reuniones reales en su bloque y notas libres. "Recuerda" es un bloc de texto
+    // que no depende de la fecha. Se redibuja solo cuando algo cambia o cambia la hora.
 
     private const int PlannerHeaderHeight = 118;
     private const int PlannerRowHeight = 26;
     private const int PlannerMenuTextLength = 40;
-    private const string PlannerRemindersKey = "reminders";
+    private const int PlannerNotepadMaxLength = 20000;
+    private static readonly TimeSpan PlannerNotepadSaveDelay = TimeSpan.FromMilliseconds(600);
 
     private readonly PlannerStore _plannerStore = new();
     private PlannerBoard? _planner;
     private DateOnly _plannerWeek = PlannerWeek.CurrentWorkWeek(DateOnly.FromDateTime(DateTime.Today));
 
-    /// <summary>Día (o "Recuerda") donde se está escribiendo una nota nueva, y los bloques que ocupará.</summary>
+    /// <summary>Bloc "Recuerda" y su guardado, que espera a que se deje de escribir.</summary>
+    private Border? _plannerNotepad;
+    private Microsoft.UI.Dispatching.DispatcherQueueTimer? _plannerNotepadSaveTimer;
+    private bool _plannerNotepadDirty;
+
+    /// <summary>Día donde se está escribiendo una nota nueva, y los bloques que ocupará.</summary>
     private string? _plannerEditingDay;
     private int _plannerEditingHour;
     private int _plannerEditingSpan = 1;
@@ -114,7 +120,12 @@ public sealed partial class MainWindow : UserControl
         var hours = PlannerHours.Blocks(start, end);
         var days = PlannerWeek.DaysOf(_plannerWeek);
 
-        PlannerGrid.Children.Clear();
+        // Se quita todo menos el bloc: sacarlo le haría perder el foco a media frase.
+        _plannerNotepad ??= CreatePlannerNotepad();
+        for (var i = PlannerGrid.Children.Count - 1; i >= 0; i--)
+        {
+            if (!ReferenceEquals(PlannerGrid.Children[i], _plannerNotepad)) PlannerGrid.Children.RemoveAt(i);
+        }
         PlannerGrid.RowDefinitions.Clear();
         PlannerGrid.ColumnDefinitions.Clear();
 
@@ -133,7 +144,7 @@ public sealed partial class MainWindow : UserControl
                 Text = days[d].Label,
                 FontSize = 11,
                 FontWeight = FontWeights.SemiBold,
-                Foreground = new SolidColorBrush(days[d].Date == today ? AccentColor : Colors.White),
+                Foreground = new SolidColorBrush(days[d].Date == today ? AccentColor : TextColor),
                 Margin = new Thickness(5, 0, 0, 2),
             };
             Grid.SetColumn(header, d + 1);
@@ -188,10 +199,9 @@ public sealed partial class MainWindow : UserControl
             }
         }
 
-        var reminders = CreatePlannerReminders();
-        Grid.SetColumn(reminders, days.Count + 1);
-        Grid.SetRowSpan(reminders, hours.Count + 1);
-        PlannerGrid.Children.Add(reminders);
+        Grid.SetColumn(_plannerNotepad, days.Count + 1);
+        Grid.SetRowSpan(_plannerNotepad, hours.Count + 1);
+        if (_plannerNotepad.Parent is null) PlannerGrid.Children.Add(_plannerNotepad);
     }
 
     /// <summary>Solo la primera fila puede empezar a media hora.</summary>
@@ -233,7 +243,7 @@ public sealed partial class MainWindow : UserControl
             // Un bloque combinado tiene espacio para más renglones.
             TextWrapping = block.Span > 1 ? TextWrapping.Wrap : TextWrapping.NoWrap,
             MaxLines = (block.Span * 2) - 1,
-            Foreground = isDoneNote ? MutedTextBrush : new SolidColorBrush(ColorHelper.FromArgb(255, 235, 237, 242)),
+            Foreground = isDoneNote ? MutedTextBrush : new SolidColorBrush(ColorHelper.FromArgb(255, 251, 243, 242)),
             TextDecorations = isDoneNote ? Windows.UI.Text.TextDecorations.Strikethrough : Windows.UI.Text.TextDecorations.None,
         });
 
@@ -246,15 +256,15 @@ public sealed partial class MainWindow : UserControl
 
         var isEmpty = meetings.Count == 0 && notes.Count == 0;
         var normalBrush = new SolidColorBrush(meetings.Count > 0
-            ? ColorHelper.FromArgb(70, 66, 165, 245)
+            ? ColorHelper.FromArgb(70, 93, 179, 204)
             : notes.Count > 0
-                ? ColorHelper.FromArgb(255, 40, 42, 51)
-                : ColorHelper.FromArgb(255, 24, 26, 33));
+                ? ColorHelper.FromArgb(255, 17, 64, 89)
+                : ColorHelper.FromArgb(255, 10, 50, 73));
 
         var slot = new Border
         {
             Background = normalBrush,
-            BorderBrush = new SolidColorBrush(isNow ? AccentColor : ColorHelper.FromArgb(18, 255, 255, 255)),
+            BorderBrush = new SolidColorBrush(isNow ? AccentColor : ColorHelper.FromArgb(18, 251, 243, 242)),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(5),
             Padding = new Thickness(5, 0, 4, 0),
@@ -452,113 +462,117 @@ public sealed partial class MainWindow : UserControl
         text.Length <= PlannerMenuTextLength ? text : text[..(PlannerMenuTextLength - 1)].TrimEnd() + "…";
 
     /// <summary>Columna "Recuerda": cosas sin fecha, igual todas las semanas.</summary>
-    private FrameworkElement CreatePlannerReminders()
+    /// <summary>
+    /// Bloc "Recuerda": un solo campo que vive mientras exista la isla. Los redibujados
+    /// del horario no lo tocan, así no se pierde el foco ni el cursor al escribir.
+    /// </summary>
+    private Border CreatePlannerNotepad()
     {
-        var layout = new Grid { RowSpacing = 3 };
+        var normalBorder = new SolidColorBrush(ColorHelper.FromArgb(28, 251, 243, 242));
+        var focusBorder = new SolidColorBrush(AccentColor);
+        var transparent = new SolidColorBrush(Colors.Transparent);
+        var textBrush = new SolidColorBrush(TextColor);
+        var placeholderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 143, 169, 181));
+
+        var layout = new Grid { RowSpacing = 4 };
         layout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         layout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-
-        var header = new Grid();
-        header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        header.Children.Add(new TextBlock
+        layout.Children.Add(new TextBlock
         {
             Text = "Recuerda",
             FontSize = 11,
             FontWeight = FontWeights.SemiBold,
-            Foreground = new SolidColorBrush(Colors.White),
-            VerticalAlignment = VerticalAlignment.Center,
+            Foreground = textBrush,
         });
 
-        var add = IconButton("", ColorHelper.FromArgb(255, 150, 156, 170), "Agregar a Recuerda", () => BeginPlannerNote(PlannerRemindersKey, 0, 1));
-        Grid.SetColumn(add, 1);
-        header.Children.Add(add);
-        layout.Children.Add(header);
-
-        var list = new StackPanel { Spacing = 2 };
-        foreach (var note in _planner!.Reminders) list.Children.Add(CreatePlannerReminder(note));
-        if (_plannerEditingDay == PlannerRemindersKey) list.Children.Add(CreatePlannerInput(PlannerRemindersKey, 0, 1));
-
-        var scroll = new ScrollViewer
+        var input = new TextBox
         {
-            Content = list,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            Text = _planner!.Notepad,
+            PlaceholderText = "Escribe aquí lo que no quieres olvidar",
+            PlaceholderForeground = placeholderBrush,
+            AcceptsReturn = true,
+            TextWrapping = TextWrapping.Wrap,
+            FontSize = 11,
+            MinHeight = 0,
+            MinWidth = 0,
+            MaxLength = PlannerNotepadMaxLength,
+            Padding = new Thickness(0, 0, 6, 0),
+            BorderThickness = new Thickness(0),
+            VerticalContentAlignment = VerticalAlignment.Top,
+            Background = transparent,
+            Foreground = textBrush,
         };
-        Grid.SetRow(scroll, 1);
-        layout.Children.Add(scroll);
+        ScrollViewer.SetVerticalScrollBarVisibility(input, ScrollBarVisibility.Auto);
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(input, "Recuerda");
 
-        return new Border
+        // El borde lo dibuja el contenedor; el campo no cambia de fondo al enfocarlo.
+        input.Resources["TextControlBackgroundFocused"] = transparent;
+        input.Resources["TextControlBackgroundPointerOver"] = transparent;
+        input.Resources["TextControlForegroundFocused"] = textBrush;
+        input.Resources["TextControlForegroundPointerOver"] = textBrush;
+        input.Resources["TextControlBorderBrushFocused"] = transparent;
+        input.Resources["TextControlBorderBrushPointerOver"] = transparent;
+        input.Resources["TextControlBorderThemeThicknessFocused"] = new Thickness(0);
+        Grid.SetRow(input, 1);
+        layout.Children.Add(input);
+
+        var panel = new Border
         {
-            Background = new SolidColorBrush(ColorHelper.FromArgb(255, 24, 26, 33)),
-            BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(28, 255, 255, 255)),
+            Background = new SolidColorBrush(ColorHelper.FromArgb(255, 10, 50, 73)),
+            BorderBrush = normalBorder,
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(10),
-            Padding = new Thickness(8, 4, 3, 6),
+            Padding = new Thickness(8, 6, 4, 6),
             Margin = new Thickness(5, 0, 0, 0),
             Child = layout,
         };
+
+        var saveTimer = DispatcherQueue.CreateTimer();
+        saveTimer.Interval = PlannerNotepadSaveDelay;
+        saveTimer.IsRepeating = false;
+        saveTimer.Tick += (_, _) => SavePlannerNotepad();
+        _plannerNotepadSaveTimer = saveTimer;
+
+        input.Tapped += (_, e) => e.Handled = true;
+        input.GotFocus += (_, _) => panel.BorderBrush = focusBorder;
+        input.LostFocus += (_, _) =>
+        {
+            panel.BorderBrush = normalBorder;
+            saveTimer.Stop();
+            SavePlannerNotepad();
+        };
+        input.TextChanged += (_, _) =>
+        {
+            if (_planner?.SetNotepad(input.Text) != true) return;
+            _plannerNotepadDirty = true;
+            saveTimer.Stop();
+            saveTimer.Start();
+        };
+
+        return panel;
     }
 
-    private FrameworkElement CreatePlannerReminder(PlannerNote note)
+    private void SavePlannerNotepad()
     {
-        var row = new Grid { ColumnSpacing = 4 };
-        row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        if (!_plannerNotepadDirty) return;
+        _plannerNotepadDirty = false;
+        SavePlanner();
+    }
 
-        var check = new Button
+    /// <summary>Al cerrar la isla se guarda de inmediato lo último que se escribió.</summary>
+    private void FlushPlannerNotepad()
+    {
+        _plannerNotepadSaveTimer?.Stop();
+        if (!_plannerNotepadDirty || _planner is null) return;
+        _plannerNotepadDirty = false;
+        try
         {
-            Width = 16,
-            Height = 16,
-            Padding = new Thickness(0),
-            CornerRadius = new CornerRadius(8),
-            BorderThickness = new Thickness(1),
-            BorderBrush = new SolidColorBrush(note.Done ? AccentColor : ColorHelper.FromArgb(120, 255, 255, 255)),
-            Background = new SolidColorBrush(note.Done ? AccentColor : Colors.Transparent),
-            VerticalAlignment = VerticalAlignment.Top,
-            Margin = new Thickness(0, 2, 0, 0),
-        };
-        if (note.Done)
-        {
-            check.Content = new FontIcon { Glyph = "", FontSize = 9, Foreground = new SolidColorBrush(Colors.White) };
-            ApplyAccentButtonStates(check);
+            _plannerStore.SaveNow(_planner);
         }
-        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(check, note.Done ? "Desmarcar nota" : "Marcar nota como hecha");
-        check.Click += (_, _) =>
+        catch (Exception ex)
         {
-            if (_planner?.Toggle(note.Id) != true) return;
-            SavePlanner();
-            RenderPlanner();
-        };
-        row.Children.Add(check);
-
-        var text = new TextBlock
-        {
-            Text = note.Text,
-            FontSize = 10.5,
-            TextWrapping = TextWrapping.Wrap,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-            MaxLines = 3,
-            Foreground = note.Done ? MutedTextBrush : new SolidColorBrush(ColorHelper.FromArgb(255, 235, 237, 242)),
-            TextDecorations = note.Done ? Windows.UI.Text.TextDecorations.Strikethrough : Windows.UI.Text.TextDecorations.None,
-        };
-        Grid.SetColumn(text, 1);
-        row.Children.Add(text);
-
-        var remove = IconButton("", ColorHelper.FromArgb(150, 150, 156, 170), "Borrar nota", () =>
-        {
-            if (_planner?.Remove(note.Id) != true) return;
-            SavePlanner();
-            RenderPlanner();
-        });
-        remove.Width = 20;
-        remove.Height = 20;
-        remove.VerticalAlignment = VerticalAlignment.Top;
-        Grid.SetColumn(remove, 2);
-        row.Children.Add(remove);
-
-        return row;
+            App.Log("Planner: no se pudo guardar el bloc al cerrar.", ex);
+        }
     }
 
     private FrameworkElement CreatePlannerInput(string key, int hour, int span)
@@ -574,7 +588,7 @@ public sealed partial class MainWindow : UserControl
             VerticalContentAlignment = VerticalAlignment.Center,
             MaxLength = 120,
             Background = new SolidColorBrush(Colors.Transparent),
-            Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 240, 242, 245)),
+            Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 251, 243, 242)),
         };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(input, "Nueva nota");
 
@@ -582,7 +596,7 @@ public sealed partial class MainWindow : UserControl
         // y se recortaba en una fila tan baja. Fondo oscuro también al escribir.
         input.Resources["TextControlBackgroundFocused"] = new SolidColorBrush(Colors.Transparent);
         input.Resources["TextControlBackgroundPointerOver"] = new SolidColorBrush(Colors.Transparent);
-        input.Resources["TextControlForegroundFocused"] = new SolidColorBrush(ColorHelper.FromArgb(255, 240, 242, 245));
+        input.Resources["TextControlForegroundFocused"] = new SolidColorBrush(ColorHelper.FromArgb(255, 251, 243, 242));
         input.Resources["TextControlBorderBrushFocused"] = new SolidColorBrush(Colors.Transparent);
         input.Resources["TextControlBorderThemeThicknessFocused"] = new Thickness(0);
 
@@ -594,8 +608,7 @@ public sealed partial class MainWindow : UserControl
             {
                 e.Handled = true;
                 CommitPlannerInput(key, hour, span, input.Text);
-                // En "Recuerda" se puede seguir anotando; en un bloque, ya se ve la nota.
-                if (key != PlannerRemindersKey) EndPlannerEditing();
+                EndPlannerEditing();
                 RenderPlanner();
             }
             else if (e.Key == VirtualKey.Escape)
@@ -626,7 +639,7 @@ public sealed partial class MainWindow : UserControl
             CornerRadius = new CornerRadius(5),
             BorderThickness = new Thickness(1),
             BorderBrush = new SolidColorBrush(AccentColor),
-            Background = new SolidColorBrush(ColorHelper.FromArgb(255, 28, 29, 34)),
+            Background = new SolidColorBrush(ColorHelper.FromArgb(255, 10, 50, 73)),
             Child = input,
         };
     }
@@ -635,7 +648,7 @@ public sealed partial class MainWindow : UserControl
     {
         if (_planner is null) return;
 
-        var note = key == PlannerRemindersKey ? _planner.AddReminder(text) : _planner.AddNote(key, text, hour, span);
+        var note = _planner.AddNote(key, text, hour, span);
         if (note is not null) SavePlanner();
     }
 }

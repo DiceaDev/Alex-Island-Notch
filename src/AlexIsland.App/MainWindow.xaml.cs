@@ -73,27 +73,33 @@ public sealed partial class MainWindow : UserControl
     // Más ancha para que las seis pestañas muestren su nombre y Inicio tenga dos columnas.
     private const int ExpandedWidth = 610;
     private const int ExpandedHeight = 162;
-    private const int ExpandedBacklogHeight = 196;
+    private const int ExpandedBacklogHeight = 202;
     private const int ExpandedCalendarHeight = 234;
     private const int ExpandedPomodoroHeight = 214;
     private const int ExpandedSystemHeight = 158;
 
-    /// <summary>Naranja de Alex Island (#FF5A00), color de acento de toda la isla.</summary>
-    private static readonly Windows.UI.Color AccentColor = ColorHelper.FromArgb(255, 255, 90, 0);
+    /// <summary>Naranja de Alex Island (#FA991C), color de acento de toda la isla.</summary>
+    private static readonly Windows.UI.Color AccentColor = ColorHelper.FromArgb(255, 250, 153, 28);
 
     /// <summary>El color de acento con otra opacidad (fondos suaves, bordes).</summary>
-    private static Windows.UI.Color Accent(byte alpha) => ColorHelper.FromArgb(alpha, 255, 90, 0);
+    /// <summary>Texto principal de la isla.</summary>
+    private static readonly Windows.UI.Color TextColor = ColorHelper.FromArgb(255, 251, 243, 242);
+
+    /// <summary>Texto sobre el acento: el blanco casi no se lee sobre este naranja.</summary>
+    private static readonly Windows.UI.Color OnAccentColor = ColorHelper.FromArgb(255, 3, 37, 57);
+
+    private static Windows.UI.Color Accent(byte alpha) => ColorHelper.FromArgb(alpha, 250, 153, 28);
 
     /// <summary>
-    /// Botón naranja creado en código: texto blanco y se mantiene naranja (más
+    /// Botón naranja creado en código: texto azul marino y se mantiene naranja (más
     /// claro u oscuro) al pasar el cursor o presionarlo, en vez del gris del tema.
     /// </summary>
     private static void ApplyAccentButtonStates(Button button)
     {
-        button.Resources["ButtonBackgroundPointerOver"] = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 122, 51));
-        button.Resources["ButtonBackgroundPressed"] = new SolidColorBrush(ColorHelper.FromArgb(255, 217, 77, 0));
-        button.Resources["ButtonForegroundPointerOver"] = new SolidColorBrush(Colors.White);
-        button.Resources["ButtonForegroundPressed"] = new SolidColorBrush(Colors.White);
+        button.Resources["ButtonBackgroundPointerOver"] = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 176, 74));
+        button.Resources["ButtonBackgroundPressed"] = new SolidColorBrush(ColorHelper.FromArgb(255, 217, 130, 15));
+        button.Resources["ButtonForegroundPointerOver"] = new SolidColorBrush(OnAccentColor);
+        button.Resources["ButtonForegroundPressed"] = new SolidColorBrush(OnAccentColor);
     }
 
     /// <summary>Espacio transparente a los lados y debajo del notch para su sombra difuminada.</summary>
@@ -338,9 +344,14 @@ public sealed partial class MainWindow : UserControl
     /// <summary>Muestra la isla en pantalla (sin quitarle el foco a la app activa).</summary>
     public void Show() => _host.Show();
 
+    /// <summary>Resumen para el registro de errores; no incluye contenido del usuario.</summary>
+    internal string DescribeStateForLog() =>
+        $"pestaña {_activeTab}, modo {_currentDisplayMode}, expandida {_isExpanded}, sincronizando Outlook {_outlookSyncRunning}";
+
     private void OnHostClosed()
     {
         _isDisposed = true;
+        FlushPlannerNotepad();
         _collapseTimer.Stop();
         _clockTimer.Stop();
         _timelineTimer.Stop();
@@ -363,6 +374,7 @@ public sealed partial class MainWindow : UserControl
         StopNotifications();
         StopOutlookSync();
         CloseSatellites();
+        CloseTopBands();
         StopLyrics();
     }
 
@@ -387,6 +399,7 @@ public sealed partial class MainWindow : UserControl
         ApplyNotificationSettings();
         ApplyOutlookSyncSettings();
         ApplyMonitorSettings();
+        ReconcileTopBands();
         if (_activeTab == IslandTab.Planner && _isExpanded) RenderPlanner();
 
         // Si se activaron las letras con una canción sonando, se piden ahora.
@@ -806,22 +819,22 @@ public sealed partial class MainWindow : UserControl
     {
         _activeTab = tab;
 
-        var inactiveBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 142, 146, 156));
-        var activeBackground = new SolidColorBrush(ColorHelper.FromArgb(255, 44, 45, 51));
+        var inactiveBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 143, 169, 181));
+        var activeBackground = new SolidColorBrush(ColorHelper.FromArgb(255, 28, 118, 143));
 
         // Todas las pestañas muestran ícono y nombre; la activa va en una píldora
-        // gris y en blanco. El naranja queda para lo que pide atención.
+        // turquesa. El naranja queda para lo que pide atención.
         foreach (var (id, button, label, view) in GetTabs())
         {
             var isActive = id == tab;
             button.Background = isActive ? activeBackground : new SolidColorBrush(Colors.Transparent);
-            label.Foreground = isActive ? new SolidColorBrush(Colors.White) : inactiveBrush;
+            label.Foreground = isActive ? new SolidColorBrush(TextColor) : inactiveBrush;
             view.Visibility = isActive ? Visibility.Visible : Visibility.Collapsed;
         }
 
         foreach (var (id, icon) in GetTabIcons())
         {
-            icon.Foreground = id == tab ? new SolidColorBrush(Colors.White) : inactiveBrush;
+            icon.Foreground = id == tab ? new SolidColorBrush(TextColor) : inactiveBrush;
         }
 
         RefreshTabBadges();

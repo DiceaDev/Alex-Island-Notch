@@ -218,22 +218,17 @@ public class PlannerBoardTests
         var board = new PlannerBoard();
 
         Assert.Null(board.AddNote(Monday, text));
-        Assert.Null(board.AddReminder(text));
         Assert.Empty(board.Days);
-        Assert.Empty(board.Reminders);
     }
 
     [Fact]
-    public void Toggles_notes_in_days_and_reminders()
+    public void Toggles_notes()
     {
         var board = new PlannerBoard();
         var day = board.AddNote(Monday, "Informe")!;
-        var reminder = board.AddReminder("Renovar licencia")!;
 
         Assert.True(board.Toggle(day.Id));
-        Assert.True(board.Toggle(reminder.Id));
         Assert.True(day.Done);
-        Assert.True(reminder.Done);
 
         board.Toggle(day.Id);
         Assert.False(day.Done);
@@ -260,13 +255,13 @@ public class PlannerBoardTests
     {
         var board = new PlannerBoard();
         board.AddNote(Monday, "Informe", hour: 15)!.Done = true;
-        board.AddReminder("Renovar licencia");
+        board.SetNotepad("Renovar licencia\nLlamar a soporte");
 
         var loaded = JsonSerializer.Deserialize<PlannerBoard>(JsonSerializer.Serialize(board))!.Normalize();
 
         Assert.True(loaded.NotesOf(Monday)[0].Done);
         Assert.Equal(15, loaded.NotesOf(Monday)[0].Hour);
-        Assert.Equal("Renovar licencia", loaded.Reminders[0].Text);
+        Assert.Equal("Renovar licencia\nLlamar a soporte", loaded.Notepad);
     }
 
     [Fact]
@@ -276,5 +271,49 @@ public class PlannerBoardTests
 
         Assert.Empty(loaded.Days);
         Assert.Empty(loaded.Reminders);
+        Assert.Equal(string.Empty, loaded.Notepad);
+    }
+
+    [Fact]
+    public void Old_reminders_move_to_the_notepad_without_losing_anything()
+    {
+        var loaded = JsonSerializer.Deserialize<PlannerBoard>(
+            """{"reminders":[{"id":"a","text":"nuevas aperturas para Alvi"},{"id":"b","text":"Pagar licencia","done":true}]}""")!.Normalize();
+
+        Assert.Equal("nuevas aperturas para Alvi\n✓ Pagar licencia", loaded.Notepad);
+        Assert.Empty(loaded.Reminders);
+
+        loaded.Normalize(); // cargar de nuevo no las duplica
+        Assert.Equal("nuevas aperturas para Alvi\n✓ Pagar licencia", loaded.Notepad);
+    }
+
+    [Fact]
+    public void Old_reminders_are_added_after_the_existing_notepad_text()
+    {
+        var loaded = JsonSerializer.Deserialize<PlannerBoard>(
+            """{"notepad":"Ya escrito","reminders":[{"id":"a","text":"Antigua"}]}""")!.Normalize();
+
+        Assert.Equal("Ya escrito\nAntigua", loaded.Notepad);
+    }
+
+    [Fact]
+    public void Notepad_keeps_long_text_and_line_breaks()
+    {
+        var board = new PlannerBoard();
+        var longLine = new string('x', 5000);
+
+        Assert.True(board.SetNotepad($"Uno\rDos\r\n\r\n  {longLine}"));
+        Assert.Equal($"Uno\nDos\n\n  {longLine}", board.Notepad);
+    }
+
+    [Fact]
+    public void Notepad_reports_when_nothing_changed()
+    {
+        var board = new PlannerBoard();
+        board.SetNotepad("Uno\nDos");
+
+        Assert.False(board.SetNotepad("Uno\rDos")); // el TextBox devuelve \r: es el mismo texto
+        Assert.True(board.SetNotepad(null));
+        Assert.Equal(string.Empty, board.Notepad);
     }
 }

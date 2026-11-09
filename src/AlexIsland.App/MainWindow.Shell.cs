@@ -129,7 +129,7 @@ public sealed partial class MainWindow : UserControl
                 else
                 {
                     ShowHardwarePeek(HardwarePeekType.Custom, "Inicio automático", "No se pudo cambiar", percent01: 0,
-                        accentColor: Microsoft.UI.ColorHelper.FromArgb(255, 239, 83, 80));
+                        accentColor: Microsoft.UI.ColorHelper.FromArgb(255, 255, 127, 120));
                 }
                 break;
 
@@ -233,6 +233,7 @@ public sealed partial class MainWindow : UserControl
         var visible = !_isHiddenByUser && !_isHiddenForFullscreen;
         NativeMethods.SetIslandVisible(_hwnd, visible);
         UpdateSatelliteVisibility();
+        ReconcileTopBands();
 
         if (visible)
         {

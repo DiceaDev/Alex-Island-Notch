@@ -243,16 +243,16 @@ public sealed partial class MainWindow : UserControl
 
         var (iconGlyph, defaultRightGlyph, defaultColor) = type switch
         {
-            HardwarePeekType.Headphones => ("\uE702", "\uE7F6", ColorHelper.FromArgb(255, 66, 165, 245)),
-            HardwarePeekType.Charging => ("\uE945", "\uE83E", ColorHelper.FromArgb(255, 0, 230, 118)),
-            HardwarePeekType.Battery => ("\uE850", "\uE7BA", ColorHelper.FromArgb(255, 255, 167, 38)),
-            HardwarePeekType.CapsLock => ("\uE765", "\uE72E", ColorHelper.FromArgb(255, 171, 71, 188)),
+            HardwarePeekType.Headphones => ("\uE702", "\uE7F6", ColorHelper.FromArgb(255, 93, 179, 204)),
+            HardwarePeekType.Charging => ("\uE945", "\uE83E", ColorHelper.FromArgb(255, 79, 209, 165)),
+            HardwarePeekType.Battery => ("\uE850", "\uE7BA", ColorHelper.FromArgb(255, 255, 194, 92)),
+            HardwarePeekType.CapsLock => ("\uE765", "\uE72E", ColorHelper.FromArgb(255, 196, 143, 214)),
             HardwarePeekType.Notification => ("\uEA8F", "\uE8BD", AccentColor),
-            HardwarePeekType.Network => ("\uE774", "\uE701", ColorHelper.FromArgb(255, 0, 230, 118)),
-            HardwarePeekType.Volume => ("\uE767", "\uE995", ColorHelper.FromArgb(255, 66, 165, 245)),
-            HardwarePeekType.Brightness => ("\uE706", "\uE706", ColorHelper.FromArgb(255, 255, 202, 40)),
-            HardwarePeekType.KeyboardLayout => ("\uE765", "\uE774", ColorHelper.FromArgb(255, 38, 166, 154)),
-            _ => ("\uE702", "\uE7F6", ColorHelper.FromArgb(255, 66, 165, 245))
+            HardwarePeekType.Network => ("\uE774", "\uE701", ColorHelper.FromArgb(255, 79, 209, 165)),
+            HardwarePeekType.Volume => ("\uE767", "\uE995", ColorHelper.FromArgb(255, 93, 179, 204)),
+            HardwarePeekType.Brightness => ("\uE706", "\uE706", ColorHelper.FromArgb(255, 255, 214, 102)),
+            HardwarePeekType.KeyboardLayout => ("\uE765", "\uE774", ColorHelper.FromArgb(255, 69, 196, 176)),
+            _ => ("\uE702", "\uE7F6", ColorHelper.FromArgb(255, 93, 179, 204))
         };
 
         var color = accentColor ?? defaultColor;
@@ -416,7 +416,7 @@ public sealed partial class MainWindow : UserControl
             var isBreak = _pomodoroMode != PomodoroMode.Work;
             CompactFocusTitle.Text = isBreak ? "Pausa de Descanso" : "Enfoque Activo";
             CompactFocusTitle.Foreground = new SolidColorBrush(isBreak
-                ? ColorHelper.FromArgb(255, 0, 230, 118) // verde: pausa (semántico)
+                ? ColorHelper.FromArgb(255, 79, 209, 165) // verde: pausa (semántico)
                 : AccentColor);
             CompactFocusTime.Text = $"{_pomodoroRemaining:mm\\:ss}";
             return;

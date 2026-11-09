@@ -67,7 +67,8 @@ public sealed partial class MainWindow : UserControl
 
         _homeMeetingUrl = MeetingUrlPolicy.Sanitize(meeting.MeetingUrl);
         HomeJoinButton.Visibility = _homeMeetingUrl is null ? Visibility.Collapsed : Visibility.Visible;
-        HomeJoinButton.Background = new SolidColorBrush(isJoinTime ? AccentColor : ColorHelper.FromArgb(255, 30, 31, 36));
+        HomeJoinButton.Background = new SolidColorBrush(isJoinTime ? AccentColor : ColorHelper.FromArgb(255, 10, 50, 73));
+        HomeJoinButton.Foreground = new SolidColorBrush(isJoinTime ? OnAccentColor : TextColor);
         if (isJoinTime)
         {
             ApplyAccentButtonStates(HomeJoinButton);

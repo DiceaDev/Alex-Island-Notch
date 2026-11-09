@@ -152,12 +152,17 @@ public static class PlannerHours
     }
 }
 
-/// <summary>Notas por día y la lista "Recuerda", que no depende de la fecha.</summary>
+/// <summary>Notas por día y el bloc "Recuerda", que no depende de la fecha.</summary>
 public sealed class PlannerBoard
 {
     [JsonPropertyName("days")]
     public Dictionary<string, List<PlannerNote>> Days { get; set; } = [];
 
+    /// <summary>Texto libre del bloc "Recuerda", con saltos de línea \n.</summary>
+    [JsonPropertyName("notepad")]
+    public string Notepad { get; set; } = string.Empty;
+
+    /// <summary>Lista "Recuerda" de versiones anteriores: <see cref="Normalize"/> la pasa al bloc.</summary>
     [JsonPropertyName("reminders")]
     public List<PlannerNote> Reminders { get; set; } = [];
 
@@ -181,12 +186,13 @@ public sealed class PlannerBoard
         return note;
     }
 
-    /// <summary>Agrega una nota a "Recuerda"; devuelve null si el texto está vacío.</summary>
-    public PlannerNote? AddReminder(string? text)
+    /// <summary>Cambia el texto del bloc; devuelve false si quedó igual (no hace falta guardar).</summary>
+    public bool SetNotepad(string? text)
     {
-        var note = Create(text);
-        if (note is not null) Reminders.Add(note);
-        return note;
+        var clean = (text ?? string.Empty).Replace("\r\n", "\n").Replace('\r', '\n');
+        if (clean == Notepad) return false;
+        Notepad = clean;
+        return true;
     }
 
     /// <summary>Cambia cuántos bloques ocupa una nota (combinar o separar).</summary>
@@ -198,7 +204,7 @@ public sealed class PlannerBoard
         return true;
     }
 
-    /// <summary>Marca o desmarca una nota, esté en un día o en "Recuerda".</summary>
+    /// <summary>Marca o desmarca una nota del horario.</summary>
     public bool Toggle(string id)
     {
         var note = AllNotes().FirstOrDefault(n => n.Id == id);
@@ -210,8 +216,6 @@ public sealed class PlannerBoard
     /// <summary>Borra una nota; los días que quedan vacíos se quitan para no acumular datos.</summary>
     public bool Remove(string id)
     {
-        if (Reminders.RemoveAll(n => n.Id == id) > 0) return true;
-
         foreach (var (key, notes) in Days)
         {
             if (notes.RemoveAll(n => n.Id == id) == 0) continue;
@@ -226,14 +230,30 @@ public sealed class PlannerBoard
     {
         Days ??= [];
         Reminders ??= [];
+        Notepad ??= string.Empty;
         foreach (var key in Days.Keys.ToList())
         {
             if (Days[key] is null) Days.Remove(key);
         }
+        MoveRemindersToNotepad();
         return this;
     }
 
-    private IEnumerable<PlannerNote> AllNotes() => Reminders.Concat(Days.Values.SelectMany(n => n));
+    /// <summary>Pasa la lista antigua al bloc, una línea por nota, para que nada se pierda al actualizar.</summary>
+    private void MoveRemindersToNotepad()
+    {
+        var lines = Reminders
+            .Where(n => n is not null && !string.IsNullOrWhiteSpace(n.Text))
+            .Select(n => n.Done ? $"✓ {n.Text}" : n.Text)
+            .ToList();
+        Reminders.Clear();
+        if (lines.Count == 0) return;
+
+        var moved = string.Join('\n', lines);
+        Notepad = Notepad.Length == 0 ? moved : $"{Notepad}\n{moved}";
+    }
+
+    private IEnumerable<PlannerNote> AllNotes() => Days.Values.SelectMany(n => n);
 
     private static PlannerNote? Create(string? text)
     {

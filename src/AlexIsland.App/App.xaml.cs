@@ -19,6 +19,8 @@ public partial class App : Application
     {
         InitializeComponent();
         UnhandledException += App_UnhandledException;
+        // Al salir, Windows debe recuperar el espacio reservado arriba de la pantalla.
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => AlexIsland.App.Native.TopBandWindow.ReleaseAll();
 
         // La isla vive en una ventana propia (no es una Window de WinUI). Sin esto,
         // la app se cerraría al cerrar la última Window, por ejemplo la de Ajustes.
@@ -48,7 +50,20 @@ public partial class App : Application
 
     private void App_UnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
     {
-        WriteLog("Excepción no controlada de WinUI:", e.Exception);
+        // Un error de la interfaz no debe cerrar la isla: los datos se guardan aparte
+        // de forma atómica, y lo ocurrido queda en el registro para poder corregirlo.
+        e.Handled = true;
+
+        string state;
+        try
+        {
+            state = _mainWindow?.DescribeStateForLog() ?? "sin ventana";
+        }
+        catch (Exception ex)
+        {
+            state = $"estado no disponible ({ex.GetType().Name})";
+        }
+        WriteLog($"Excepción no controlada de WinUI; la isla sigue abierta. Estado: {state}.", e.Exception);
     }
 
     /// <summary>Registro de diagnóstico en %LocalAppData%\AlexIsland\logs\startup.log.</summary>

@@ -96,6 +96,33 @@ internal static class NativeMethods
         }
     }
 
+    [DllImport("shcore.dll")]
+    private static extern int GetDpiForMonitor(nint monitor, int dpiType, out uint dpiX, out uint dpiY);
+
+    /// <summary>Factor de escala de un monitor (1.0 = 96 DPI).</summary>
+    internal static double GetMonitorDpiScale(nint monitor)
+    {
+        try
+        {
+            return GetDpiForMonitor(monitor, 0 /* MDT_EFFECTIVE_DPI */, out var dpi, out _) == 0 && dpi > 0 ? dpi / 96.0 : 1.0;
+        }
+        catch
+        {
+            return 1.0;
+        }
+    }
+
+    [DllImport("user32.dll", EntryPoint = "SetWindowPos")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetWindowPosRaw(nint hwnd, nint insertAfter, int x, int y, int cx, int cy, uint flags);
+
+    /// <summary>Pone la ventana encima de las demás "siempre visibles", sin moverla ni activarla.</summary>
+    internal static void BringToTopmostFront(nint hwnd)
+    {
+        const uint SwpNoSize = 0x0001, SwpNoMove = 0x0002, SwpNoActivate = 0x0010;
+        if (hwnd != 0) SetWindowPosRaw(hwnd, -1 /* HWND_TOPMOST */, 0, 0, 0, 0, SwpNoSize | SwpNoMove | SwpNoActivate);
+    }
+
     // ------------------------------------------------------------ Mostrar / ocultar
 
     [DllImport("user32.dll")]

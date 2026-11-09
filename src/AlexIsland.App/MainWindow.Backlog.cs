@@ -66,7 +66,7 @@ public sealed partial class MainWindow : UserControl
             {
                 Text = "⚡ Sin tareas en el backlog. ¡Escribe una arriba!",
                 FontSize = 10,
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(160, 133, 138, 150)),
+                Foreground = new SolidColorBrush(ColorHelper.FromArgb(160, 143, 169, 181)),
                 HorizontalAlignment = HorizontalAlignment.Center,
                 Margin = new Thickness(0, 18, 0, 0)
             };
@@ -81,10 +81,10 @@ public sealed partial class MainWindow : UserControl
         {
             var itemContainer = new Border
             {
-                Background = new SolidColorBrush(ColorHelper.FromArgb(200, 26, 28, 35)),
+                Background = new SolidColorBrush(ColorHelper.FromArgb(200, 10, 50, 73)),
                 CornerRadius = new CornerRadius(5),
                 Padding = new Thickness(6, 4, 6, 4),
-                BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(35, 255, 255, 255)),
+                BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(35, 251, 243, 242)),
                 BorderThickness = new Thickness(1)
             };
 
@@ -119,8 +119,8 @@ public sealed partial class MainWindow : UserControl
             }
             else
             {
-                checkBtn.Background = new SolidColorBrush(ColorHelper.FromArgb(255, 23, 25, 32));
-                checkBtn.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 60, 65, 80));
+                checkBtn.Background = new SolidColorBrush(ColorHelper.FromArgb(255, 10, 50, 73));
+                checkBtn.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 31, 86, 112));
                 checkBtn.Content = null;
             }
 
@@ -161,8 +161,8 @@ public sealed partial class MainWindow : UserControl
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 MaxLines = 1,
                 Foreground = task.IsCompleted
-                    ? new SolidColorBrush(ColorHelper.FromArgb(140, 133, 138, 150))
-                    : new SolidColorBrush(ColorHelper.FromArgb(255, 245, 245, 247))
+                    ? new SolidColorBrush(ColorHelper.FromArgb(140, 143, 169, 181))
+                    : new SolidColorBrush(ColorHelper.FromArgb(255, 251, 243, 242))
             };
 
             if (task.IsCompleted)
@@ -187,7 +187,7 @@ public sealed partial class MainWindow : UserControl
                 {
                     Glyph = "\uE711",
                     FontSize = 10,
-                    Foreground = new SolidColorBrush(ColorHelper.FromArgb(140, 133, 138, 150))
+                    Foreground = new SolidColorBrush(ColorHelper.FromArgb(140, 143, 169, 181))
                 }
             };
             deleteBtn.Click += (_, _) =>
@@ -209,20 +209,20 @@ public sealed partial class MainWindow : UserControl
         return category switch
         {
             "FEAT" => (
-                new SolidColorBrush(ColorHelper.FromArgb(40, 33, 150, 243)),
-                new SolidColorBrush(ColorHelper.FromArgb(255, 66, 165, 245))),
+                new SolidColorBrush(ColorHelper.FromArgb(40, 93, 179, 204)),
+                new SolidColorBrush(ColorHelper.FromArgb(255, 93, 179, 204))),
             "FIX" => (
-                new SolidColorBrush(ColorHelper.FromArgb(40, 239, 83, 80)),
-                new SolidColorBrush(ColorHelper.FromArgb(255, 239, 83, 80))),
+                new SolidColorBrush(ColorHelper.FromArgb(40, 255, 127, 120)),
+                new SolidColorBrush(ColorHelper.FromArgb(255, 255, 127, 120))),
             "REFACTOR" => (
-                new SolidColorBrush(ColorHelper.FromArgb(40, 255, 167, 38)),
-                new SolidColorBrush(ColorHelper.FromArgb(255, 255, 167, 38))),
+                new SolidColorBrush(ColorHelper.FromArgb(40, 255, 194, 92)),
+                new SolidColorBrush(ColorHelper.FromArgb(255, 255, 194, 92))),
             "DOCS" => (
-                new SolidColorBrush(ColorHelper.FromArgb(40, 171, 71, 188)),
-                new SolidColorBrush(ColorHelper.FromArgb(255, 171, 71, 188))),
+                new SolidColorBrush(ColorHelper.FromArgb(40, 196, 143, 214)),
+                new SolidColorBrush(ColorHelper.FromArgb(255, 196, 143, 214))),
             _ => (
-                new SolidColorBrush(ColorHelper.FromArgb(40, 38, 166, 154)),
-                new SolidColorBrush(ColorHelper.FromArgb(255, 38, 166, 154)))
+                new SolidColorBrush(ColorHelper.FromArgb(40, 69, 196, 176)),
+                new SolidColorBrush(ColorHelper.FromArgb(255, 69, 196, 176)))
         };
     }
 
@@ -240,7 +240,7 @@ public sealed partial class MainWindow : UserControl
         NewTaskInputBorder.BorderBrush = new SolidColorBrush(AccentColor);
 
     private void NewTaskInput_LostFocus(object sender, RoutedEventArgs e) =>
-        NewTaskInputBorder.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 47, 51, 66));
+        NewTaskInputBorder.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 31, 86, 112));
 
     private void NewTaskInput_KeyDown(object sender, KeyRoutedEventArgs e)
     {

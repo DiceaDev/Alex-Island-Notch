@@ -14,6 +14,8 @@ public sealed class IslandSettings
     public double NotchScale { get; set; } = 1.0;
     /// <summary>Un notch en cada monitor; la isla completa va al monitor del cursor.</summary>
     public bool ShowOnAllMonitors { get; set; } = true;
+    /// <summary>Reserva arriba una franja del alto del notch: las ventanas maximizadas empiezan debajo.</summary>
+    public bool ReserveTopBand { get; set; } = true;
 
     // Avisos (peeks)
     public bool ShowNetworkPeeks { get; set; } = true;

@@ -64,18 +64,18 @@ public sealed partial class MainWindow : UserControl
 
     private void UpdatePomodoroModeVisuals()
     {
-        PomoModeWorkBtn.Background = new SolidColorBrush(_pomodoroMode == PomodoroMode.Work ? ColorHelper.FromArgb(255, 42, 45, 55) : Colors.Transparent);
-        PomoModeWorkLabel.Foreground = new SolidColorBrush(_pomodoroMode == PomodoroMode.Work ? Colors.White : ColorHelper.FromArgb(255, 160, 165, 178));
+        PomoModeWorkBtn.Background = new SolidColorBrush(_pomodoroMode == PomodoroMode.Work ? ColorHelper.FromArgb(255, 28, 118, 143) : Colors.Transparent);
+        PomoModeWorkLabel.Foreground = new SolidColorBrush(_pomodoroMode == PomodoroMode.Work ? TextColor : ColorHelper.FromArgb(255, 184, 203, 211));
 
-        PomoModeShortBtn.Background = new SolidColorBrush(_pomodoroMode == PomodoroMode.ShortBreak ? ColorHelper.FromArgb(255, 42, 45, 55) : Colors.Transparent);
-        PomoModeShortLabel.Foreground = new SolidColorBrush(_pomodoroMode == PomodoroMode.ShortBreak ? Colors.White : ColorHelper.FromArgb(255, 160, 165, 178));
+        PomoModeShortBtn.Background = new SolidColorBrush(_pomodoroMode == PomodoroMode.ShortBreak ? ColorHelper.FromArgb(255, 28, 118, 143) : Colors.Transparent);
+        PomoModeShortLabel.Foreground = new SolidColorBrush(_pomodoroMode == PomodoroMode.ShortBreak ? TextColor : ColorHelper.FromArgb(255, 184, 203, 211));
 
-        PomoModeLongBtn.Background = new SolidColorBrush(_pomodoroMode == PomodoroMode.LongBreak ? ColorHelper.FromArgb(255, 42, 45, 55) : Colors.Transparent);
-        PomoModeLongLabel.Foreground = new SolidColorBrush(_pomodoroMode == PomodoroMode.LongBreak ? Colors.White : ColorHelper.FromArgb(255, 160, 165, 178));
+        PomoModeLongBtn.Background = new SolidColorBrush(_pomodoroMode == PomodoroMode.LongBreak ? ColorHelper.FromArgb(255, 28, 118, 143) : Colors.Transparent);
+        PomoModeLongLabel.Foreground = new SolidColorBrush(_pomodoroMode == PomodoroMode.LongBreak ? TextColor : ColorHelper.FromArgb(255, 184, 203, 211));
 
         var accentColor = _pomodoroMode == PomodoroMode.Work
             ? AccentColor // trabajo: naranja de la marca
-            : ColorHelper.FromArgb(255, 0, 230, 118); // pausa: verde (semántico)
+            : ColorHelper.FromArgb(255, 79, 209, 165); // pausa: verde (semántico)
 
         PomoPlayPauseBtn.Background = new SolidColorBrush(accentColor);
         PomodoroProgressBar.Background = new SolidColorBrush(accentColor);
@@ -114,7 +114,7 @@ public sealed partial class MainWindow : UserControl
 
             var color = _pomodoroMode == PomodoroMode.Work
                 ? AccentColor
-                : ColorHelper.FromArgb(255, 0, 230, 118);
+                : ColorHelper.FromArgb(255, 79, 209, 165);
             CompactPomodoroText.Foreground = new SolidColorBrush(color);
             CompactPomodoroBadge.BorderBrush = new SolidColorBrush(color);
 
