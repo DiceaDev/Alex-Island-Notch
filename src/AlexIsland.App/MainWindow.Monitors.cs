@@ -51,6 +51,7 @@ public sealed partial class MainWindow : UserControl
             // Con el ajuste desactivado, la isla vuelve al monitor principal.
             var primary = _monitors.FirstOrDefault(m => m.IsPrimary);
             if (primary is not null && NativeMethods.GetWindowMonitor(_hwnd) != primary.Id) MoveIslandTo(primary);
+            ReconcileTopBands();
             return;
         }
 
@@ -83,6 +84,7 @@ public sealed partial class MainWindow : UserControl
 
         SyncSatellites();
         UpdateSatelliteVisibility();
+        ReconcileTopBands();
     }
 
     private void CloseSatellites()

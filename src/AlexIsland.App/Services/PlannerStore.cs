@@ -56,11 +56,29 @@ internal sealed class PlannerStore
         // aunque el usuario siga agregando notas mientras se escribe el archivo.
         var json = JsonSerializer.Serialize(board, JsonOptions);
 
-        await _lock.WaitAsync();
+        await _lock.WaitAsync().ConfigureAwait(false);
         try
         {
             var temporaryPath = _filePath + ".tmp";
-            await File.WriteAllTextAsync(temporaryPath, json);
+            await File.WriteAllTextAsync(temporaryPath, json).ConfigureAwait(false);
+            File.Move(temporaryPath, _filePath, overwrite: true);
+        }
+        finally
+        {
+            _lock.Release();
+        }
+    }
+
+    /// <summary>Guardado síncrono para el cierre de la app, cuando ya no se puede esperar.</summary>
+    public void SaveNow(PlannerBoard board)
+    {
+        var json = JsonSerializer.Serialize(board, JsonOptions);
+
+        if (!_lock.Wait(TimeSpan.FromSeconds(2))) throw new TimeoutException("Hay otro guardado en curso.");
+        try
+        {
+            var temporaryPath = _filePath + ".tmp";
+            File.WriteAllText(temporaryPath, json);
             File.Move(temporaryPath, _filePath, overwrite: true);
         }
         finally

@@ -134,14 +134,14 @@ public sealed partial class MainWindow : UserControl
     {
         _calendarSubMode = mode;
 
-        CalSubAgendaBtn.Background = new SolidColorBrush(_calendarSubMode == CalendarSubMode.Agenda ? ColorHelper.FromArgb(255, 42, 45, 55) : Colors.Transparent);
-        CalSubAgendaLabel.Foreground = new SolidColorBrush(_calendarSubMode == CalendarSubMode.Agenda ? Colors.White : ColorHelper.FromArgb(255, 160, 165, 178));
+        CalSubAgendaBtn.Background = new SolidColorBrush(_calendarSubMode == CalendarSubMode.Agenda ? ColorHelper.FromArgb(255, 28, 118, 143) : Colors.Transparent);
+        CalSubAgendaLabel.Foreground = new SolidColorBrush(_calendarSubMode == CalendarSubMode.Agenda ? TextColor : ColorHelper.FromArgb(255, 184, 203, 211));
 
-        CalSubWeekBtn.Background = new SolidColorBrush(_calendarSubMode == CalendarSubMode.Week ? ColorHelper.FromArgb(255, 42, 45, 55) : Colors.Transparent);
-        CalSubWeekLabel.Foreground = new SolidColorBrush(_calendarSubMode == CalendarSubMode.Week ? Colors.White : ColorHelper.FromArgb(255, 160, 165, 178));
+        CalSubWeekBtn.Background = new SolidColorBrush(_calendarSubMode == CalendarSubMode.Week ? ColorHelper.FromArgb(255, 28, 118, 143) : Colors.Transparent);
+        CalSubWeekLabel.Foreground = new SolidColorBrush(_calendarSubMode == CalendarSubMode.Week ? TextColor : ColorHelper.FromArgb(255, 184, 203, 211));
 
-        CalSubMonthBtn.Background = new SolidColorBrush(_calendarSubMode == CalendarSubMode.Month ? ColorHelper.FromArgb(255, 42, 45, 55) : Colors.Transparent);
-        CalSubMonthLabel.Foreground = new SolidColorBrush(_calendarSubMode == CalendarSubMode.Month ? Colors.White : ColorHelper.FromArgb(255, 160, 165, 178));
+        CalSubMonthBtn.Background = new SolidColorBrush(_calendarSubMode == CalendarSubMode.Month ? ColorHelper.FromArgb(255, 28, 118, 143) : Colors.Transparent);
+        CalSubMonthLabel.Foreground = new SolidColorBrush(_calendarSubMode == CalendarSubMode.Month ? TextColor : ColorHelper.FromArgb(255, 184, 203, 211));
 
         CalAgendaContainer.Visibility = _calendarSubMode == CalendarSubMode.Agenda ? Visibility.Visible : Visibility.Collapsed;
         CalWeekContainer.Visibility = _calendarSubMode == CalendarSubMode.Week ? Visibility.Visible : Visibility.Collapsed;
@@ -250,11 +250,11 @@ public sealed partial class MainWindow : UserControl
                 Padding = new Thickness(0),
                 CornerRadius = new CornerRadius(4),
                 Background = isSelected
-                    ? new SolidColorBrush(ColorHelper.FromArgb(255, 42, 45, 55))
+                    ? new SolidColorBrush(ColorHelper.FromArgb(255, 28, 118, 143))
                     : new SolidColorBrush(Colors.Transparent),
                 BorderBrush = isToday
                     ? new SolidColorBrush(AccentColor)
-                    : (isSelected ? new SolidColorBrush(ColorHelper.FromArgb(60, 255, 255, 255)) : new SolidColorBrush(Colors.Transparent)),
+                    : (isSelected ? new SolidColorBrush(ColorHelper.FromArgb(60, 251, 243, 242)) : new SolidColorBrush(Colors.Transparent)),
                 BorderThickness = new Thickness(1)
             };
 
@@ -268,7 +268,7 @@ public sealed partial class MainWindow : UserControl
                 FontWeight = isSelected || isToday ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal,
                 Foreground = isToday
                     ? new SolidColorBrush(AccentColor)
-                    : new SolidColorBrush(Colors.White),
+                    : new SolidColorBrush(TextColor),
                 HorizontalAlignment = HorizontalAlignment.Center
             });
 
@@ -278,7 +278,7 @@ public sealed partial class MainWindow : UserControl
                 {
                     Width = 3,
                     Height = 3,
-                    Fill = new SolidColorBrush(ColorHelper.FromArgb(255, 66, 165, 245)),
+                    Fill = new SolidColorBrush(ColorHelper.FromArgb(255, 93, 179, 204)),
                     HorizontalAlignment = HorizontalAlignment.Center,
                     Margin = new Thickness(0, 1, 0, 0)
                 };
@@ -316,7 +316,7 @@ public sealed partial class MainWindow : UserControl
                 Text = headers[i],
                 FontSize = 9,
                 FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(160, 140, 145, 155)),
+                Foreground = new SolidColorBrush(ColorHelper.FromArgb(160, 143, 169, 181)),
                 HorizontalAlignment = HorizontalAlignment.Center
             };
             Grid.SetColumn(headerBlock, i);
@@ -351,7 +351,7 @@ public sealed partial class MainWindow : UserControl
                 Padding = new Thickness(0),
                 CornerRadius = new CornerRadius(3),
                 Background = isSelected
-                    ? new SolidColorBrush(ColorHelper.FromArgb(255, 42, 45, 55))
+                    ? new SolidColorBrush(ColorHelper.FromArgb(255, 28, 118, 143))
                     : new SolidColorBrush(Colors.Transparent),
                 BorderBrush = isToday
                     ? new SolidColorBrush(AccentColor)
@@ -367,7 +367,7 @@ public sealed partial class MainWindow : UserControl
                 FontWeight = isToday || isSelected ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal,
                 Foreground = isToday
                     ? new SolidColorBrush(AccentColor)
-                    : new SolidColorBrush(Colors.White),
+                    : new SolidColorBrush(TextColor),
                 HorizontalAlignment = HorizontalAlignment.Center
             });
 
@@ -377,7 +377,7 @@ public sealed partial class MainWindow : UserControl
                 {
                     Width = 2.5,
                     Height = 2.5,
-                    Fill = new SolidColorBrush(ColorHelper.FromArgb(255, 66, 165, 245)),
+                    Fill = new SolidColorBrush(ColorHelper.FromArgb(255, 93, 179, 204)),
                     HorizontalAlignment = HorizontalAlignment.Center
                 };
                 stack.Children.Add(dot);
@@ -401,20 +401,20 @@ public sealed partial class MainWindow : UserControl
         return category switch
         {
             "MEETING" => (
-                new SolidColorBrush(ColorHelper.FromArgb(40, 33, 150, 243)),
-                new SolidColorBrush(ColorHelper.FromArgb(255, 66, 165, 245))),
+                new SolidColorBrush(ColorHelper.FromArgb(40, 93, 179, 204)),
+                new SolidColorBrush(ColorHelper.FromArgb(255, 93, 179, 204))),
             "REVIEW" => (
-                new SolidColorBrush(ColorHelper.FromArgb(40, 171, 71, 188)),
-                new SolidColorBrush(ColorHelper.FromArgb(255, 171, 71, 188))),
+                new SolidColorBrush(ColorHelper.FromArgb(40, 196, 143, 214)),
+                new SolidColorBrush(ColorHelper.FromArgb(255, 196, 143, 214))),
             "PLANNING" => (
-                new SolidColorBrush(ColorHelper.FromArgb(40, 255, 167, 38)),
-                new SolidColorBrush(ColorHelper.FromArgb(255, 255, 167, 38))),
+                new SolidColorBrush(ColorHelper.FromArgb(40, 255, 194, 92)),
+                new SolidColorBrush(ColorHelper.FromArgb(255, 255, 194, 92))),
             "DEADLINE" => (
-                new SolidColorBrush(ColorHelper.FromArgb(40, 239, 83, 80)),
-                new SolidColorBrush(ColorHelper.FromArgb(255, 239, 83, 80))),
+                new SolidColorBrush(ColorHelper.FromArgb(40, 255, 127, 120)),
+                new SolidColorBrush(ColorHelper.FromArgb(255, 255, 127, 120))),
             _ => (
-                new SolidColorBrush(ColorHelper.FromArgb(40, 38, 166, 154)),
-                new SolidColorBrush(ColorHelper.FromArgb(255, 38, 166, 154)))
+                new SolidColorBrush(ColorHelper.FromArgb(40, 69, 196, 176)),
+                new SolidColorBrush(ColorHelper.FromArgb(255, 69, 196, 176)))
         };
     }
 
@@ -852,8 +852,8 @@ public sealed partial class MainWindow : UserControl
     {
         SyncStatusMsg.Text = message;
         SyncStatusMsg.Foreground = new SolidColorBrush(isError
-            ? ColorHelper.FromArgb(255, 255, 167, 38)
-            : ColorHelper.FromArgb(255, 0, 230, 118)); // verde: éxito (semántico)
+            ? ColorHelper.FromArgb(255, 255, 194, 92)
+            : ColorHelper.FromArgb(255, 79, 209, 165)); // verde: éxito (semántico)
         SyncStatusMsg.Visibility = Visibility.Visible;
 
         _syncStatusTimer?.Stop();

@@ -136,7 +136,7 @@ public sealed partial class MainWindow : UserControl
                 current.IsVpnActive ? string.Join(", ", current.VpnAdapters) : current.Describe(),
                 percent01: current.IsVpnActive ? 1.0 : 0.0,
                 rightGlyph: "\uE705",
-                accentColor: ColorHelper.FromArgb(255, 66, 165, 245));
+                accentColor: ColorHelper.FromArgb(255, 93, 179, 204));
             return;
         }
 
@@ -148,7 +148,7 @@ public sealed partial class MainWindow : UserControl
                 current.IsConnected ? current.Describe() : "Revisa el cable o la Wi-Fi",
                 percent01: 0.0,
                 rightGlyph: "\uE7BA",
-                accentColor: ColorHelper.FromArgb(255, 239, 83, 80));
+                accentColor: ColorHelper.FromArgb(255, 255, 127, 120));
             return;
         }
 
@@ -158,7 +158,7 @@ public sealed partial class MainWindow : UserControl
             current.Describe(),
             percent01: 1.0,
             rightGlyph: NetworkGlyph(current),
-            accentColor: ColorHelper.FromArgb(255, 0, 230, 118));
+            accentColor: ColorHelper.FromArgb(255, 79, 209, 165));
     }
 
     private void RefreshSystemView()
@@ -237,7 +237,7 @@ public sealed partial class MainWindow : UserControl
             // La primera vez se guarda el color original para poder restaurarlo.
             bar.Tag ??= bar.Background;
             bar.Background = percent >= threshold
-                ? new SolidColorBrush(ColorHelper.FromArgb(255, 239, 83, 80))
+                ? new SolidColorBrush(ColorHelper.FromArgb(255, 255, 127, 120))
                 : (Brush)bar.Tag;
         }
     }
@@ -246,8 +246,8 @@ public sealed partial class MainWindow : UserControl
     {
         SysNetIcon.Glyph = NetworkGlyph(n);
         SysNetIcon.Foreground = new SolidColorBrush(!n.IsConnected
-            ? ColorHelper.FromArgb(255, 239, 83, 80)
-            : n.HasInternet ? ColorHelper.FromArgb(255, 0, 230, 118) : ColorHelper.FromArgb(255, 255, 167, 38));
+            ? ColorHelper.FromArgb(255, 255, 127, 120)
+            : n.HasInternet ? ColorHelper.FromArgb(255, 79, 209, 165) : ColorHelper.FromArgb(255, 255, 194, 92));
 
         SysNetTitle.Text = n.Describe();
 
@@ -294,10 +294,10 @@ public sealed partial class MainWindow : UserControl
         SysLatencyText.Text = ms is long value ? $"{value} ms" : "-- ms";
         var color = ms switch
         {
-            null => ColorHelper.FromArgb(255, 160, 165, 178),
-            < 60 => ColorHelper.FromArgb(255, 0, 230, 118),
-            < 150 => ColorHelper.FromArgb(255, 255, 167, 38),
-            _ => ColorHelper.FromArgb(255, 239, 83, 80),
+            null => ColorHelper.FromArgb(255, 184, 203, 211),
+            < 60 => ColorHelper.FromArgb(255, 79, 209, 165),
+            < 150 => ColorHelper.FromArgb(255, 255, 194, 92),
+            _ => ColorHelper.FromArgb(255, 255, 127, 120),
         };
         SysLatencyText.Foreground = new SolidColorBrush(color);
         ToolTipService.SetToolTip(SysLatencyPill, $"Ping a {_settings.LatencyHost}");

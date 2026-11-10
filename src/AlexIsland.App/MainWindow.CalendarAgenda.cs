@@ -28,7 +28,7 @@ public sealed partial class MainWindow : UserControl
     /// <summary>Hay una reunión empezando pronto o en curso (punto naranja en la pestaña Agenda).</summary>
     private bool _upcomingMeetingSoon;
 
-    private static readonly SolidColorBrush MutedTextBrush = new(ColorHelper.FromArgb(255, 150, 156, 170));
+    private static readonly SolidColorBrush MutedTextBrush = new(ColorHelper.FromArgb(255, 143, 169, 181));
 
     /// <summary>Nombre visible de cada categoría (en disco se guarda el código en inglés).</summary>
     private static string CategoryLabel(string? category) => category switch
@@ -84,7 +84,7 @@ public sealed partial class MainWindow : UserControl
                 Text = isToday ? "No tienes reuniones hoy" : "No hay eventos este día",
                 FontSize = 11.5,
                 FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 220, 223, 230)),
+                Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 220, 227, 229)),
                 HorizontalAlignment = HorizontalAlignment.Center,
             });
             empty.Children.Add(new TextBlock
@@ -140,10 +140,10 @@ public sealed partial class MainWindow : UserControl
         {
             Background = new SolidColorBrush(isLive
                 ? Accent(34)
-                : ColorHelper.FromArgb(255, 24, 26, 33)),
+                : ColorHelper.FromArgb(255, 10, 50, 73)),
             BorderBrush = new SolidColorBrush(isLive || isNext
                 ? Accent(140)
-                : ColorHelper.FromArgb(28, 255, 255, 255)),
+                : ColorHelper.FromArgb(28, 251, 243, 242)),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(8),
             Padding = new Thickness(0, 5, 6, 5),
@@ -171,7 +171,7 @@ public sealed partial class MainWindow : UserControl
         var timeStack = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = 0 };
         if (ev.IsAllDay)
         {
-            timeStack.Children.Add(new TextBlock { Text = "Todo", FontSize = 10.5, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(Colors.White) });
+            timeStack.Children.Add(new TextBlock { Text = "Todo", FontSize = 10.5, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(TextColor) });
             timeStack.Children.Add(new TextBlock { Text = "el día", FontSize = 9.5, Foreground = MutedTextBrush });
         }
         else
@@ -181,7 +181,7 @@ public sealed partial class MainWindow : UserControl
                 Text = ev.StartTime.ToString("HH:mm"),
                 FontSize = 11,
                 FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-                Foreground = new SolidColorBrush(isLive ? AccentColor : Colors.White),
+                Foreground = new SolidColorBrush(isLive ? AccentColor : TextColor),
             });
             timeStack.Children.Add(new TextBlock { Text = ev.EndTime.ToString("HH:mm"), FontSize = 9.5, Foreground = MutedTextBrush });
         }
@@ -195,7 +195,7 @@ public sealed partial class MainWindow : UserControl
             Text = ev.Title,
             FontSize = 11.5,
             FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-            Foreground = new SolidColorBrush(Colors.White),
+            Foreground = new SolidColorBrush(TextColor),
             TextTrimming = TextTrimming.CharacterEllipsis,
             MaxLines = 1,
         });
@@ -224,11 +224,11 @@ public sealed partial class MainWindow : UserControl
         {
             meta.Children.Add(new Border
             {
-                Background = new SolidColorBrush(ColorHelper.FromArgb(40, 255, 167, 38)),
+                Background = new SolidColorBrush(ColorHelper.FromArgb(40, 255, 194, 92)),
                 CornerRadius = new CornerRadius(4),
                 Padding = new Thickness(5, 0, 5, 1),
                 VerticalAlignment = VerticalAlignment.Center,
-                Child = MetaText("Sin responder", ColorHelper.FromArgb(255, 255, 183, 77), bold: true),
+                Child = MetaText("Sin responder", ColorHelper.FromArgb(255, 255, 201, 122), bold: true),
             });
         }
 
@@ -240,8 +240,8 @@ public sealed partial class MainWindow : UserControl
                 Spacing = 2,
                 Children =
                 {
-                    new FontIcon { Glyph = "", FontSize = 9, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 167, 38)) },
-                    MetaText("Se solapa", ColorHelper.FromArgb(255, 255, 167, 38), bold: true),
+                    new FontIcon { Glyph = "", FontSize = 9, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 194, 92)) },
+                    MetaText("Se solapa", ColorHelper.FromArgb(255, 255, 194, 92), bold: true),
                 },
             });
         }
@@ -275,8 +275,8 @@ public sealed partial class MainWindow : UserControl
                 Padding = new Thickness(8, 0, 8, 0),
                 CornerRadius = new CornerRadius(12),
                 BorderThickness = new Thickness(0),
-                Background = new SolidColorBrush(isJoinTime ? AccentColor : ColorHelper.FromArgb(255, 44, 47, 58)),
-                Foreground = new SolidColorBrush(isJoinTime ? Colors.White : ColorHelper.FromArgb(255, 220, 223, 230)),
+                Background = new SolidColorBrush(isJoinTime ? AccentColor : ColorHelper.FromArgb(255, 17, 64, 89)),
+                Foreground = new SolidColorBrush(isJoinTime ? OnAccentColor : ColorHelper.FromArgb(255, 220, 227, 229)),
                 Content = new StackPanel
                 {
                     Orientation = Orientation.Horizontal,
@@ -295,8 +295,8 @@ public sealed partial class MainWindow : UserControl
 
         if (!IsSyncedFromOutlook(ev))
         {
-            actions.Children.Add(IconButton("", ColorHelper.FromArgb(200, 150, 156, 170), "Editar", () => OpenEditForm(ev)));
-            actions.Children.Add(IconButton("", ColorHelper.FromArgb(200, 239, 83, 80), "Eliminar", () =>
+            actions.Children.Add(IconButton("", ColorHelper.FromArgb(200, 143, 169, 181), "Editar", () => OpenEditForm(ev)));
+            actions.Children.Add(IconButton("", ColorHelper.FromArgb(200, 255, 127, 120), "Eliminar", () =>
             {
                 _events.Remove(ev);
                 _ = _calendarStore.SaveAsync(_events);

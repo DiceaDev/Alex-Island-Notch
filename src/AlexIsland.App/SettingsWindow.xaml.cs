@@ -49,6 +49,7 @@ public sealed partial class SettingsWindow : Window
         StartWithWindowsToggle.IsOn = _settings.StartWithWindows;
         HideInFullscreenToggle.IsOn = _settings.HideInFullscreen;
         ShowOnAllMonitorsToggle.IsOn = _settings.ShowOnAllMonitors;
+        ReserveTopBandToggle.IsOn = _settings.ReserveTopBand;
         ShowMascotToggle.IsOn = _settings.ShowMascot;
         MinimalNotchToggle.IsOn = _settings.MinimalNotch;
         NotchScaleSlider.Value = Math.Round(_settings.NotchScale * 100);
@@ -119,6 +120,7 @@ public sealed partial class SettingsWindow : Window
 
         _settings.HideInFullscreen = HideInFullscreenToggle.IsOn;
         _settings.ShowOnAllMonitors = ShowOnAllMonitorsToggle.IsOn;
+        _settings.ReserveTopBand = ReserveTopBandToggle.IsOn;
         _settings.ShowMascot = ShowMascotToggle.IsOn;
         _settings.MinimalNotch = MinimalNotchToggle.IsOn;
         _settings.ShowNetworkPeeks = NetworkPeeksToggle.IsOn;
@@ -227,7 +229,7 @@ public sealed partial class SettingsWindow : Window
         if (!NotificationPeeksToggle.IsOn)
         {
             NotificationAccessText.Text = "Desactivado. Al activarlo, Windows te pedirá permiso para leer tus notificaciones.";
-            NotificationAccessText.Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0x9A, 0xA3, 0xB2));
+            NotificationAccessText.Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 184, 203, 211));
             NotificationPrivacyLink.Visibility = Visibility.Collapsed;
             return;
         }
@@ -243,8 +245,8 @@ public sealed partial class SettingsWindow : Window
 
         NotificationAccessText.Text = text;
         NotificationAccessText.Foreground = new SolidColorBrush(ok
-            ? ColorHelper.FromArgb(255, 0, 230, 118)
-            : ColorHelper.FromArgb(255, 0xFF, 0xA7, 0x26));
+            ? ColorHelper.FromArgb(255, 79, 209, 165)
+            : ColorHelper.FromArgb(255, 255, 194, 92));
         NotificationPrivacyLink.Visibility = ok ? Visibility.Collapsed : Visibility.Visible;
     }
 

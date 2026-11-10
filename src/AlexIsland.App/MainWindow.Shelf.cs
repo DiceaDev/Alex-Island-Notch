@@ -349,7 +349,7 @@ public sealed partial class MainWindow : UserControl
             Width = 76,
             Height = 58,
             CornerRadius = new CornerRadius(6),
-            Background = new SolidColorBrush(ColorHelper.FromArgb(255, 26, 29, 37)),
+            Background = new SolidColorBrush(ColorHelper.FromArgb(255, 10, 50, 73)),
             Padding = new Thickness(5, 4, 5, 4),
             Opacity = exists ? 1.0 : 0.45,
             Child = new StackPanel
@@ -369,7 +369,7 @@ public sealed partial class MainWindow : UserControl
                     {
                         Text = item.DisplayName,
                         FontSize = 9.5,
-                        Foreground = new SolidColorBrush(Colors.White),
+                        Foreground = new SolidColorBrush(TextColor),
                         TextTrimming = TextTrimming.CharacterEllipsis,
                         MaxLines = 2,
                         TextWrapping = TextWrapping.Wrap,
@@ -444,8 +444,8 @@ public sealed partial class MainWindow : UserControl
 
     private static Windows.UI.Color ColorFor(ShelfItem item) => item.Kind switch
     {
-        ShelfItemKind.Text => ColorHelper.FromArgb(255, 171, 71, 188),
-        ShelfItemKind.Folder => ColorHelper.FromArgb(255, 255, 202, 40),
-        _ => ColorHelper.FromArgb(255, 66, 165, 245),
+        ShelfItemKind.Text => ColorHelper.FromArgb(255, 196, 143, 214),
+        ShelfItemKind.Folder => ColorHelper.FromArgb(255, 255, 214, 102),
+        _ => ColorHelper.FromArgb(255, 93, 179, 204),
     };
 }

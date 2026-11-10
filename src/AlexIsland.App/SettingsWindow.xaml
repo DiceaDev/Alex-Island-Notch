@@ -4,27 +4,30 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="Ajustes de Alex Island">
 
-    <Grid Background="#FF111318">
+    <Grid Background="#FF032539">
         <ScrollViewer Padding="24,20,24,24" VerticalScrollBarVisibility="Auto">
             <StackPanel Spacing="18" MaxWidth="460" HorizontalAlignment="Stretch">
 
                 <StackPanel Spacing="2">
-                    <TextBlock Text="Alex Island" FontSize="22" FontWeight="SemiBold" Foreground="White"/>
-                    <TextBlock Text="Los cambios se guardan al instante." FontSize="12" Foreground="#FF9AA3B2"/>
+                    <TextBlock Text="Alex Island" FontSize="22" FontWeight="SemiBold" Foreground="#FFFBF3F2"/>
+                    <TextBlock Text="Los cambios se guardan al instante." FontSize="12" Foreground="#FFB8CBD3"/>
                 </StackPanel>
 
                 <!-- General -->
                 <StackPanel Spacing="6">
-                    <TextBlock Text="General" FontSize="15" FontWeight="SemiBold" Foreground="White" Margin="0,6,0,0"/>
-                    <ToggleSwitch x:Name="StartWithWindowsToggle" Header="Iniciar con Windows" Foreground="White" Toggled="OnToggled"/>
-                    <TextBlock x:Name="StartupError" Visibility="Collapsed" FontSize="11" Foreground="#FFFFA726" TextWrapping="Wrap"
+                    <TextBlock Text="General" FontSize="15" FontWeight="SemiBold" Foreground="#FFFBF3F2" Margin="0,6,0,0"/>
+                    <ToggleSwitch x:Name="StartWithWindowsToggle" Header="Iniciar con Windows" Foreground="#FFFBF3F2" Toggled="OnToggled"/>
+                    <TextBlock x:Name="StartupError" Visibility="Collapsed" FontSize="11" Foreground="#FFFFC25C" TextWrapping="Wrap"
                                Text="No se pudo actualizar el inicio automático. Revisa que la app esté instalada en una carpeta a la que tengas acceso."/>
-                    <ToggleSwitch x:Name="HideInFullscreenToggle" Header="Ocultar en pantalla completa (juegos, videos, presentaciones)" Foreground="White" Toggled="OnToggled"/>
-                    <ToggleSwitch x:Name="ShowOnAllMonitorsToggle" Header="Mostrar la isla en todos los monitores" Foreground="White" Toggled="OnToggled"/>
-                    <ToggleSwitch x:Name="ShowMascotToggle" Header="Mostrar la mascota cuando el equipo está inactivo" Foreground="White" Toggled="OnToggled"/>
-                    <ToggleSwitch x:Name="MinimalNotchToggle" Header="Notch mínimo (una línea fina en reposo)" Foreground="White" Toggled="OnToggled"/>
+                    <ToggleSwitch x:Name="HideInFullscreenToggle" Header="Ocultar en pantalla completa (juegos, videos, presentaciones)" Foreground="#FFFBF3F2" Toggled="OnToggled"/>
+                    <ToggleSwitch x:Name="ShowOnAllMonitorsToggle" Header="Mostrar la isla en todos los monitores" Foreground="#FFFBF3F2" Toggled="OnToggled"/>
+                    <ToggleSwitch x:Name="ReserveTopBandToggle" Header="Reservar la franja superior para la isla" Foreground="#FFFBF3F2" Toggled="OnToggled"/>
+                    <TextBlock FontSize="11" Foreground="#FFB8CBD3" TextWrapping="Wrap"
+                               Text="Las ventanas maximizadas empiezan debajo de la isla, así no tapa sus pestañas. La franja toma el color de lo que tiene debajo."/>
+                    <ToggleSwitch x:Name="ShowMascotToggle" Header="Mostrar la mascota cuando el equipo está inactivo" Foreground="#FFFBF3F2" Toggled="OnToggled"/>
+                    <ToggleSwitch x:Name="MinimalNotchToggle" Header="Notch mínimo (una línea fina en reposo)" Foreground="#FFFBF3F2" Toggled="OnToggled"/>
                     <StackPanel Spacing="2">
-                        <TextBlock Text="Tamaño del notch" FontSize="14" Foreground="White"/>
+                        <TextBlock Text="Tamaño del notch" FontSize="14" Foreground="#FFFBF3F2"/>
                         <Grid ColumnSpacing="10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -32,46 +35,46 @@
                             </Grid.ColumnDefinitions>
                             <Slider x:Name="NotchScaleSlider" Minimum="80" Maximum="140" StepFrequency="5" TickFrequency="10"
                                     ValueChanged="NotchScaleSlider_ValueChanged"/>
-                            <TextBlock x:Name="NotchScaleLabel" Grid.Column="1" Text="100%" Foreground="#FF9AA3B2" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="NotchScaleLabel" Grid.Column="1" Text="100%" Foreground="#FFB8CBD3" VerticalAlignment="Center"/>
                         </Grid>
                     </StackPanel>
                 </StackPanel>
 
                 <!-- Avisos -->
                 <StackPanel Spacing="6">
-                    <TextBlock Text="Avisos en la isla" FontSize="15" FontWeight="SemiBold" Foreground="White" Margin="0,6,0,0"/>
-                    <ToggleSwitch x:Name="NetworkPeeksToggle" Header="Cambios de red y VPN" Foreground="White" Toggled="OnToggled"/>
-                    <ToggleSwitch x:Name="VolumePeeksToggle" Header="Volumen" Foreground="White" Toggled="OnToggled"/>
-                    <ToggleSwitch x:Name="BrightnessPeeksToggle" Header="Brillo de pantalla" Foreground="White" Toggled="OnToggled"/>
-                    <ToggleSwitch x:Name="KeyboardLayoutPeeksToggle" Header="Idioma del teclado" Foreground="White" Toggled="OnToggled"/>
-                    <ToggleSwitch x:Name="CapsLockPeeksToggle" Header="Bloq Mayús" Foreground="White" Toggled="OnToggled"/>
+                    <TextBlock Text="Avisos en la isla" FontSize="15" FontWeight="SemiBold" Foreground="#FFFBF3F2" Margin="0,6,0,0"/>
+                    <ToggleSwitch x:Name="NetworkPeeksToggle" Header="Cambios de red y VPN" Foreground="#FFFBF3F2" Toggled="OnToggled"/>
+                    <ToggleSwitch x:Name="VolumePeeksToggle" Header="Volumen" Foreground="#FFFBF3F2" Toggled="OnToggled"/>
+                    <ToggleSwitch x:Name="BrightnessPeeksToggle" Header="Brillo de pantalla" Foreground="#FFFBF3F2" Toggled="OnToggled"/>
+                    <ToggleSwitch x:Name="KeyboardLayoutPeeksToggle" Header="Idioma del teclado" Foreground="#FFFBF3F2" Toggled="OnToggled"/>
+                    <ToggleSwitch x:Name="CapsLockPeeksToggle" Header="Bloq Mayús" Foreground="#FFFBF3F2" Toggled="OnToggled"/>
                 </StackPanel>
 
                 <!-- Notificaciones de Windows -->
                 <StackPanel Spacing="6">
-                    <TextBlock Text="Notificaciones de Windows" FontSize="15" FontWeight="SemiBold" Foreground="White" Margin="0,6,0,0"/>
-                    <ToggleSwitch x:Name="NotificationPeeksToggle" Header="Mostrar notificaciones en la isla" Foreground="White" Toggled="NotificationPeeksToggle_Toggled"/>
-                    <TextBlock x:Name="NotificationAccessText" FontSize="11" Foreground="#FF9AA3B2" TextWrapping="Wrap"/>
+                    <TextBlock Text="Notificaciones de Windows" FontSize="15" FontWeight="SemiBold" Foreground="#FFFBF3F2" Margin="0,6,0,0"/>
+                    <ToggleSwitch x:Name="NotificationPeeksToggle" Header="Mostrar notificaciones en la isla" Foreground="#FFFBF3F2" Toggled="NotificationPeeksToggle_Toggled"/>
+                    <TextBlock x:Name="NotificationAccessText" FontSize="11" Foreground="#FFB8CBD3" TextWrapping="Wrap"/>
                     <HyperlinkButton x:Name="NotificationPrivacyLink" Content="Abrir los permisos de notificaciones de Windows" Padding="0"
-                                     Foreground="#FFFF5A00" Click="NotificationPrivacyLink_Click" Visibility="Collapsed"/>
-                    <ToggleSwitch x:Name="NotificationContentToggle" Header="Mostrar el texto del mensaje (si no, solo el nombre de la app)" Foreground="White" Toggled="OnToggled"/>
-                    <TextBox x:Name="MutedAppsBox" Header="Apps silenciadas (separadas por comas)" PlaceholderText="Teams, Outlook"
+                                     Foreground="#FFFA991C" Click="NotificationPrivacyLink_Click" Visibility="Collapsed"/>
+                    <ToggleSwitch x:Name="NotificationContentToggle" Header="Mostrar el texto del mensaje (si no, solo el nombre de la app)" Foreground="#FFFBF3F2" Toggled="OnToggled"/>
+                    <TextBox x:Name="MutedAppsBox" Header="Apps silenciadas (separadas por comas)" PlaceholderText="Teams, Outlook" PlaceholderForeground="#FF8FA9B5"
                              LostFocus="MutedAppsBox_LostFocus" KeyDown="MutedAppsBox_KeyDown"/>
-                    <TextBlock FontSize="11" Foreground="#FF9AA3B2" TextWrapping="Wrap"
+                    <TextBlock FontSize="11" Foreground="#FFB8CBD3" TextWrapping="Wrap"
                                Text="Las notificaciones se leen solo en este equipo: no se guardan ni se envían a ningún sitio. Usa el nombre de la app tal como aparece en la notificación."/>
                 </StackPanel>
 
                 <!-- Agenda -->
                 <StackPanel Spacing="6">
-                    <TextBlock Text="Agenda" FontSize="15" FontWeight="SemiBold" Foreground="White" Margin="0,6,0,0"/>
-                    <ToggleSwitch x:Name="SyncOutlookToggle" Header="Importar el calendario de Outlook automáticamente" Foreground="White" Toggled="OnToggled"/>
-                    <TextBlock x:Name="SyncOutlookInfo" FontSize="11" Foreground="#FF9AA3B2" TextWrapping="Wrap"
+                    <TextBlock Text="Agenda" FontSize="15" FontWeight="SemiBold" Foreground="#FFFBF3F2" Margin="0,6,0,0"/>
+                    <ToggleSwitch x:Name="SyncOutlookToggle" Header="Importar el calendario de Outlook automáticamente" Foreground="#FFFBF3F2" Toggled="OnToggled"/>
+                    <TextBlock x:Name="SyncOutlookInfo" FontSize="11" Foreground="#FFB8CBD3" TextWrapping="Wrap"
                                Text="Lee tus reuniones de los próximos 45 días del Outlook clásico cada 15 minutos, solo en este equipo. Es solo lectura: la isla nunca crea ni cambia nada en Outlook. Si Outlook clásico está cerrado, se abre sin ventana un momento y se vuelve a cerrar."/>
                 </StackPanel>
 
                 <!-- Planner -->
                 <StackPanel Spacing="6">
-                    <TextBlock Text="Planner" FontSize="15" FontWeight="SemiBold" Foreground="White" Margin="0,6,0,0"/>
+                    <TextBlock Text="Planner" FontSize="15" FontWeight="SemiBold" Foreground="#FFFBF3F2" Margin="0,6,0,0"/>
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <ComboBox x:Name="PlannerStartCombo" Header="Empieza a las" MinWidth="120" SelectionChanged="PlannerHours_SelectionChanged"/>
                         <ComboBox x:Name="PlannerEndCombo" Header="Termina a las" MinWidth="120" SelectionChanged="PlannerHours_SelectionChanged"/>
@@ -80,24 +83,24 @@
 
                 <!-- Música -->
                 <StackPanel Spacing="6">
-                    <TextBlock Text="Música" FontSize="15" FontWeight="SemiBold" Foreground="White" Margin="0,6,0,0"/>
-                    <ToggleSwitch x:Name="ShowLyricsToggle" Header="Letras sincronizadas" Foreground="White" Toggled="OnToggled"/>
-                    <TextBlock FontSize="11" Foreground="#FF9AA3B2" TextWrapping="Wrap"
+                    <TextBlock Text="Música" FontSize="15" FontWeight="SemiBold" Foreground="#FFFBF3F2" Margin="0,6,0,0"/>
+                    <ToggleSwitch x:Name="ShowLyricsToggle" Header="Letras sincronizadas" Foreground="#FFFBF3F2" Toggled="OnToggled"/>
+                    <TextBlock FontSize="11" Foreground="#FFB8CBD3" TextWrapping="Wrap"
                                Text="Las letras se piden a LRCLIB (lrclib.net) enviando solo el título, el artista y la duración de la canción. Desactívalo si no quieres que la app se conecte a ese servicio."/>
                 </StackPanel>
 
                 <!-- Sistema y red -->
                 <StackPanel Spacing="6">
-                    <TextBlock Text="Sistema y red" FontSize="15" FontWeight="SemiBold" Foreground="White" Margin="0,6,0,0"/>
-                    <TextBox x:Name="LatencyHostBox" Header="Host para medir la latencia (ping)" PlaceholderText="1.1.1.1"
+                    <TextBlock Text="Sistema y red" FontSize="15" FontWeight="SemiBold" Foreground="#FFFBF3F2" Margin="0,6,0,0"/>
+                    <TextBox x:Name="LatencyHostBox" Header="Host para medir la latencia (ping)" PlaceholderText="1.1.1.1" PlaceholderForeground="#FF8FA9B5"
                              LostFocus="LatencyHostBox_LostFocus" KeyDown="LatencyHostBox_KeyDown"/>
-                    <TextBlock x:Name="LatencyHostError" Visibility="Collapsed" FontSize="11" Foreground="#FFFFA726"
+                    <TextBlock x:Name="LatencyHostError" Visibility="Collapsed" FontSize="11" Foreground="#FFFFC25C"
                                Text="Escribe solo un nombre de host o una IP, sin http:// ni rutas."/>
-                    <TextBlock FontSize="11" Foreground="#FF9AA3B2" TextWrapping="Wrap"
+                    <TextBlock FontSize="11" Foreground="#FFB8CBD3" TextWrapping="Wrap"
                                Text="El ping solo se envía mientras la pestaña Sistema está abierta. Puedes usar un servidor interno de tu empresa."/>
                 </StackPanel>
 
-                <TextBlock x:Name="DataFolderText" FontSize="11" Foreground="#FF6B7280" TextWrapping="Wrap" IsTextSelectionEnabled="True"/>
+                <TextBlock x:Name="DataFolderText" FontSize="11" Foreground="#FF6F8E9C" TextWrapping="Wrap" IsTextSelectionEnabled="True"/>
             </StackPanel>
         </ScrollViewer>
     </Grid>
