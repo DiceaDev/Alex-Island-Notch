@@ -1036,6 +1036,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
                     <!-- Fila 0: CPU, memoria, disco y tiempo encendido -->
@@ -1123,6 +1124,9 @@
                             </StackPanel>
                         </Grid>
                     </Border>
+
+                    <!-- Fila 2: batería de los accesorios Bluetooth conectados (se oculta si no hay) -->
+                    <Grid x:Name="SysBluetoothRow" Grid.Row="2" Visibility="Collapsed" ColumnSpacing="5"/>
                 </Grid>
 
                 <!-- ================= VISTA: PLANNER SEMANAL ================= -->
