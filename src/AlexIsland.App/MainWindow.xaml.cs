@@ -525,7 +525,7 @@ public sealed partial class MainWindow : UserControl
                     IslandTab.Planner => ExpandedPlannerHeight,
                     IslandTab.Backlog => ExpandedBacklogHeight,
                     IslandTab.Pomodoro => ExpandedPomodoroHeight,
-                    IslandTab.System => ExpandedSystemHeight,
+                    IslandTab.System => SystemExpandedHeight,
                     IslandTab.Shelf => ExpandedShelfHeight,
                     IslandTab.Media when HasLyrics => ExpandedMediaLyricsHeight,
                     _ => ExpandedHeight

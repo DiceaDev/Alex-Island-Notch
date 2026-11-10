@@ -178,6 +178,12 @@ public sealed partial class MainWindow : UserControl
 
         // La red cambia por eventos; aquí solo se refresca cada 10 s por si
         // Windows no avisó (por ejemplo, la Wi-Fi se queda sin Internet).
+        // La batería de los accesorios cambia despacio: también cada 10 s.
+        if (_systemTickCount % 5 == 0)
+        {
+            RefreshBluetoothBatteries();
+        }
+
         if (_systemTickCount % 5 == 0 && _networkMonitor is not null)
         {
             var monitor = _networkMonitor;
@@ -333,6 +339,11 @@ public sealed partial class MainWindow : UserControl
                 sb.AppendLine($"CPU: {s.CpuPercent:0}% · Memoria: {s.MemoryPercent:0}% ({SystemMetrics.FormatBytes(s.MemoryTotalBytes)})");
                 sb.AppendLine($"Disco {s.DiskName}: {s.DiskPercent:0}% usado de {SystemMetrics.FormatBytes(s.DiskTotalBytes)}");
                 sb.AppendLine($"Encendido: {SystemMetrics.FormatUptime(s.Uptime)}");
+            }
+
+            foreach (var device in _bluetoothDevices)
+            {
+                sb.AppendLine($"Bluetooth {device.Name}: batería {device.Percent}%");
             }
 
             var package = new Windows.ApplicationModel.DataTransfer.DataPackage();
