@@ -48,6 +48,7 @@
                     <ToggleSwitch x:Name="BrightnessPeeksToggle" Header="Brillo de pantalla" Foreground="#FFFBF3F2" Toggled="OnToggled"/>
                     <ToggleSwitch x:Name="KeyboardLayoutPeeksToggle" Header="Idioma del teclado" Foreground="#FFFBF3F2" Toggled="OnToggled"/>
                     <ToggleSwitch x:Name="CapsLockPeeksToggle" Header="Bloq Mayús" Foreground="#FFFBF3F2" Toggled="OnToggled"/>
+                    <ToggleSwitch x:Name="BluetoothBatteryPeeksToggle" Header="Batería baja de accesorios Bluetooth (20 %)" Foreground="#FFFBF3F2" Toggled="OnToggled"/>
                 </StackPanel>
 
                 <!-- Notificaciones de Windows -->

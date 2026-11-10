@@ -60,6 +60,7 @@ public sealed partial class SettingsWindow : Window
         BrightnessPeeksToggle.IsOn = _settings.ShowBrightnessPeeks;
         KeyboardLayoutPeeksToggle.IsOn = _settings.ShowKeyboardLayoutPeeks;
         CapsLockPeeksToggle.IsOn = _settings.ShowCapsLockPeeks;
+        BluetoothBatteryPeeksToggle.IsOn = _settings.ShowBluetoothBatteryPeeks;
         ShowLyricsToggle.IsOn = _settings.ShowLyrics;
         LatencyHostBox.Text = _settings.LatencyHost;
         for (var hour = IslandSettings.MinPlannerHour; hour <= IslandSettings.MaxPlannerHour; hour++)
@@ -128,6 +129,7 @@ public sealed partial class SettingsWindow : Window
         _settings.ShowBrightnessPeeks = BrightnessPeeksToggle.IsOn;
         _settings.ShowKeyboardLayoutPeeks = KeyboardLayoutPeeksToggle.IsOn;
         _settings.ShowCapsLockPeeks = CapsLockPeeksToggle.IsOn;
+        _settings.ShowBluetoothBatteryPeeks = BluetoothBatteryPeeksToggle.IsOn;
         _settings.ShowLyrics = ShowLyricsToggle.IsOn;
         _settings.ShowNotificationContent = NotificationContentToggle.IsOn;
         _settings.SyncOutlookCalendar = SyncOutlookToggle.IsOn;

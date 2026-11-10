@@ -23,6 +23,8 @@ public sealed class IslandSettings
     public bool ShowBrightnessPeeks { get; set; } = true;
     public bool ShowKeyboardLayoutPeeks { get; set; } = true;
     public bool ShowCapsLockPeeks { get; set; } = true;
+    /// <summary>Avisa cuando un accesorio Bluetooth conectado baja del 20 % de batería.</summary>
+    public bool ShowBluetoothBatteryPeeks { get; set; } = true;
 
     // Notificaciones de Windows (desactivadas por defecto: requieren permiso del usuario)
     public bool ShowNotificationPeeks { get; set; }

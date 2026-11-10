@@ -310,6 +310,7 @@ public sealed partial class MainWindow : UserControl
         catch { }
 
         InitializeSystemModule();
+        StartBluetoothBatteryWatch();
         InitializeShellIntegration();
         InitializeOverlays();
         InitializeNotifications();
@@ -369,6 +370,7 @@ public sealed partial class MainWindow : UserControl
         }
         DetachMediaSession();
         StopSystemModule();
+        StopBluetoothBatteryWatch();
         StopShellIntegration();
         StopOverlays();
         StopNotifications();

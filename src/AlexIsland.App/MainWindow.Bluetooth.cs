@@ -1,6 +1,7 @@
 using AlexIsland.App.Services;
 using AlexIsland.Core.SystemInfo;
 using Microsoft.UI;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -20,6 +21,44 @@ public sealed partial class MainWindow : UserControl
 
     private IReadOnlyList<BluetoothBatteryInfo> _bluetoothDevices = [];
     private bool _bluetoothReading;
+    private readonly BluetoothLowBatteryAlerts _bluetoothAlerts = new();
+    private DispatcherQueueTimer? _bluetoothWatchTimer;
+
+    /// <summary>
+    /// Revisa la batería cada minuto aunque la pestaña Sistema esté cerrada, para
+    /// avisar cuando un accesorio baje del 20 %. La lectura es local y tarda milisegundos.
+    /// </summary>
+    private void StartBluetoothBatteryWatch()
+    {
+        _bluetoothWatchTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
+        _bluetoothWatchTimer.Interval = TimeSpan.FromMinutes(1);
+        _bluetoothWatchTimer.IsRepeating = true;
+        _bluetoothWatchTimer.Tick += (_, _) => RefreshBluetoothBatteries();
+        _bluetoothWatchTimer.Start();
+        RefreshBluetoothBatteries();
+    }
+
+    private void StopBluetoothBatteryWatch() => _bluetoothWatchTimer?.Stop();
+
+    private void WarnLowBluetoothBattery()
+    {
+        if (!_settings.ShowBluetoothBatteryPeeks) return;
+
+        var pending = _bluetoothAlerts.Pending(_bluetoothDevices);
+        // Si la isla está abierta u oculta, el aviso queda pendiente para la próxima revisión.
+        if (pending.Count == 0 || !CanShowAutomaticPeek) return;
+
+        var device = pending[0];
+        ShowHardwarePeek(
+            HardwarePeekType.Battery,
+            $"Batería baja · {device.Name}",
+            $"Queda {device.Percent}%, conviene cargarlo",
+            percent01: device.Percent / 100.0,
+            rightGlyph: GlyphFor(device.Kind),
+            accentColor: BatteryColor(device.Percent),
+            duration: TimeSpan.FromSeconds(6));
+        _bluetoothAlerts.MarkWarned(device);
+    }
 
     /// <summary>La pestaña Sistema crece una fila solo cuando hay accesorios que mostrar.</summary>
     private int SystemExpandedHeight =>
@@ -40,6 +79,7 @@ public sealed partial class MainWindow : UserControl
 
                 _bluetoothDevices = t.Result;
                 RenderBluetoothBatteries();
+                WarnLowBluetoothBattery();
             });
         }, TaskScheduler.Default);
     }
@@ -77,13 +117,7 @@ public sealed partial class MainWindow : UserControl
 
         var icon = new FontIcon
         {
-            Glyph = device.Kind switch
-            {
-                BluetoothDeviceKind.Audio => "",
-                BluetoothDeviceKind.Mouse => "",
-                BluetoothDeviceKind.Keyboard => "",
-                _ => "",
-            },
+            Glyph = GlyphFor(device.Kind),
             FontSize = 10,
             Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 184, 203, 211)),
             VerticalAlignment = VerticalAlignment.Center,
@@ -135,6 +169,14 @@ public sealed partial class MainWindow : UserControl
         ToolTipService.SetToolTip(chip, $"{device.Name}: batería {device.Percent}%");
         return chip;
     }
+
+    private static string GlyphFor(BluetoothDeviceKind kind) => kind switch
+    {
+        BluetoothDeviceKind.Audio => "",
+        BluetoothDeviceKind.Mouse => "",
+        BluetoothDeviceKind.Keyboard => "",
+        _ => "",
+    };
 
     private static Color BatteryColor(int percent) => percent switch
     {
